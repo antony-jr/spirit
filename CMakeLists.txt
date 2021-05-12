@@ -17,7 +17,13 @@ include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 
 SET(source)
-list(APPEND source src/main.cc)
+list(APPEND source include/windowinfo_p.hpp
+		   include/windowinfo.hpp
+		   include/helpers_p.hpp
+		   src/windowinfo_p.cc
+		   src/windowinfo.cc
+		   src/helpers_p.cc
+		   src/main.cc)
 
 add_executable(spirit ${source})
 target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets xdo)
