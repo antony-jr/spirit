@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=spirit
+Type=Application
+Exec=spirit
+Icon=spirit
+Terminal=true
+Categories=System;
+Comment=Something to cheer your spirits.

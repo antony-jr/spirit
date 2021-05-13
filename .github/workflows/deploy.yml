@@ -1,0 +1,174 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  Check:
+    runs-on: ubuntu-16.04
+    outputs:
+      deploy: ${{ steps.check.outputs.check }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: lukka/get-cmake@latest
+
+      - name: Install Python3
+        run: |
+          sudo apt install -y python3
+
+      - id: check
+        name: Check Commit Message
+        run: |
+          git clone https://github.com/antony-jr/spirit
+          cd spirit
+          git tag > /tmp/tags.txt
+          cd ..
+          rm -rf spirit
+          cat /tmp/tags.txt
+          result=$(python3 scripts/check.py "$(git log -1 --pretty=%B)" "/tmp/tags.txt")
+          echo "::set-output name=check::$result"
+  BuildAndDeploy:
+    name: "Build And Deploy"
+    runs-on: ubuntu-16.04
+    needs: Check
+    steps:
+      - uses: actions/checkout@v2
+      - uses: lukka/get-cmake@latest
+
+      - name: Install Qt and other Dependencies
+        run: |
+          sudo add-apt-repository ppa:beineri/opt-qt-5.12.9-xenial -y
+          sudo apt-get update -qq
+          sudo apt-get -y install build-essential libgl1-mesa-dev xvfb qt512base \
+               automake libtool \
+               libcairo-dev libfuse-dev zsync desktop-file-utils \
+               ca-certificates autoconf libtool patch wget \
+               vim-common desktop-file-utils pkg-config \
+               libarchive-dev librsvg2-dev librsvg2-bin liblzma-dev \
+               libxdo-dev
+
+      - name: Building Spirit
+        id: appimage_build
+        run: |
+          git submodule init
+          git submodule update # Download all required submodules.
+          export VERSION=$(git rev-parse --short HEAD)
+          source /opt/qt*/bin/qt*-env.sh || true
+          cmake .
+          make -j$(nproc)
+          mkdir -p appdir/usr/lib 
+          mkdir -p appdir/usr/bin ; 
+          strip spirit ; cp spirit appdir/usr/bin/
+          mkdir -p appdir/usr/share/applications ; 
+          cp build_resources/spirit.desktop appdir/usr/share/applications/
+          mkdir -p appdir/usr/share/icons/hicolor/256x256/apps/ ; 
+          cp build_resources/spirit.png appdir/usr/share/icons/hicolor/256x256/apps/spirit.png
+          wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+          chmod a+x linuxdeployqt-continuous-x86_64.AppImage
+          unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
+          deploy=${{ needs.Check.outputs.deploy }} 
+          if [ "$deploy" = "false" ]
+            then
+            export tag="development"
+            export VERSION=$(git rev-parse --short HEAD) 
+          else
+            export tag="latest"
+            export VERSION=$deploy
+          fi
+          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -bundle-non-qt-libs 
+          ./linuxdeployqt-continuous-x86_64.AppImage appdir-cli/usr/share/applications/*.desktop -bundle-non-qt-libs
+
+          wget -c -nv "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" 
+          chmod +x appimagetool-x86_64.AppImage
+
+          ./appimagetool-x86_64.AppImage -u "gh-releases-zsync|antony-jr|spirit|$tag|spirit*-x86_64.AppImage.zsync" appdir
+
+          wget -q "https://github.com/antony-jr/MakeAppImageTorrent/releases/download/Mk-2/MakeAppImageTorrent-609383f-x86_64.AppImage"
+          chmod +x MakeAppImageTorrent-609383f-x86_64.AppImage
+
+          ./MakeAppImageTorrent-609383f-x86_64.AppImage spirit-*-x86_64.AppImage
+
+          echo ::set-output name=appimagefile::spirit-$VERSION-x86_64.AppImage
+          echo ::set-output name=zsyncfile::spirit-$VERSION-x86_64.AppImage.zsync
+          echo ::set-output name=torrentfile::spirit-$VERSION-x86_64.AppImage.torrent
+          
+          # Remove development appimages.
+          rm -rf MakeAppImageTorrent*
+          rm -rf appimagetool*
+          rm -rf linuxdeployqt*
+
+          # Check if all files needed are generated.
+          file spirit-$VERSION-x86_64.AppImage
+          file spirit-$VERSION-x86_64.AppImage.zsync
+          file spirit-$VERSION-x86_64.AppImage.torrent
+
+      - name: Delete Old Development Builds
+        if: needs.Check.outputs.deploy == 'false'
+        uses: mknejp/delete-release-assets@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: development
+          assets: spirit-*-x86_64.AppImage*
+          fail-if-no-assets: false
+          fail-if-no-release: false
+
+      - name: Upload Development Build
+        if: needs.Check.outputs.deploy == 'false'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./spirit-*-x86_64.AppImage*
+          tag: development
+          overwrite: true
+          file_glob: true
+          prerelease: true
+          release_name: "Spirit Development Builds"
+          body: "The latest and greatest of spirit!"
+
+      - name: Create Release
+        if: needs.Check.outputs.deploy != 'false'
+        id: create_release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.Check.outputs.deploy }}
+          release_name: Release ${{ needs.Check.outputs.deploy }}
+          body_path: ./release_notes/${{ needs.Check.outputs.deploy }}.md
+          draft: false
+          prerelease: false
+
+      - name: Upload AppImage Release Asset
+        if: needs.Check.outputs.deploy != 'false'
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{steps.appimage_build.outputs.appimagefile}}
+          asset_name: ${{steps.appimage_build.outputs.appimagefile}}
+          asset_content_type: application/octet-stream
+
+      - name: Upload AppImage Zsync File Release Asset
+        if: needs.Check.outputs.deploy != 'false'
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{steps.appimage_build.outputs.zsyncfile}}
+          asset_name: ${{steps.appimage_build.outputs.zsyncfile}}
+          asset_content_type: application/octet-stream
+
+      - name: Upload AppImage Torrent File Release Asset
+        if: needs.Check.outputs.deploy != 'false'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{steps.appimage_build.outputs.torrentfile}}
+          asset_name: ${{steps.appimage_build.outputs.torrentfile}}
+          asset_content_type: application/octet-stream
