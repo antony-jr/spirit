@@ -5,6 +5,8 @@
 A C++ program which can attach a gif or any graphic image attach to a X11 application.
 **But using with a terminal emulator is recommended.**
 
+See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
+
 ![Preview of Spirited Konsole](.github/preview.gif)
 
 # Building from source
