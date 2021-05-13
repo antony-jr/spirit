@@ -77,7 +77,7 @@ jobs:
             export tag="latest"
             export VERSION=$deploy
           fi
-          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -bundle-non-qt-libs 
+          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop
 
           wget -c -nv "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" 
           chmod +x appimagetool-x86_64.AppImage
