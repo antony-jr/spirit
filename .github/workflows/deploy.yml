@@ -7,7 +7,7 @@ on:
 
 jobs:
   Check:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     outputs:
       deploy: ${{ steps.check.outputs.check }}
     steps:
@@ -31,7 +31,7 @@ jobs:
           echo "::set-output name=check::$result"
   BuildAndDeploy:
     name: "Build And Deploy"
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     needs: Check
     steps:
       - uses: actions/checkout@v2
@@ -39,7 +39,7 @@ jobs:
 
       - name: Install Qt and other Dependencies
         run: |
-          sudo add-apt-repository ppa:beineri/opt-qt-5.12.9-xenial -y
+          sudo add-apt-repository ppa:beineri/opt-qt-5.12.9-bionic -y
           sudo apt-get update -qq
           sudo apt-get -y install build-essential libgl1-mesa-dev xvfb qt512base \
                automake libtool \
