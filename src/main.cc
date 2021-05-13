@@ -10,7 +10,7 @@ int main(int ac, char **av) {
 	QApplication::setQuitOnLastWindowClosed(false);
 
 	WindowInfo info;
-	Spirit spirit;
+	Spirit spirit(":/default.webp", false);
 
 	QObject::connect(&info, &WindowInfo::update, &spirit, &Spirit::update);
 	QObject::connect(&info, &WindowInfo::hintHide, &spirit, &Spirit::hide);

@@ -1,41 +1,13 @@
-//#include <QPixmap>
+#include <QPixmap>
 #include <QMovie>
-#include <QDebug>
+#include <QPair>
 #include "spirit.hpp"
 
-Spirit::Spirit()
-	: QLabel("", nullptr, 
-		 Qt::FramelessWindowHint |
-		 Qt::Tool |
-		 Qt::WindowStaysOnTopHint) {
-		
-	setAttribute(Qt::WA_TranslucentBackground);
-        setStyleSheet(QString::fromUtf8("background: transparent;"));
-	resize(200, 200);
-
-	/*
-	QPixmap pixmap(":/default.png");
-	if(pixmap.isNull()){
-		qDebug() << "Pixmap is null.";
-	}
-	setPixmap(pixmap);
-
-	if(pixmap.width() < pixmap.height()) {
-		/// potrait
-		resize(100, 200);
-	}else {
-		resize(200, 100);
-	}*/
-	//setScaledContents(true);
-
-
-	QMovie *movie = new QMovie(QString::fromUtf8(":/default.gif"));
-	setMovie(movie);	
-	movie->start();
-
-	auto pix = movie->currentPixmap();
-	movie->stop();
-
+static QPair<int,int> optimalSize(const QPixmap &pix) {
+	QPair<int,int> r;
+	r.first = 0;
+	r.second = 0;
+	
 	int w_factor = 2,
 	    y_factor = 2;
 
@@ -49,9 +21,42 @@ Spirit::Spirit()
 	int pw = pix.width() / w_factor;
 	int ph = pix.height() / y_factor;
 
-	resize(pw, ph);
-	movie->setScaledSize(QSize(pw, ph));
-	movie->start();
+	r.first = pw;
+	r.second = ph;
+
+	return r;
+}
+
+Spirit::Spirit(const QString &filename, bool is_png)
+	: QLabel("", nullptr, 
+		 Qt::FramelessWindowHint |
+		 Qt::Tool |
+		 Qt::WindowStaysOnTopHint) {
+		
+	setAttribute(Qt::WA_TranslucentBackground);
+        setStyleSheet(QString::fromUtf8("background: transparent;"));
+	resize(240, 240);
+
+	QPair<int, int> s;
+
+	if(is_png) {
+		QPixmap pixmap(filename);
+		if(pixmap.isNull()){
+			emit error("Cannot open file.");
+		}	
+		setPixmap(pixmap);
+		setScaledContents(true);
+		s = optimalSize(pixmap);
+	}else {
+		QMovie *movie = new QMovie(filename);
+		setMovie(movie);	
+		movie->start();
+		
+		auto pix = movie->currentPixmap();
+		s = optimalSize(pix);
+		movie->setScaledSize(QSize(s.first, s.second));
+	}	
+	resize(s.first, s.second);
 }
 
 Spirit::~Spirit() {
