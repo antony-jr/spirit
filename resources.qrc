@@ -1,5 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-    <file>default.png</file>
+    <file>default.webp</file>
+    <file>default.gif</file>
 </qresource>
 </RCC>
