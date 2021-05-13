@@ -30,4 +30,4 @@ list(APPEND source include/termcolor.hpp
 		   resources.qrc)
 
 add_executable(spirit ${source})
-target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets xdo)
+target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets xdo X11)

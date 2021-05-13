@@ -18,11 +18,13 @@ public Q_SLOTS:
 private Q_SLOTS:
 	void loop();
 Q_SIGNALS:
+	void hintHide();
 	void windowId(long long);
 	void focused(int x, int y, unsigned width, unsigned height);
 	void unFocused();
 private:
 	int m_PID = 0;
+	Window m_WID = 0;
 	QTimer *m_Timer = nullptr;
 	XDOWrapper::xdo_t *ctx = NULL;
 };

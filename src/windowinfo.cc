@@ -10,6 +10,9 @@ WindowInfo::WindowInfo(int pid, QObject *parent)
 
 	m_Private = new WindowInfoPrivate(pid);
 	m_Private->moveToThread(m_WorkerThread);
+	
+	connect(m_Private, &WindowInfoPrivate::hintHide,
+		this, &WindowInfo::hintHide, Qt::DirectConnection);
 
 	connect(m_Private, &WindowInfoPrivate::windowId,
 		this, &WindowInfo::windowId, Qt::DirectConnection);

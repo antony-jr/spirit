@@ -1,3 +1,4 @@
+#include <QWindow>
 #include <QFileInfo>
 #include <QDebug>
 
@@ -58,10 +59,17 @@ void WindowInfoPrivate::loop() {
 	}
 
 	if(pid == m_PID) {
+		if(m_WID == 0) {
+			m_WID = wid;
+		}
+
+		int x = 0,
+		    y = 0;
+		unsigned w = 0,
+			 h = 0;
+		int ret  = 0;
+
 		emit windowId((long long)wid);
-		int x = 0, y = 0; 
-		unsigned w = 0, h = 0;
-		int ret = 0;
 
 		ret = XDOWrapper::xdo_get_window_location(ctx, wid, &x, &y, NULL);
 		if(ret){
@@ -76,6 +84,22 @@ void WindowInfoPrivate::loop() {
 
 		emit focused(x,y,w,h);
 	}else {
-		emit unFocused();
+		{
+			unsigned char *value = NULL;
+			long nitems = 0;
+			Atom type = 0;
+			int size = 0;
+			XDOWrapper::xdo_get_window_property(ctx, m_WID, "_NET_WM_STATE",
+				&value, &nitems, &type, &size);
+
+			if(size && value && type ) {
+				if(value[0] != 0) {
+					emit hintHide();
+				}else {
+					emit unFocused();
+				}
+				free(value);
+			}
+		}		
 	}
 }

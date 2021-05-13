@@ -31,6 +31,7 @@ int main(int ac, char **av) {
 
 	QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
 	QObject::connect(&info, &WindowInfo::unFocused, &s, &Spirit::onTop);
+	QObject::connect(&info, &WindowInfo::hintHide, &s, &Spirit::hide);
 	QObject::connect(&proc, &QProcess::started, &info, &WindowInfo::start);
 	return app.exec();
 }

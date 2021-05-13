@@ -13,6 +13,7 @@ public Q_SLOTS:
 	void start();
 	void quit();
 Q_SIGNALS:
+	void hintHide();
 	void windowId(long long);
 	void focused(int x, int y, unsigned width, unsigned height);
 	void unFocused();
