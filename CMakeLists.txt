@@ -16,7 +16,9 @@ include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 
 SET(source)
-list(APPEND source include/windowinfo_p.hpp
+list(APPEND source include/termcolor.hpp
+		   include/xdo_wrapper.hpp
+		   include/windowinfo_p.hpp
 		   include/windowinfo.hpp
 		   include/helpers_p.hpp
 		   include/spirit.hpp
