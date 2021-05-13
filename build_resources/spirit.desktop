@@ -3,6 +3,6 @@ Name=spirit
 Type=Application
 Exec=spirit
 Icon=spirit
-Terminal=false;
+Terminal=false
 Categories=System;
 Comment=Something to cheer your spirits.
