@@ -3,6 +3,8 @@
 #include <QPair>
 #include "spirit.hpp"
 
+Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint;
+
 static QPair<int,int> optimalSize(const QPixmap &pix) {
 	QPair<int,int> r;
 	r.first = 0;
@@ -28,18 +30,23 @@ static QPair<int,int> optimalSize(const QPixmap &pix) {
 }
 
 Spirit::Spirit()
-	: QLabel("", nullptr, 
-		 Qt::FramelessWindowHint |
-		 Qt::Tool |
-		 Qt::WindowStaysOnTopHint) {
+	: QLabel("", nullptr, flags) {
 		
 	setAttribute(Qt::WA_TranslucentBackground);
-        setStyleSheet(QString::fromUtf8("background: transparent;"));
+        setAttribute(Qt::WA_TransparentForMouseEvents);	
+	setStyleSheet(QString::fromUtf8("background: transparent;"));
 	resize(240, 240);
 }
 
 Spirit::~Spirit() {
 	hide();
+}
+
+void Spirit::onTop() {
+	if(windowFlags() == flags) {
+		setWindowFlags(flags ^ Qt::WindowStaysOnTopHint);
+	}
+	show();
 }
 
 void Spirit::setGraphic(const QString &file, bool is_png) {
@@ -64,6 +71,12 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 }
 
 void Spirit::update(int x, int y, unsigned w, unsigned h) {
-	move(x + 90, y - 200);
+	if(windowFlags() == flags ^ Qt::WindowStaysOnTopHint) {	
+		setWindowFlags(flags);	
+	}
+	hide();
 	show();
+	move(x + 90, y - 200);
+	
+	raise();
 }

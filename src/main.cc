@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QWindow>
 #include <QProcess>
 #include <QtWidgets/QLabel>
 #include <QDebug>
@@ -6,6 +7,7 @@
 #include "windowinfo.hpp"
 //#include "spiritmanager.hpp"
 #include "spirit.hpp"
+#include "xdo_wrapper.hpp"
 
 int main(int ac, char **av) {
 	if(ac == 1) {
@@ -28,7 +30,7 @@ int main(int ac, char **av) {
 	//SpiritManager manager(":/default.webp", ":/default.gif");
 
 	QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
-	QObject::connect(&info, &WindowInfo::unFocused, &s, &Spirit::hide);
+	QObject::connect(&info, &WindowInfo::unFocused, &s, &Spirit::onTop);
 	QObject::connect(&proc, &QProcess::started, &info, &WindowInfo::start);
 	return app.exec();
 }

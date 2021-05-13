@@ -9,6 +9,7 @@ public:
 	Spirit();
 	~Spirit();
 public Q_SLOTS:
+	void onTop();
 	void setGraphic(const QString&, bool);
 	void update(int, int, unsigned, unsigned);
 };

@@ -18,6 +18,7 @@ public Q_SLOTS:
 private Q_SLOTS:
 	void loop();
 Q_SIGNALS:
+	void windowId(long long);
 	void focused(int x, int y, unsigned width, unsigned height);
 	void unFocused();
 private:

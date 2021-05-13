@@ -58,6 +58,7 @@ void WindowInfoPrivate::loop() {
 	}
 
 	if(pid == m_PID) {
+		emit windowId((long long)wid);
 		int x = 0, y = 0; 
 		unsigned w = 0, h = 0;
 		int ret = 0;
