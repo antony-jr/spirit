@@ -7,13 +7,14 @@ class WindowInfoPrivate;
 class WindowInfo : public QObject {
 	Q_OBJECT
 public:
-	WindowInfo(QObject *parent = nullptr);
+	WindowInfo(int, QObject *parent = nullptr);
 	~WindowInfo();
 public Q_SLOTS:
+	void start();
 	void quit();
 Q_SIGNALS:
-	void hintHide();
-	void update(int x, int y, unsigned w, unsigned h);
+	void focused(int x, int y, unsigned width, unsigned height);
+	void unFocused();
 private:
 	QThread *m_WorkerThread;
 	WindowInfoPrivate *m_Private;

@@ -22,9 +22,9 @@ extern "C" {
 #undef Unsorted
 
 namespace XDOWrapper {
- extern "C" {
-   #include <xdo.h>
- }
-} // namespace
+extern "C" {
+ #include <xdo.h>
+}
+}
 
 #endif // XDO_WRAPPER_HPP_INCLUDED

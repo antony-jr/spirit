@@ -27,7 +27,7 @@ static QPair<int,int> optimalSize(const QPixmap &pix) {
 	return r;
 }
 
-Spirit::Spirit(const QString &filename, bool is_png)
+Spirit::Spirit()
 	: QLabel("", nullptr, 
 		 Qt::FramelessWindowHint |
 		 Qt::Tool |
@@ -36,19 +36,23 @@ Spirit::Spirit(const QString &filename, bool is_png)
 	setAttribute(Qt::WA_TranslucentBackground);
         setStyleSheet(QString::fromUtf8("background: transparent;"));
 	resize(240, 240);
+}
 
+Spirit::~Spirit() {
+	hide();
+}
+
+void Spirit::setGraphic(const QString &file, bool is_png) {
 	QPair<int, int> s;
 
 	if(is_png) {
-		QPixmap pixmap(filename);
-		if(pixmap.isNull()){
-			emit error("Cannot open file.");
-		}	
+		QPixmap pixmap(file);
 		setPixmap(pixmap);
 		setScaledContents(true);
 		s = optimalSize(pixmap);
 	}else {
-		QMovie *movie = new QMovie(filename);
+		QMovie *movie = new QMovie(this);
+		movie->setFileName(file);
 		setMovie(movie);	
 		movie->start();
 		
@@ -57,10 +61,6 @@ Spirit::Spirit(const QString &filename, bool is_png)
 		movie->setScaledSize(QSize(s.first, s.second));
 	}	
 	resize(s.first, s.second);
-}
-
-Spirit::~Spirit() {
-	hide();
 }
 
 void Spirit::update(int x, int y, unsigned w, unsigned h) {

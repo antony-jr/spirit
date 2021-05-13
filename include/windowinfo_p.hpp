@@ -2,6 +2,7 @@
 #define WINDOW_INFO_PRIVATE_HPP_INCLUDED
 
 #include <QObject>
+#include <QHash>
 #include <QTimer>
 
 #include "xdo_wrapper.hpp"
@@ -9,31 +10,20 @@
 class WindowInfoPrivate : public QObject {
 	Q_OBJECT
 public:
-	WindowInfoPrivate(QObject *parent = nullptr);
+	WindowInfoPrivate(int, QObject *parent = nullptr);
 	~WindowInfoPrivate();
 public Q_SLOTS:
+	void start();
 	void quit();
-
 private Q_SLOTS:
 	void loop();
-
 Q_SIGNALS:
-	//// Request the main overlay to hide.
-	void hintHide();
-
-	//// If emitted this implies to show the overlay if
-	//// it is hidden.
-	void update(
-		int x,
-		int y,
-		unsigned width,
-		unsigned height);
+	void focused(int x, int y, unsigned width, unsigned height);
+	void unFocused();
 private:
-	QTimer m_Timer;
-	Window m_WID = 0;
-	int nX = 0, nY = 0;
-	unsigned nWidth = 0, nHeight = 0;	
-	XDOWrapper::xdo_t *xdo_ctx = NULL;
+	int m_PID = 0;
+	QTimer *m_Timer = nullptr;
+	XDOWrapper::xdo_t *ctx = NULL;
 };
 
 #endif // WINDOW_INFO_PRIVATE_INCLUDED_HPP

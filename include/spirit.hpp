@@ -6,12 +6,11 @@
 class Spirit : public QLabel {
 	Q_OBJECT
 public:
-	Spirit(const QString&/*filename*/, bool is_png = false);
+	Spirit();
 	~Spirit();
 public Q_SLOTS:
+	void setGraphic(const QString&, bool);
 	void update(int, int, unsigned, unsigned);
-Q_SIGNALS:
-	void error(QString);
 };
 
 #endif // SPIRIT_HPP_INCLUDED
