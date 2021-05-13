@@ -70,13 +70,11 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 	resize(s.first, s.second);
 }
 
-void Spirit::update(int x, int y, unsigned w, unsigned h) {
-	if(windowFlags() == flags ^ Qt::WindowStaysOnTopHint) {	
-		setWindowFlags(flags);	
-	}
-	hide();
+void Spirit::update(int xpos, int ypos, unsigned w, unsigned h) {
+	move(xpos + 90, ypos - 200);
 	show();
-	move(x + 90, y - 200);
-	
-	raise();
+
+	if(y() < 0 || x() < 0) {
+		hide();
+	}
 }

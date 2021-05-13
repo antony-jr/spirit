@@ -84,22 +84,6 @@ void WindowInfoPrivate::loop() {
 
 		emit focused(x,y,w,h);
 	}else {
-		{
-			unsigned char *value = NULL;
-			long nitems = 0;
-			Atom type = 0;
-			int size = 0;
-			XDOWrapper::xdo_get_window_property(ctx, m_WID, "_NET_WM_STATE",
-				&value, &nitems, &type, &size);
-
-			if(size && value && type ) {
-				if(value[0] != 0) {
-					emit hintHide();
-				}else {
-					emit unFocused();
-				}
-				free(value);
-			}
-		}		
+		emit hintHide();
 	}
 }

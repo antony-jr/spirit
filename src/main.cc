@@ -23,7 +23,7 @@ int main(int ac, char **av) {
 			 &app,
 			 &QApplication::quit);
 	Spirit s;
-	s.setGraphic(":/default.webp", false);
+	s.setGraphic(":/default.gif", false);
 
 	proc.start();
 	WindowInfo info((int)proc.processId());
