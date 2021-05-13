@@ -50,6 +50,7 @@ void Spirit::onTop() {
 }
 
 void Spirit::setGraphic(const QString &file, bool is_png) {
+	hide();
 	QPair<int, int> s;
 
 	if(is_png) {

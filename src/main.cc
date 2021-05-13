@@ -1,33 +1,73 @@
 #include <QApplication>
-#include <QWindow>
 #include <QProcess>
+#include <QFileInfo>
 #include <QtWidgets/QLabel>
-#include <QDebug>
 
+#include "termcolor.hpp"
 #include "windowinfo.hpp"
-//#include "spiritmanager.hpp"
 #include "spirit.hpp"
 #include "xdo_wrapper.hpp"
 
+static void usage(const char *prog) {
+	std::cout << termcolor::bold << "Spirit"
+		  << termcolor::reset
+		  << " " 
+		  << termcolor::underline
+		  << "v0.1.0"
+		  << termcolor::reset
+		  << ","
+		  << " Attach gif/webp over any X11 window in a stylish way."
+		  << "\n"
+		  << termcolor::magenta
+		  << termcolor::bold
+		  << "D. Antony J.R <antonyjr@pm.me>"
+		  << termcolor::reset
+		  << "\n\n";
+
+	std::cout << termcolor::bold
+		  << "Usage: " << prog << " [GIF/WEBP FILE] [PROGRAM TO EXEC]"
+		  << termcolor::reset
+		  << "\n\n";
+
+	std::cout << termcolor::blue
+		  << termcolor::bold
+		  << "Example:\n"
+		  << "\t" << prog << " \":/default.webp\" konsole\n"
+		  << termcolor::reset;
+}
+
 int main(int ac, char **av) {
-	if(ac == 1) {
+	if(ac < 2) {
+		usage(av[0]);
 		return 0;
 	}
+
 	QApplication app(ac, av);
 	QApplication::setQuitOnLastWindowClosed(false);
 
 	QProcess proc;
-	proc.setProgram(av[1]);
+	proc.setProgram(av[2]);
+	
 	QObject::connect(&proc,
 			 QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
 			 &app,
 			 &QApplication::quit);
+
+	
+	QString filename(av[1]);
+	QFileInfo finfo(filename);
+
+	if(!finfo.isFile() || !finfo.exists()) {
+		std::cout << termcolor::red << termcolor::bold << "Fatal: cannot open file" << av[1] 
+			  << termcolor::reset << "\n";	
+		return -1;
+	}
+
 	Spirit s;
-	s.setGraphic(":/default.gif", false);
+	s.setGraphic(filename, false);
 
 	proc.start();
 	WindowInfo info((int)proc.processId());
-	//SpiritManager manager(":/default.webp", ":/default.gif");
 
 	QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
 	QObject::connect(&info, &WindowInfo::unFocused, &s, &Spirit::onTop);
