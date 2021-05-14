@@ -32,7 +32,7 @@ static void usage(const char *prog) {
 	std::cout << termcolor::blue
 		  << termcolor::bold
 		  << "Example:\n"
-		  << "\t" << prog << " \":/default.webp\" konsole\n"
+		  << "\t" << prog << " \":default.gif\" konsole\n"
 		  << termcolor::reset;
 }
 
