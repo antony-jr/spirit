@@ -55,10 +55,8 @@ jobs:
       - name: Building Spirit
         id: appimage_build
         run: |
-          git submodule init
-          git submodule update # Download all required submodules.
           export VERSION=$(git rev-parse --short HEAD)
-          /usr/local/Qt-5.10.0/bin/qmake .
+          /usr/local/Qt-5.12.8/bin/qmake .
           make -j$(nproc)
           mkdir -p appdir/usr/lib 
           mkdir -p appdir/usr/bin ; 
