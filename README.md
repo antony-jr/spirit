@@ -17,6 +17,15 @@ See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
 ![Preview of Spirited Konsole](.github/preview.gif)
 
 
+# Quick Start for KDE Plasma
+
+```
+ $ wget "https://github.com/antony-jr/spirit/releases/download/development/spirit"
+ $ chmod +x spirit
+ $ ./spirit ":default.gif" konsole
+ $ ./spirit path/to/your/custom.gif konsole # for your custom transparent gif
+```
+
 # Get AppImages 
 
 **Spirit** can be used as an AppImage, please don't integrate this into your system. You can put it in your local bin 
