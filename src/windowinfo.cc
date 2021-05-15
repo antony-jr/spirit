@@ -33,7 +33,12 @@ WindowInfo::~WindowInfo() {
 
 	/// Delete resources
 	m_WorkerThread->deleteLater();
-	m_WorkerThread->deleteLater();
+}
+
+
+void WindowInfo::setDebug(bool value) {
+  getMethod(m_Private, "setDebug(bool)")
+    .invoke(m_Private, Qt::QueuedConnection, Q_ARG(bool, value));
 }
 
 void WindowInfo::start() {

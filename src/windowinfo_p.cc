@@ -18,6 +18,10 @@ WindowInfoPrivate::~WindowInfoPrivate() {
 	XDOWrapper::xdo_free(ctx);
 }
 
+void WindowInfoPrivate::setDebug(bool value) {
+	bDebug = value;
+}
+
 void WindowInfoPrivate::start() {
 	ctx = XDOWrapper::xdo_new(NULL);
 	if(!ctx) {
@@ -52,9 +56,22 @@ void WindowInfoPrivate::loop() {
 	if(r) {
 		return;
 	}
-
+	if(bDebug) {
+		qDebug() << "WindowInfo::loop():: " 
+			 << "PID(" << m_PID << "):: " 
+			 << "Window in Focus:: "
+			 << wid;
+	}
+	
 	int pid = XDOWrapper::xdo_get_pid_window(ctx, wid);
 	if(!pid) {
+		if(bDebug) {
+			qDebug() << "WindowInfo::loop():: " 
+				 << "PID(" << m_PID << "):: " 
+				 << "Cannot get pid of window "
+				 << wid
+				 << ".";
+		}
 		return;
 	}
 
@@ -63,6 +80,12 @@ void WindowInfoPrivate::loop() {
 			m_WID = wid;
 		}
 
+		if(bDebug) {
+			qDebug() << "WindowInfo::loop():: " 
+				 << "PID(" << m_PID << "):: " 
+				 << "Focused Window is target PID.";
+		}
+	
 		int x = 0,
 		    y = 0;
 		unsigned w = 0,
@@ -73,17 +96,72 @@ void WindowInfoPrivate::loop() {
 
 		ret = XDOWrapper::xdo_get_window_location(ctx, wid, &x, &y, NULL);
 		if(ret){
+			if(bDebug) {
+				qDebug() << "WindowInfo::loop():: " 
+					<< "PID(" << m_PID << "):: " 
+					<< "Cannot get Window location.";
+			}
 			emit unFocused();
 			return;
 		}
 		ret = XDOWrapper::xdo_get_window_size(ctx, wid, &w, &h);
-		if(r) {
+		if(ret) {
+			if(bDebug) {
+				qDebug() << "WindowInfo::loop():: " 
+					<< "PID(" << m_PID << "):: " 
+					<< "Cannot get Window szie.";
+	
+			}
 			emit unFocused();
 			return;
 		}
 
+		if(bDebug) {
+			unsigned char *name = NULL;
+			int name_len = 0;
+			int name_type = 0;
+
+			ret = XDOWrapper::xdo_get_window_name(
+				ctx,
+				wid,
+				&name,
+				&name_len,
+				&name_type);
+
+			QString title;
+
+			if(!ret) {
+				{
+					QByteArray array((const char*)name, name_len);
+					title = QString(array);
+
+				}
+				free(name);
+			}
+
+			qDebug() << "WindowInfo::loop():: " 
+				 << "PID(" << m_PID << "):: " 
+				 << "Title -> " 
+				 << title
+				 << ", X: "
+				 << x 
+				 << " Y: "
+				 << y
+				 << " Width: "
+				 << w
+				 << " Height: "
+				 << h
+				 << "." 
+				 ;
+		}
+
 		emit focused(x,y,w,h);
 	}else {
+		if(bDebug) {
+			qDebug() << "WindowInfo::loop():: " 
+				 << "PID(" << m_PID << "):: " 
+				 << "Focused Window pid is " << pid;
+		}
 		emit hintHide();
 	}
 }

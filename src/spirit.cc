@@ -1,6 +1,7 @@
 #include <QPixmap>
 #include <QMovie>
 #include <QPair>
+#include <QDebug>
 #include "spirit.hpp"
 
 Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint;
@@ -49,6 +50,10 @@ void Spirit::onTop() {
 	show();
 }
 
+void Spirit::setDebug(bool value) {
+	debug = value;
+}
+
 void Spirit::setGraphic(const QString &file, bool is_png) {
 	hide();
 	QPair<int, int> s;
@@ -74,6 +79,13 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 void Spirit::update(int xpos, int ypos, unsigned w, unsigned h) {
 	move(xpos + 90, ypos - 200);
 	show();
+
+	if(debug) {
+		qDebug() << "Spirit:: X: "
+			 << x()
+			 << " Y: "
+			 << y();
+	}
 
 	if(y() < 0 || x() < 0) {
 		hide();

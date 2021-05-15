@@ -13,6 +13,7 @@ public:
 	WindowInfoPrivate(int, QObject *parent = nullptr);
 	~WindowInfoPrivate();
 public Q_SLOTS:
+	void setDebug(bool);
 	void start();
 	void quit();
 private Q_SLOTS:
@@ -24,6 +25,7 @@ Q_SIGNALS:
 	void unFocused();
 private:
 	int m_PID = 0;
+	bool bDebug = false;
 	Window m_WID = 0;
 	QTimer *m_Timer = nullptr;
 	XDOWrapper::xdo_t *ctx = NULL;

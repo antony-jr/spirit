@@ -10,6 +10,7 @@ public:
 	WindowInfo(int, QObject *parent = nullptr);
 	~WindowInfo();
 public Q_SLOTS:
+	void setDebug(bool);
 	void start();
 	void quit();
 Q_SIGNALS:

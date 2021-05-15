@@ -25,9 +25,12 @@ static void usage(const char *prog) {
 		  << "\n\n";
 
 	std::cout << termcolor::bold
-		  << "Usage: " << prog << " [GIF/WEBP FILE] [PROGRAM TO EXEC]"
+		  << "Usage: " << prog << " [OPTIONS] [GIF/WEBP FILE] [PROGRAM TO EXEC]"
 		  << termcolor::reset
 		  << "\n\n";
+
+	std::cout << "Options:\n"
+		  << " -d,--debug " << "\t" << "enable debug messages.\n\n";
 
 	std::cout << termcolor::blue
 		  << termcolor::bold
@@ -37,7 +40,7 @@ static void usage(const char *prog) {
 }
 
 int main(int ac, char **av) {
-	if(ac < 2) {
+	if(ac < 3) {
 		usage(av[0]);
 		return 0;
 	}
@@ -45,8 +48,28 @@ int main(int ac, char **av) {
 	QApplication app(ac, av);
 	QApplication::setQuitOnLastWindowClosed(false);
 
+	char *program_exec = NULL,
+	     *giffile = NULL;
+	bool debug = false;
+	
+	if(ac > 3) {
+		if(strstr(av[1], "-d") ||
+		   strstr(av[1], "--debug")) {
+			debug = true;
+		}else {
+			usage(av[0]);
+			return 0;
+		}
+
+		program_exec = av[3];
+		giffile = av[2];
+	}else {
+		program_exec = av[2];
+		giffile = av[1];
+	}
+
 	QProcess proc;
-	proc.setProgram(av[2]);
+	proc.setProgram(program_exec);
 	
 	QObject::connect(&proc,
 			 QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
@@ -54,20 +77,22 @@ int main(int ac, char **av) {
 			 &QApplication::quit);
 
 	
-	QString filename(av[1]);
+	QString filename(giffile);
 	QFileInfo finfo(filename);
 
 	if(!finfo.isFile() || !finfo.exists()) {
-		std::cout << termcolor::red << termcolor::bold << "Fatal: cannot open file" << av[1] 
+		std::cout << termcolor::red << termcolor::bold << "Fatal: cannot open file " << av[1] 
 			  << termcolor::reset << "\n";	
 		return -1;
 	}
 
 	Spirit s;
 	s.setGraphic(filename, false);
+	s.setDebug(debug);
 
 	proc.start();
 	WindowInfo info((int)proc.processId());
+	info.setDebug(debug);
 
 	QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
 	QObject::connect(&info, &WindowInfo::unFocused, &s, &Spirit::onTop);
