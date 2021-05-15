@@ -17,7 +17,7 @@ See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
 ![Preview of Spirited Konsole](.github/preview.gif)
 
 
-# Quick Start for KDE Plasma
+# Quick Start
 
 ```
  $ wget "https://github.com/antony-jr/spirit/releases/download/development/spirit"
@@ -30,6 +30,12 @@ See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
 
 **Spirit** can be used as an AppImage, please don't integrate this into your system. You can put it in your local bin 
 path and edit your terminal desktop file to invoke it with the spirit command.
+
+```
+ $ wget "https://github.com/antony-jr/spirit/releases/download/development/spirit"
+ $ chmod +x spirit
+ $ ./spirit # Use it now, or move it to /usr/bin/ to install
+```
 
 ### Development Builds
 
