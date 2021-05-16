@@ -8,8 +8,8 @@ class Spirit : public QLabel {
 	bool debug = false;
 	int xoff = 90,
 	    yoff = 200;
-	int w = 230,
-	    h = 230;
+	int w = 240,
+	    h = 240;
 public:
 	Spirit();
 	~Spirit();
