@@ -22,8 +22,8 @@ See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
 ```
  $ wget "https://github.com/antony-jr/spirit/releases/download/development/spirit"
  $ chmod +x spirit
- $ ./spirit ":default.gif" konsole
- $ ./spirit path/to/your/custom.gif konsole # for your custom transparent gif
+ $ ./spirit konsole
+ $ ./spirit -g path/to/your/custom.gif konsole # for your custom transparent gif
 ```
 
 # Get AppImages 
@@ -55,22 +55,8 @@ Somewhat considered as stable. These builds are usually older than the developme
  $ cd spirit
  $ cmake .
  $ make -j$(nproc)
- $ ./spirit ":/default.webp" konsole # Test it out.
+ $ ./spirit konsole # Test it out.
 ```
-
-# Usage 
-
-
-```
-Spirit v0.1.0, Attach gif/webp over any X11 window in a stylish way.
-D. Antony J.R <antonyjr@pm.me>
-
-Usage: ./spirit [GIF/WEBP FILE] [PROGRAM TO EXEC]
-
-Example:
-        ./spirit ":/default.webp" konsole
-```
-
 
 # License
 

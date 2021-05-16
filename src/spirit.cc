@@ -6,23 +6,22 @@
 
 Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint;
 
-static QPair<int,int> optimalSize(const QPixmap &pix) {
+static QPair<int,int> optimalSize(const QPixmap &pix, int w_thresh, int h_thresh) {
 	QPair<int,int> r;
 	r.first = 0;
 	r.second = 0;
 	
 	int w_factor = 2,
-	    y_factor = 2;
+	    h_factor = 2;
 
-	int thresh = 240;
-	while(pix.width() / w_factor > thresh ||
-	      pix.height() / y_factor > thresh) {
+	while(pix.width() / w_factor > w_thresh ||
+	      pix.height() / h_factor > h_thresh) {
 		w_factor++;
-		y_factor++;
+		h_factor++;
 	}
 
 	int pw = pix.width() / w_factor;
-	int ph = pix.height() / y_factor;
+	int ph = pix.height() / h_factor;
 
 	r.first = pw;
 	r.second = ph;
@@ -36,7 +35,7 @@ Spirit::Spirit()
 	setAttribute(Qt::WA_TranslucentBackground);
         setAttribute(Qt::WA_TransparentForMouseEvents);	
 	setStyleSheet(QString::fromUtf8("background: transparent;"));
-	resize(240, 240);
+	resize(w, h);
 }
 
 Spirit::~Spirit() {
@@ -48,6 +47,22 @@ void Spirit::onTop() {
 		setWindowFlags(flags ^ Qt::WindowStaysOnTopHint);
 	}
 	show();
+}
+
+void Spirit::setXOffset(int value) {
+	xoff = value;
+}
+
+void Spirit::setYOffset(int value) {
+	yoff = value;
+}
+
+void Spirit::setWidth(int value) {
+	w = value;
+}
+
+void Spirit::setHeight(int value) {
+	h = value;
 }
 
 void Spirit::setDebug(bool value) {
@@ -62,7 +77,7 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 		QPixmap pixmap(file);
 		setPixmap(pixmap);
 		setScaledContents(true);
-		s = optimalSize(pixmap);
+		s = optimalSize(pixmap, w, h);
 	}else {
 		QMovie *movie = new QMovie(this);
 		movie->setFileName(file);
@@ -70,14 +85,14 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 		movie->start();
 		
 		auto pix = movie->currentPixmap();
-		s = optimalSize(pix);
+		s = optimalSize(pix, w, h);
 		movie->setScaledSize(QSize(s.first, s.second));
 	}	
 	resize(s.first, s.second);
 }
 
 void Spirit::update(int xpos, int ypos, unsigned w, unsigned h) {
-	move(xpos + 90, ypos - 200);
+	move(xpos + xoff, ypos - yoff);
 	show();
 
 	if(debug) {
