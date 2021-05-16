@@ -36,6 +36,7 @@ Spirit::Spirit()
         setAttribute(Qt::WA_TransparentForMouseEvents, true);
 	setAttribute(Qt::WA_ShowWithoutActivating, true);
 	setAttribute(Qt::WA_X11DoNotAcceptFocus, true);
+	setFocusPolicy(Qt::NoFocus);	
 	setStyleSheet(QString::fromUtf8("background: transparent;"));
 	resize(w, h);
 }
@@ -96,7 +97,8 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 }
 
 void Spirit::update(int xpos, int ypos, unsigned w, unsigned h) {
-	move(xpos + xoff, ypos - yoff);
+	int height_pad = height();
+	move(xpos + xoff, ypos - height_pad - 5 /*- yoff*/);
 	show();
 
 	if(debug) {
