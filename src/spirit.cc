@@ -33,7 +33,8 @@ Spirit::Spirit()
 	: QLabel("", nullptr, flags) {
 		
 	setAttribute(Qt::WA_TranslucentBackground);
-        setAttribute(Qt::WA_TransparentForMouseEvents);	
+        setAttribute(Qt::WA_TransparentForMouseEvents);
+	setAttribute(Qt::WA_ShowWithoutActivating);	
 	setStyleSheet(QString::fromUtf8("background: transparent;"));
 	resize(w, h);
 }

@@ -143,8 +143,6 @@ int main(int ac, char **av) {
 	}
 
 	Spirit s;
-	s.setGraphic(filename, false);
-
 	/// Set Offsets and Dimensions
 	setIntOp([&s](int value) -> void {
 		s.setXOffset(value);
@@ -164,6 +162,9 @@ int main(int ac, char **av) {
 	/// ---
 	
 	s.setDebug(debug);
+	
+	s.setGraphic(filename, false);
+
 
 	WindowInfo info;
 	if(parser.isSet(programOption)) {
