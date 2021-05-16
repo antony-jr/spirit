@@ -14,18 +14,22 @@ public:
 	~WindowInfoPrivate();
 public Q_SLOTS:
 	void setProgram(const QString&);
+	void setGuessYOffset(bool);
 	void setDebug(bool);
 	void start();
 	void quit();
 private Q_SLOTS:
+	void guessYOffset(const QString&);
 	void loop();
 Q_SIGNALS:
+	void setYOffset(int);
 	void hintHide();
 	void focused(int x, int y, unsigned width, unsigned height);
 	void unFocused();
 private:
 	QStringList m_ProgramSigns;	
 	bool bDebug = false;
+	bool bGuessYOff = false;
 	QTimer *m_Timer = nullptr;
 	XDOWrapper::xdo_t *ctx = NULL;
 };

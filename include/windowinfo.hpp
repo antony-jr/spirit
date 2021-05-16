@@ -10,11 +10,13 @@ public:
 	WindowInfo(QObject *parent = nullptr);
 	~WindowInfo();
 public Q_SLOTS:
+	void setGuessYOffset(bool);
 	void setProgram(const QString&);
 	void setDebug(bool);
 	void start();
 	void quit();
 Q_SIGNALS:
+	void setYOffset(int);
 	void hintHide();
 	void focused(int x, int y, unsigned width, unsigned height);
 	void unFocused();

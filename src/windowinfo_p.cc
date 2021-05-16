@@ -23,6 +23,10 @@ WindowInfoPrivate::~WindowInfoPrivate() {
 	XDOWrapper::xdo_free(ctx);
 }
 
+void WindowInfoPrivate::setGuessYOffset(bool value) {
+	bGuessYOff = value;
+}
+
 void WindowInfoPrivate::setProgram(const QString &program) {
 	m_ProgramSigns.clear();
 	m_ProgramSigns << program;
@@ -58,6 +62,18 @@ void WindowInfoPrivate::quit() {
 	}
 
 	m_Timer->stop();
+}
+
+void WindowInfoPrivate::guessYOffset(const QString &program) {
+	if(program == "konsole") {
+		emit setYOffset(200);
+	}else if(program == "gnome-terminal") {
+		emit setYOffset(150);
+	}else if(program == "io.elementary.terminal") {
+		emit setYOffset(100);
+	}else {
+		emit setYOffset(140);
+	}
 }
 
 void WindowInfoPrivate::loop() {
@@ -107,6 +123,9 @@ void WindowInfoPrivate::loop() {
 	bool show = false;
 	for(auto program : m_ProgramSigns) {
 		if(cmdline.contains(program)) {
+			if(bGuessYOff) {
+				guessYOffset(program);
+			}
 			show = true;
 			break;
 		}

@@ -4,7 +4,7 @@
 #include <QDebug>
 #include "spirit.hpp"
 
-Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint;
+Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint | Qt::WindowTransparentForInput;
 
 static QPair<int,int> optimalSize(const QPixmap &pix, int w_thresh, int h_thresh) {
 	QPair<int,int> r;
@@ -32,9 +32,10 @@ static QPair<int,int> optimalSize(const QPixmap &pix, int w_thresh, int h_thresh
 Spirit::Spirit()
 	: QLabel("", nullptr, flags) {
 		
-	setAttribute(Qt::WA_TranslucentBackground);
-        setAttribute(Qt::WA_TransparentForMouseEvents);
-	setAttribute(Qt::WA_ShowWithoutActivating);	
+	setAttribute(Qt::WA_TranslucentBackground, true);
+        setAttribute(Qt::WA_TransparentForMouseEvents, true);
+	setAttribute(Qt::WA_ShowWithoutActivating, true);
+	setAttribute(Qt::WA_X11DoNotAcceptFocus, true);
 	setStyleSheet(QString::fromUtf8("background: transparent;"));
 	resize(w, h);
 }
@@ -44,10 +45,12 @@ Spirit::~Spirit() {
 }
 
 void Spirit::onTop() {
+#if 0
 	if(windowFlags() == flags) {
 		setWindowFlags(flags ^ Qt::WindowStaysOnTopHint);
 	}
 	show();
+#endif
 }
 
 void Spirit::setXOffset(int value) {

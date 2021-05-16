@@ -142,13 +142,15 @@ int main(int ac, char **av) {
 		return -1;
 	}
 
+	bool guessYOff = true;
 	Spirit s;
 	/// Set Offsets and Dimensions
 	setIntOp([&s](int value) -> void {
 		s.setXOffset(value);
 	}, parser, xOffOption);
 	
-	setIntOp([&s](int value) -> void {
+	setIntOp([&](int value) -> void {
+		guessYOff = false;
 		s.setYOffset(value);
 	}, parser, yOffOption);
 
@@ -171,10 +173,11 @@ int main(int ac, char **av) {
 		info.setProgram(
 			parser.value(programOption));
 	}
+	info.setGuessYOffset(guessYOff);
 	info.setDebug(debug);
 	
 	QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
-	//QObject::connect(&info, &WindowInfo::unFocused, &s, &Spirit::onTop);
+	QObject::connect(&info, &WindowInfo::setYOffset, &s, &Spirit::setYOffset);
 	QObject::connect(&info, &WindowInfo::hintHide, &s, &Spirit::hide);
 	
 	info.start();

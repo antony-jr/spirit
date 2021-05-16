@@ -11,6 +11,10 @@ WindowInfo::WindowInfo(QObject *parent)
 	m_Private = new WindowInfoPrivate;
 	m_Private->moveToThread(m_WorkerThread);
 	
+	
+	connect(m_Private, &WindowInfoPrivate::setYOffset,
+		this, &WindowInfo::setYOffset, Qt::DirectConnection);
+
 	connect(m_Private, &WindowInfoPrivate::hintHide,
 		this, &WindowInfo::hintHide, Qt::DirectConnection);
 
@@ -36,6 +40,11 @@ WindowInfo::~WindowInfo() {
 void WindowInfo::setProgram(const QString &program) {
   getMethod(m_Private, "setProgram(QString)")
     .invoke(m_Private, Qt::QueuedConnection, Q_ARG(QString, program));
+}
+
+void WindowInfo::setGuessYOffset(bool value) {
+  getMethod(m_Private, "setGuessYOffset(bool)")
+    .invoke(m_Private, Qt::QueuedConnection, Q_ARG(bool, value));
 }
 
 void WindowInfo::setDebug(bool value) {
