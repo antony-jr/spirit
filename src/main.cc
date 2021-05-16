@@ -1,12 +1,10 @@
 #include <QApplication>
-#include <QProcess>
 #include <QFileInfo>
 #include <QCommandLineParser>
 
 #include "termcolor.hpp"
 #include "windowinfo.hpp"
 #include "spirit.hpp"
-#include "xdo_wrapper.hpp"
 
 static void usage(const char *prog) {
 	std::cout << termcolor::bold << "Spirit"
@@ -25,13 +23,15 @@ static void usage(const char *prog) {
 		  << "\n\n";
 
 	std::cout << termcolor::bold
-		  << "Usage: " << prog << " [OPTIONS] [PROGRAM]"
+		  << "Usage: " << prog << " [OPTIONS]"
 		  << termcolor::reset
 		  << "\n\n";
 
 	std::cout << termcolor::bold
 		  << "Options:\n\n"
 		  << termcolor::reset
+		  << " -H,--help" << "\t" << "show help.\n"
+		  << " -p,--program" << "\t" << "match with this program name.\n"
 		  << " -x,--x-offset" << "\t" << "use this value as x offset.\n"
 		  << " -y,--y-offset" << "\t" << "use this value as y offset.\n"
 		  << " -w,--witdh" << "\t" << "use this as the witdh for the overlay.\n"
@@ -63,25 +63,28 @@ static void setIntOp(
 }
 
 int main(int ac, char **av) {
-	if(ac < 2) {
-		usage(av[0]);
-		return 0;
-	}
-
 	QApplication app(ac, av);
 	QApplication::setQuitOnLastWindowClosed(false);
 	
 	QCommandLineParser parser;
-	parser.addPositionalArgument("program", 
-			QCoreApplication::translate("main", "program to attach the animation"));
-	
-	
+
+	QCommandLineOption helpOption(
+			QStringList() << "H"
+				      << "help", 
+			QCoreApplication::translate("main", "Show help."));
+	parser.addOption(helpOption);
+
 	QCommandLineOption debugOption(
 			QStringList() << "d"
 				      << "debug", 
 			QCoreApplication::translate("main", "Show progress during copy"));
 	parser.addOption(debugOption);
 
+	QCommandLineOption programOption(QStringList() << "p" << "program",
+            QCoreApplication::translate("main", "Match with this program name."),
+	    "program");
+	parser.addOption(programOption);
+	
 	QCommandLineOption xOffOption(QStringList() << "x" << "x-offset",
             QCoreApplication::translate("main", "Offset to use in x coordinate."),
 	    "xoffset");
@@ -114,9 +117,12 @@ int main(int ac, char **av) {
 
 	parser.process(app);
 
-	const QStringList args = parser.positionalArguments();
+	if(parser.isSet(helpOption)) {
+		usage(av[0]);
+		return 0;
+	}
+
 	bool debug = parser.isSet(debugOption);
-	QString program = args.at(0);
 	QString filename = QString::fromUtf8(":default.gif"),
 		error_file = QString::fromUtf8(":default.gif");
 
@@ -128,14 +134,6 @@ int main(int ac, char **av) {
 		error_file = parser.value(errPathOption);
 	}
 
-	QProcess proc;
-	proc.setProgram(program);
-	
-	QObject::connect(&proc,
-			 QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-			 &app,
-			 &QApplication::quit);
-	
 	QFileInfo finfo(filename);
 
 	if(!finfo.isFile() || !finfo.exists()) {
@@ -167,13 +165,17 @@ int main(int ac, char **av) {
 	
 	s.setDebug(debug);
 
-	proc.start();
-	WindowInfo info((int)proc.processId());
+	WindowInfo info;
+	if(parser.isSet(programOption)) {
+		info.setProgram(
+			parser.value(programOption));
+	}
 	info.setDebug(debug);
-
+	
 	QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
-	QObject::connect(&info, &WindowInfo::unFocused, &s, &Spirit::onTop);
+	//QObject::connect(&info, &WindowInfo::unFocused, &s, &Spirit::onTop);
 	QObject::connect(&info, &WindowInfo::hintHide, &s, &Spirit::hide);
-	QObject::connect(&proc, &QProcess::started, &info, &WindowInfo::start);
+	
+	info.start();
 	return app.exec();
 }

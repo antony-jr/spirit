@@ -2,21 +2,18 @@
 #include "windowinfo.hpp"
 #include "helpers_p.hpp"
 
-WindowInfo::WindowInfo(int pid, QObject *parent)
+WindowInfo::WindowInfo(QObject *parent)
 	: QObject(parent) {
 		
 	m_WorkerThread = new QThread;
 	m_WorkerThread->start();
 
-	m_Private = new WindowInfoPrivate(pid);
+	m_Private = new WindowInfoPrivate;
 	m_Private->moveToThread(m_WorkerThread);
 	
 	connect(m_Private, &WindowInfoPrivate::hintHide,
 		this, &WindowInfo::hintHide, Qt::DirectConnection);
 
-	connect(m_Private, &WindowInfoPrivate::windowId,
-		this, &WindowInfo::windowId, Qt::DirectConnection);
-	
 	connect(m_Private, &WindowInfoPrivate::unFocused,
 		this, &WindowInfo::unFocused, Qt::DirectConnection);
 	
@@ -35,6 +32,11 @@ WindowInfo::~WindowInfo() {
 	m_WorkerThread->deleteLater();
 }
 
+
+void WindowInfo::setProgram(const QString &program) {
+  getMethod(m_Private, "setProgram(QString)")
+    .invoke(m_Private, Qt::QueuedConnection, Q_ARG(QString, program));
+}
 
 void WindowInfo::setDebug(bool value) {
   getMethod(m_Private, "setDebug(bool)")

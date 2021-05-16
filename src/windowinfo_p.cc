@@ -1,6 +1,7 @@
 #include <QWindow>
 #include <QFileInfo>
 #include <QDebug>
+#include <QFile>
 
 /// C libs
 #include <cstdlib>
@@ -8,14 +9,23 @@
 /// local headers
 #include "windowinfo_p.hpp"
 
-WindowInfoPrivate::WindowInfoPrivate(int pid, QObject *parent) 
-	: QObject(parent) { 
-	m_PID = pid;
+WindowInfoPrivate::WindowInfoPrivate(QObject *parent) 
+	: QObject(parent) {
+
+	/// All supported default program signs.
+	m_ProgramSigns << "konsole"
+		       << "gnome-terminal"
+	       	       << "io.elementary.terminal";	       
 }
 
 WindowInfoPrivate::~WindowInfoPrivate() {
 	quit();
 	XDOWrapper::xdo_free(ctx);
+}
+
+void WindowInfoPrivate::setProgram(const QString &program) {
+	m_ProgramSigns.clear();
+	m_ProgramSigns << program;
 }
 
 void WindowInfoPrivate::setDebug(bool value) {
@@ -58,7 +68,6 @@ void WindowInfoPrivate::loop() {
 	}
 	if(bDebug) {
 		qDebug() << "WindowInfo::loop():: " 
-			 << "PID(" << m_PID << "):: " 
 			 << "Window in Focus:: "
 			 << wid;
 	}
@@ -67,7 +76,6 @@ void WindowInfoPrivate::loop() {
 	if(!pid) {
 		if(bDebug) {
 			qDebug() << "WindowInfo::loop():: " 
-				 << "PID(" << m_PID << "):: " 
 				 << "Cannot get pid of window "
 				 << wid
 				 << ".";
@@ -75,15 +83,40 @@ void WindowInfoPrivate::loop() {
 		return;
 	}
 
-	if(pid == m_PID) {
-		if(m_WID == 0) {
-			m_WID = wid;
-		}
+	/// Read the command line of the program in focus to actually 
+	/// verify if it's a supported program.
+	QString cmdline;
+	{
+	   QString filename = QString::fromUtf8("/proc/%1/cmdline");
+	   QFile file(filename.arg(pid));
+	   if(!file.open(QIODevice::ReadOnly)) {
+		   if(bDebug) {
+			   qDebug() << "WindowInfo::loop():: "
+				    << "Cannot open " << filename.arg(pid)
+				    << ".";
+		   }
 
+		   emit hintHide();
+		   return;
+	   }
+
+	   cmdline = QString(file.readAll());
+	   file.close();
+	}
+
+	bool show = false;
+	for(auto program : m_ProgramSigns) {
+		if(cmdline.contains(program)) {
+			show = true;
+			break;
+		}
+	}
+
+	if(show) {
 		if(bDebug) {
 			qDebug() << "WindowInfo::loop():: " 
-				 << "PID(" << m_PID << "):: " 
-				 << "Focused Window is target PID.";
+				 << "PID(" << pid << "):: " 
+				 << "Focused Window.";
 		}
 	
 		int x = 0,
@@ -92,13 +125,11 @@ void WindowInfoPrivate::loop() {
 			 h = 0;
 		int ret  = 0;
 
-		emit windowId((long long)wid);
-
 		ret = XDOWrapper::xdo_get_window_location(ctx, wid, &x, &y, NULL);
 		if(ret){
 			if(bDebug) {
 				qDebug() << "WindowInfo::loop():: " 
-					<< "PID(" << m_PID << "):: " 
+					<< "PID(" << pid << "):: " 
 					<< "Cannot get Window location.";
 			}
 			emit unFocused();
@@ -108,7 +139,7 @@ void WindowInfoPrivate::loop() {
 		if(ret) {
 			if(bDebug) {
 				qDebug() << "WindowInfo::loop():: " 
-					<< "PID(" << m_PID << "):: " 
+					<< "PID(" << pid << "):: " 
 					<< "Cannot get Window szie.";
 	
 			}
@@ -140,7 +171,7 @@ void WindowInfoPrivate::loop() {
 			}
 
 			qDebug() << "WindowInfo::loop():: " 
-				 << "PID(" << m_PID << "):: " 
+				 << "PID(" << pid << "):: " 
 				 << "Title -> " 
 				 << title
 				 << ", X: "
@@ -159,7 +190,6 @@ void WindowInfoPrivate::loop() {
 	}else {
 		if(bDebug) {
 			qDebug() << "WindowInfo::loop():: " 
-				 << "PID(" << m_PID << "):: " 
 				 << "Focused Window pid is " << pid;
 		}
 		emit hintHide();

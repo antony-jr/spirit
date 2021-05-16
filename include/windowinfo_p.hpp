@@ -2,7 +2,7 @@
 #define WINDOW_INFO_PRIVATE_HPP_INCLUDED
 
 #include <QObject>
-#include <QHash>
+#include <QStringList>
 #include <QTimer>
 
 #include "xdo_wrapper.hpp"
@@ -10,9 +10,10 @@
 class WindowInfoPrivate : public QObject {
 	Q_OBJECT
 public:
-	WindowInfoPrivate(int, QObject *parent = nullptr);
+	WindowInfoPrivate(QObject *parent = nullptr);
 	~WindowInfoPrivate();
 public Q_SLOTS:
+	void setProgram(const QString&);
 	void setDebug(bool);
 	void start();
 	void quit();
@@ -20,13 +21,11 @@ private Q_SLOTS:
 	void loop();
 Q_SIGNALS:
 	void hintHide();
-	void windowId(long long);
 	void focused(int x, int y, unsigned width, unsigned height);
 	void unFocused();
 private:
-	int m_PID = 0;
+	QStringList m_ProgramSigns;	
 	bool bDebug = false;
-	Window m_WID = 0;
 	QTimer *m_Timer = nullptr;
 	XDOWrapper::xdo_t *ctx = NULL;
 };

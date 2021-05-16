@@ -7,15 +7,15 @@ class WindowInfoPrivate;
 class WindowInfo : public QObject {
 	Q_OBJECT
 public:
-	WindowInfo(int, QObject *parent = nullptr);
+	WindowInfo(QObject *parent = nullptr);
 	~WindowInfo();
 public Q_SLOTS:
+	void setProgram(const QString&);
 	void setDebug(bool);
 	void start();
 	void quit();
 Q_SIGNALS:
 	void hintHide();
-	void windowId(long long);
 	void focused(int x, int y, unsigned width, unsigned height);
 	void unFocused();
 private:
