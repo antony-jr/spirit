@@ -4,7 +4,11 @@
 #include <QDebug>
 #include "spirit.hpp"
 
-Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint | Qt::WindowTransparentForInput;
+Qt::WindowFlags flags = Qt::FramelessWindowHint |
+			Qt::Tool |
+			Qt::WindowStaysOnTopHint |
+			Qt::WindowTransparentForInput |
+			Qt::WindowDoesNotAcceptFocus;
 
 static QPair<int,int> optimalSize(const QPixmap &pix, int w_thresh, int h_thresh) {
 	QPair<int,int> r;
