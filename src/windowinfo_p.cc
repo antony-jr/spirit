@@ -107,7 +107,14 @@ void WindowInfoPrivate::loop() {
 	bool show = false;
 	for(auto program : m_ProgramSigns) {
 		if(cmdline.contains(program)) {
-			show = true;
+			if(program == "konsole") {
+				emit yOffHint(48);
+			} else if(program == "gnome-terminal") {
+				emit yOffHint(0);
+			} else if(program == "io.elementary.terminal") {
+				emit yOffHint(0);
+			}
+			show = true;	
 			break;
 		}
 	}

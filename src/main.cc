@@ -174,7 +174,8 @@ int main(int ac, char **av) {
 			parser.value(programOption));
 	}
 	info.setDebug(debug);
-	
+
+	QObject::connect(&info, &WindowInfo::yOffHint, &s, &Spirit::setYOffset);	
 	QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
 	QObject::connect(&info, &WindowInfo::hintHide, &s, &Spirit::hide);
 	

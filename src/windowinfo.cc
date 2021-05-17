@@ -11,6 +11,9 @@ WindowInfo::WindowInfo(QObject *parent)
 	m_Private = new WindowInfoPrivate;
 	m_Private->moveToThread(m_WorkerThread);
 	
+	connect(m_Private, &WindowInfoPrivate::yOffHint,
+		this, &WindowInfo::yOffHint, Qt::DirectConnection);
+
 	connect(m_Private, &WindowInfoPrivate::hintHide,
 		this, &WindowInfo::hintHide, Qt::DirectConnection);
 

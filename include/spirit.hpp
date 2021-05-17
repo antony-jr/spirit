@@ -5,6 +5,7 @@
 // The spelling is intentional.
 class Spirit : public QLabel {
 	Q_OBJECT
+	bool guess = true;
 	bool debug = false;
 	int xoff = 0,
 	    yoff = 0;

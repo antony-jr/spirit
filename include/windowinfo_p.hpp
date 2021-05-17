@@ -20,6 +20,7 @@ public Q_SLOTS:
 private Q_SLOTS:
 	void loop();
 Q_SIGNALS:
+	void yOffHint(int);
 	void hintHide();
 	void focused(int x, int y, unsigned width, unsigned height);
 	void unFocused();

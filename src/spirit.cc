@@ -2,7 +2,9 @@
 #include <QMovie>
 #include <QPair>
 #include <QDebug>
+
 #include "spirit.hpp"
+#include "windowinfo.hpp"
 
 Qt::WindowFlags flags = Qt::FramelessWindowHint |
 			Qt::Tool |
@@ -62,6 +64,14 @@ void Spirit::setXOffset(int value) {
 }
 
 void Spirit::setYOffset(int value) {
+	auto sender = qobject_cast<WindowInfo*>(QObject::sender());
+	if(!sender) {
+		guess = false;
+	}else {
+		if(!guess) {
+			return;
+		}
+	}
 	yoff = value;
 }
 
@@ -101,7 +111,7 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 
 void Spirit::update(int xpos, int ypos, unsigned w, unsigned h) {
 	move(xpos + (w/width()) + int(width() * 0.5f) + xoff, 
-	     ypos - int(h/height()) - height() - int(height()*0.05f) - yoff);
+	     ypos - int(height()*0.75f) - yoff);
 	show();
 
 	if(debug) {
