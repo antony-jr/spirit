@@ -100,7 +100,8 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 }
 
 void Spirit::update(int xpos, int ypos, unsigned w, unsigned h) {
-	move(xpos + xoff, ypos - yoff);
+	move(xpos + (w/width()) + int(width() * 0.5f) + xoff, 
+	     ypos - int(h/height()) - height() - int(height()*0.05f) - yoff);
 	show();
 
 	if(debug) {

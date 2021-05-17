@@ -6,10 +6,10 @@
 class Spirit : public QLabel {
 	Q_OBJECT
 	bool debug = false;
-	int xoff = 90,
-	    yoff = 200;
-	int w = 240,
-	    h = 240;
+	int xoff = 0,
+	    yoff = 0;
+	int w = 200,
+	    h = 200;
 public:
 	Spirit();
 	~Spirit();

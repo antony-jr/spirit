@@ -173,11 +173,9 @@ int main(int ac, char **av) {
 		info.setProgram(
 			parser.value(programOption));
 	}
-	info.setGuessYOffset(guessYOff);
 	info.setDebug(debug);
 	
 	QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
-	QObject::connect(&info, &WindowInfo::setYOffset, &s, &Spirit::setYOffset);
 	QObject::connect(&info, &WindowInfo::hintHide, &s, &Spirit::hide);
 	
 	info.start();
