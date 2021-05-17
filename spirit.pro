@@ -1,5 +1,5 @@
 INCLUDEPATH += $$PWD $$PWD/include
-QT += core widgets
+QT += core widgets network
 CONFIG += static
 LIBS += -lxdo 
 TARGET = spirit

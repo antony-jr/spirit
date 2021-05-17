@@ -59,6 +59,10 @@ void Spirit::onTop() {
 #endif
 }
 
+void Spirit::setHorizontalAlignment(HAlign v) {
+	align = v;
+}
+
 void Spirit::setXOffset(int value) {
 	xoff = value;
 }
@@ -97,20 +101,37 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 		setScaledContents(true);
 		s = optimalSize(pixmap, w, h);
 	}else {
-		QMovie *movie = new QMovie(this);
-		movie->setFileName(file);
-		setMovie(movie);	
-		movie->start();
+		QMovie *m = movie();
+		if(!m) {
+			m->deleteLater();
+		}
+
+		clear();
+
+	 	m = new QMovie(this);
+		m->setFileName(file);
+		setMovie(m);	
+		m->start();
 		
-		auto pix = movie->currentPixmap();
+		auto pix = m->currentPixmap();
 		s = optimalSize(pix, w, h);
-		movie->setScaledSize(QSize(s.first, s.second));
+		m->setScaledSize(QSize(s.first, s.second));
 	}	
 	resize(s.first, s.second);
 }
 
 void Spirit::update(int xpos, int ypos, unsigned w, unsigned h) {
-	move(xpos + (w/width()) + int(width() * 0.5f) + xoff, 
+	auto xfinal = xpos;
+
+	if(align == HAlign::Left) {
+		xfinal += int(width()*0.45f);
+	}else if(align == HAlign::Center) {
+		xfinal += int(w/2) - int(width()/2);
+	}else {
+		xfinal += w - width() - int(width()*0.25f);
+	}
+	
+	move(xfinal + xoff, 
 	     ypos - int(height()*0.75f) - yoff);
 	show();
 

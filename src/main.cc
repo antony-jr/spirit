@@ -1,12 +1,18 @@
 #include <QApplication>
+#include <QTimer>
+#include <QThread>
+#include <QProcess>
+#include <QLocalServer>
+#include <QLocalSocket>
 #include <QFileInfo>
+#include <QDir>
 #include <QCommandLineParser>
 
 #include "termcolor.hpp"
 #include "windowinfo.hpp"
 #include "spirit.hpp"
 
-static void usage(const char *prog) {
+static void info() {
 	std::cout << termcolor::bold << "Spirit"
 		  << termcolor::reset
 		  << " " 
@@ -14,23 +20,35 @@ static void usage(const char *prog) {
 		  << "v0.1.0"
 		  << termcolor::reset
 		  << ","
-		  << " Attach gif/webp over any X11 window in a stylish way."
+		  << " Overlay gif over any XWindow."
 		  << "\n"
 		  << termcolor::magenta
 		  << termcolor::bold
 		  << "D. Antony J.R <antonyjr@pm.me>"
 		  << termcolor::reset
 		  << "\n\n";
+}
+
+static void usage(const char *prog) {
+	info();
 
 	std::cout << termcolor::bold
-		  << "Usage: " << prog << " [OPTIONS]"
+		  << "Usage: " << prog << " <SUBCOMMAND> [OPTIONS]"
 		  << termcolor::reset
 		  << "\n\n";
 
 	std::cout << termcolor::bold
-		  << "Options:\n\n"
+		  << "Subcommands:\n\n"
+		  << " init" << "\t" << "Initialize Spirit.\n"
+		  << " deinit" << "\t" << "Kill Spirit.\n"
+		  << " error" << "\t" << "Set error state.\n"
+		  << " nonerror" << "\t" << "Set normal state.\n\n";
+
+	std::cout << termcolor::bold
+		  << "Init Subcommand Options:\n\n"
 		  << termcolor::reset
 		  << " -H,--help" << "\t" << "show help.\n"
+		  << " -a,--h-align" << "\t" << "Possible values center,lef, and right.\n"
 		  << " -p,--program" << "\t" << "match with this program name.\n"
 		  << " -x,--x-offset" << "\t" << "use this value as x offset.\n"
 		  << " -y,--y-offset" << "\t" << "use this value as y offset.\n"
@@ -43,8 +61,11 @@ static void usage(const char *prog) {
 	std::cout << termcolor::blue
 		  << termcolor::bold
 		  << "Example:\n"
-		  << "\t" << prog << " konsole\n"
-		  << termcolor::reset;
+		  << "\t" << prog << " init\n"
+		  << "\t" << prog << " kill\n"
+		  << "\t" << prog << " init -p dolphin"
+		  << termcolor::reset
+		  << "\n";
 }
 
 static void setIntOp(
@@ -63,10 +84,17 @@ static void setIntOp(
 }
 
 int main(int ac, char **av) {
+	if(ac == 1) {
+		usage(av[0]);
+		return 0;
+	}
 	QApplication app(ac, av);
 	QApplication::setQuitOnLastWindowClosed(false);
 	
 	QCommandLineParser parser;
+
+	parser.addPositionalArgument("subcommand", 
+		QCoreApplication::translate("main", "subcommand"));
 
 	QCommandLineOption helpOption(
 			QStringList() << "H"
@@ -84,7 +112,12 @@ int main(int ac, char **av) {
             QCoreApplication::translate("main", "Match with this program name."),
 	    "program");
 	parser.addOption(programOption);
-	
+
+	QCommandLineOption hAlignOption(QStringList() << "a" << "h-align",
+            QCoreApplication::translate("main", "Aligns the spirit horizontally center,left and right."),
+	    "halign");
+	parser.addOption(hAlignOption);
+
 	QCommandLineOption xOffOption(QStringList() << "x" << "x-offset",
             QCoreApplication::translate("main", "Offset to use in x coordinate."),
 	    "xoffset");
@@ -122,6 +155,212 @@ int main(int ac, char **av) {
 		return 0;
 	}
 
+	const QStringList args = parser.positionalArguments();
+	if(args.size() == 0) {
+		usage(av[0]);
+		return 0;
+	}
+
+	const QString subcommand = args.at(0).toLower();
+	const QString socketName = QString::fromUtf8("com.github.antony-jr.spirit");
+	QLocalSocket socket;
+
+	//// Process deinit,check and reinit.
+	if(subcommand == "deinit") {
+		info();
+		/// Send kill via Unix Sockets.
+		socket.connectToServer(socketName);
+		socket.waitForConnected();
+		if(socket.state() == QLocalSocket::ConnectedState) {
+			/// Quit the previous one.
+			socket.write("quit");
+			socket.waitForDisconnected();
+		}else {
+			std::cout << termcolor::bold
+				  << termcolor::red
+				  << "ERROR: no running spirit process found."
+				  << termcolor::reset
+				  << "\n";
+			return -1;
+		}
+
+		//// Remove trap commands from bashrc.
+		const QString bashrc = QDir::homePath() + QDir::separator() + ".bashrc";
+		{
+			QFile file(bashrc);
+			if(!file.open(QIODevice::ReadWrite)) {
+			std::cout << "Warning: cannot update .bashrc."
+				  << "\n";
+			}else {
+			   file.seek(0);
+			   bool write_empty = false;
+			   while(true) {
+				   QByteArray line;
+				   line = file.readLine(2096);
+				   if(line.size() == 0) {
+					   break;
+				   }
+
+				   if(line.contains("### spirit trap commands")) {
+					   write_empty = true;
+					   break;
+				   }
+			   }
+
+			   QString c = QString::fromUtf8("### ");
+			   if(write_empty) {
+				   file.write(c.toUtf8());
+
+				   auto line = file.readLine(1024);
+
+				   file.write(c.toUtf8());
+			   }
+
+			   std::cout << termcolor::bold
+			     << "~/.bashrc updated. Please restart your terminal for full effect."
+			     << termcolor::reset
+			     << "\n";
+			}
+
+			file.close();
+		}
+
+
+		std::cout << termcolor::bold
+			  << termcolor::cyan
+			  << "Spirit De-Initialized Successfully."
+			  << termcolor::reset
+			  << "\n";
+		return 0;
+	}else if(subcommand == "error" || subcommand == "nonerror") {
+		/// Send previous command return code via Unix Sockets.
+		socket.connectToServer(socketName);
+		socket.waitForConnected();
+		if(socket.state() == QLocalSocket::ConnectedState) {
+			/// Quit the previous one.
+			if(subcommand == "error") {
+				socket.write("check 1");
+			}else {
+				socket.write("check 0");
+			}
+			socket.waitForDisconnected();
+		}else {
+			return -1;
+		}
+		return 0;	
+	}else if(subcommand == "init") {
+		/// Check if program is running if so quit it.
+		socket.connectToServer(socketName);
+		socket.waitForConnected();
+		if(socket.state() == QLocalSocket::ConnectedState) {
+			/// Quit the previous one.
+			socket.write("quit");
+			socket.waitForDisconnected();
+		}
+	
+		info();	
+		auto arguments = QCoreApplication::arguments();
+            
+		if(arguments.isEmpty()) {
+			std::cout << termcolor::bold
+				  << termcolor::red
+				  << "ERROR: cannot get current program binary location."
+				  << termcolor::reset
+				  << "\n";
+		
+			return -1;
+		}
+
+                auto program = QFileInfo(arguments.at(0)).absolutePath() + 
+			       QDir::separator() +
+			       QFileInfo(arguments.at(0)).fileName();
+
+		arguments.removeFirst();
+		arguments.replaceInStrings(
+			QString::fromUtf8("init"),
+			QString::fromUtf8("server"),
+			Qt::CaseInsensitive);
+
+		bool r = QProcess::startDetached(program, arguments);
+		if(!r) {
+			std::cout << termcolor::bold
+				  << termcolor::red
+				  << "ERROR: cannot initialize server."
+				  << termcolor::reset
+				  << "\n";
+
+			return -1;
+		}
+
+		//// Write trap commands into bashrc.
+		const QString bashrc = QDir::homePath() + QDir::separator() + ".bashrc";
+		{
+			QFile file(bashrc);
+			if(!file.open(QIODevice::ReadWrite)) {
+			std::cout << "Warning: cannot update .bashrc."
+				  << "\n";
+			}else {
+			   file.seek(0);
+			   bool avoid_comment = false;
+			   while(true) {
+				   QByteArray line;
+				   line = file.readLine(2096);
+				   if(line.size() == 0) {
+					   break;
+				   }
+
+				   if(line.contains("### spirit trap commands")) {
+					   avoid_comment = true;
+					   break;
+				   }
+			   }
+
+			   QString comment = QString::fromUtf8("\n### spirit trap commands\n");
+			   QString trap_line = QString::fromUtf8("trap \"%1 %2\" %3\n");
+
+			   if(!avoid_comment) {
+				   file.write(comment.toUtf8());
+			   } 
+			   file.write(trap_line.arg(program).arg("error").arg("ERR").toUtf8());
+			   file.write(trap_line.arg(program).arg("nonerror").arg("DEBUG").toUtf8());
+
+			   std::cout << termcolor::bold
+			     << "~/.bashrc updated. Please restart your terminal for full effect."
+			     << termcolor::reset
+			     << "\n";
+			}
+
+			file.close();
+		}
+
+		std::cout << termcolor::bold
+			  << termcolor::yellow
+			  << "Spirit Initialized Successfully."
+			  << termcolor::reset
+			  << "\n";
+		return 0;
+	}else if(subcommand == "server") { /// Un-Documented Secret internal server init
+		/// Check if program is running if so quit it.
+		socket.connectToServer(socketName);
+		socket.waitForConnected();
+		if(socket.state() == QLocalSocket::ConnectedState) {
+			socket.disconnect();
+			socket.waitForDisconnected();
+			return 0;
+		}
+
+	} else {
+		usage(av[0]);
+		return 0;
+	}
+	//// ---
+
+	QLocalServer server;
+	server.removeServer(socketName);
+	if(!server.listen(socketName)) {
+		return -1;
+	}
+
 	bool debug = parser.isSet(debugOption);
 	QString filename = QString::fromUtf8(":default.gif"),
 		error_file = QString::fromUtf8(":default.gif");
@@ -142,7 +381,6 @@ int main(int ac, char **av) {
 		return -1;
 	}
 
-	bool guessYOff = true;
 	Spirit s;
 	/// Set Offsets and Dimensions
 	setIntOp([&s](int value) -> void {
@@ -150,7 +388,6 @@ int main(int ac, char **av) {
 	}, parser, xOffOption);
 	
 	setIntOp([&](int value) -> void {
-		guessYOff = false;
 		s.setYOffset(value);
 	}, parser, yOffOption);
 
@@ -162,11 +399,19 @@ int main(int ac, char **av) {
 		s.setHeight(value);
 	}, parser, heightOption);
 	/// ---
-	
+
+	if(parser.isSet(hAlignOption)) {
+		auto value = parser.value(hAlignOption).toLower();
+		if(value == "center") {
+			s.setHorizontalAlignment(Spirit::HAlign::Center);
+		} else if(value == "right") {
+			s.setHorizontalAlignment(Spirit::HAlign::Right);	
+		}
+	}	
+
 	s.setDebug(debug);
 	
 	s.setGraphic(filename, false);
-
 
 	WindowInfo info;
 	if(parser.isSet(programOption)) {
@@ -178,7 +423,58 @@ int main(int ac, char **av) {
 	QObject::connect(&info, &WindowInfo::yOffHint, &s, &Spirit::setYOffset);	
 	QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
 	QObject::connect(&info, &WindowInfo::hintHide, &s, &Spirit::hide);
-	
+
+
+	bool errored = false;
+
+	QObject::connect(&server, &QLocalServer::newConnection,
+	[&server, &app, &s, &error_file, &errored, &info, &filename]() {
+	   auto socket = server.nextPendingConnection();
+	   if(!socket || !socket->isValid()) {
+	   	return;
+	   }
+
+	   socket->waitForReadyRead();
+
+	   auto dataSent = QString::fromUtf8(socket->readAll());
+	   socket->disconnectFromServer();
+
+	   if(dataSent.contains("quit")) {
+	   	QTimer::singleShot(1000, &app, &QApplication::quit);   
+	   }else if(dataSent.contains("check")) {
+	      auto args = dataSent.split(" ");
+	      if(args.size() != 2) {
+	         return;
+	      }
+	      
+	      bool ok = false;
+	      int r = args.at(1).toInt(&ok);
+	      if(!ok) {
+		      return;
+	      }
+
+	      if(!errored && r) {
+		 errored = true;
+	         QObject::disconnect(&info, &WindowInfo::focused, &s, &Spirit::update);
+	         s.hide();
+		 s.setGraphic(error_file, false);
+		 QThread::msleep(200);
+	         QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
+		 s.show();
+	      }
+	      
+	      if(errored && !r) {
+		 errored = false;
+		 QObject::disconnect(&info, &WindowInfo::focused, &s, &Spirit::update);
+	         s.hide();
+		 s.setGraphic(filename, false);
+		 QThread::msleep(200); 
+		 QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
+		 s.show(); 
+	      } 
+	  }
+	});
+
 	info.start();
 	return app.exec();
 }
