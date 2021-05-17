@@ -363,7 +363,7 @@ int main(int ac, char **av) {
 
 	bool debug = parser.isSet(debugOption);
 	QString filename = QString::fromUtf8(":default.gif"),
-		error_file = QString::fromUtf8(":default.gif");
+		error_file = QString::fromUtf8(":error.gif");
 
 	if(parser.isSet(gifPathOption)) {
 		filename = parser.value(gifPathOption);
@@ -381,22 +381,28 @@ int main(int ac, char **av) {
 		return -1;
 	}
 
-	Spirit s;
+	Spirit s,
+	       error;
+
 	/// Set Offsets and Dimensions
-	setIntOp([&s](int value) -> void {
+	setIntOp([&s,&error](int value) -> void {
 		s.setXOffset(value);
+		error.setXOffset(value);
 	}, parser, xOffOption);
 	
-	setIntOp([&](int value) -> void {
+	setIntOp([&s,&error](int value) -> void {
 		s.setYOffset(value);
+		error.setYOffset(value);
 	}, parser, yOffOption);
 
-	setIntOp([&s](int value) -> void {
+	setIntOp([&s,&error](int value) -> void {
 		s.setWidth(value);
+		error.setWidth(value);
 	}, parser, widthOption);
 
-	setIntOp([&s](int value) -> void {
+	setIntOp([&s,&error](int value) -> void {
 		s.setHeight(value);
+		error.setHeight(value);
 	}, parser, heightOption);
 	/// ---
 
@@ -404,14 +410,18 @@ int main(int ac, char **av) {
 		auto value = parser.value(hAlignOption).toLower();
 		if(value == "center") {
 			s.setHorizontalAlignment(Spirit::HAlign::Center);
+			error.setHorizontalAlignment(Spirit::HAlign::Center);	
 		} else if(value == "right") {
 			s.setHorizontalAlignment(Spirit::HAlign::Right);	
+			error.setHorizontalAlignment(Spirit::HAlign::Right);		
 		}
 	}	
 
 	s.setDebug(debug);
+	error.setDebug(debug);
 	
 	s.setGraphic(filename, false);
+	error.setGraphic(error_file, false);
 
 	WindowInfo info;
 	if(parser.isSet(programOption)) {
@@ -428,7 +438,7 @@ int main(int ac, char **av) {
 	bool errored = false;
 
 	QObject::connect(&server, &QLocalServer::newConnection,
-	[&server, &app, &s, &error_file, &errored, &info, &filename]() {
+	[&server, &app, &s, &error_file, &errored, &info, &filename, &error]() {
 	   auto socket = server.nextPendingConnection();
 	   if(!socket || !socket->isValid()) {
 	   	return;
@@ -455,22 +465,27 @@ int main(int ac, char **av) {
 
 	      if(!errored && r) {
 		 errored = true;
-	         QObject::disconnect(&info, &WindowInfo::focused, &s, &Spirit::update);
-	         s.hide();
-		 s.setGraphic(error_file, false);
-		 QThread::msleep(200);
-	         QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
-		 s.show();
+		 QObject::disconnect(&info, &WindowInfo::yOffHint, &s, &Spirit::setYOffset);	
+		 QObject::disconnect(&info, &WindowInfo::focused, &s, &Spirit::update);
+		 QObject::disconnect(&info, &WindowInfo::hintHide, &s, &Spirit::hide);
+		 s.hide();
+		 
+		 QObject::connect(&info, &WindowInfo::yOffHint, &error, &Spirit::setYOffset);	
+		 QObject::connect(&info, &WindowInfo::focused, &error, &Spirit::update);
+		 QObject::connect(&info, &WindowInfo::hintHide, &error, &Spirit::hide);
 	      }
 	      
 	      if(errored && !r) {
-		 errored = false;
-		 QObject::disconnect(&info, &WindowInfo::focused, &s, &Spirit::update);
-	         s.hide();
-		 s.setGraphic(filename, false);
-		 QThread::msleep(200); 
-		 QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
-		 s.show(); 
+		errored = false;
+
+		QObject::disconnect(&info, &WindowInfo::yOffHint, &error, &Spirit::setYOffset);	
+		QObject::disconnect(&info, &WindowInfo::focused, &error, &Spirit::update);
+		QObject::disconnect(&info, &WindowInfo::hintHide, &error, &Spirit::hide);
+		error.hide();
+
+		QObject::connect(&info, &WindowInfo::yOffHint, &s, &Spirit::setYOffset);	
+		QObject::connect(&info, &WindowInfo::focused, &s, &Spirit::update);
+		QObject::connect(&info, &WindowInfo::hintHide, &s, &Spirit::hide);
 	      } 
 	  }
 	});

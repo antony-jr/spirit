@@ -101,18 +101,11 @@ void Spirit::setGraphic(const QString &file, bool is_png) {
 		setScaledContents(true);
 		s = optimalSize(pixmap, w, h);
 	}else {
-		QMovie *m = movie();
-		if(!m) {
-			m->deleteLater();
-		}
-
-		clear();
-
-	 	m = new QMovie(this);
+		QMovie *m = new QMovie(this);
+		setMovie(m);
 		m->setFileName(file);
-		setMovie(m);	
 		m->start();
-		
+
 		auto pix = m->currentPixmap();
 		s = optimalSize(pix, w, h);
 		m->setScaledSize(QSize(s.first, s.second));
