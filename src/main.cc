@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QCommandLineParser>
+#include <cstdlib>
 
 #include "termcolor.hpp"
 #include "windowinfo.hpp"
@@ -229,8 +230,13 @@ int main(int ac, char **av) {
 			return -1;
 		}
 
-                auto program = QCoreApplication::applicationFilePath();
-		
+		QString program;
+		auto appimage = std::getenv("APPIMAGE");
+		if(appimage) {
+			program = QString::fromUtf8(appimage);
+		}else {
+			program = QCoreApplication::applicationFilePath();
+		}
 		arguments.removeFirst();
 		arguments.replaceInStrings(
 			QString::fromUtf8("init"),

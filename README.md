@@ -20,7 +20,7 @@ See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
 # Quick Start
 
 ```
- $ wget "https://github.com/antony-jr/spirit/releases/download/development/spirit"
+ $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.0/spirit" 
  $ chmod +x spirit
  $ ./spirit init 
  $ # Now only the focused terminal will have the overlay.
@@ -32,20 +32,28 @@ See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
 **Spirit** can be used as an AppImage, please don't integrate this into your system. You can put it in your local bin 
 path and edit your terminal desktop file to invoke it with the spirit command.
 
+### Development Builds
+
+The build of the master branch into an AppImage are the development builds. On each push these binaries are updated.
+Use this to get the latest and the greatest of spirit.
+
+
 ```
  $ wget "https://github.com/antony-jr/spirit/releases/download/development/spirit"
  $ chmod +x spirit
  $ ./spirit # Use it now, or move it to /usr/bin/ to install
 ```
 
-### Development Builds
-
-The build of the master branch into an AppImage are the development builds. On each push these binaries are updated.
-Use this to get the latest and the greatest of spirit.
-
 ### Versioned Releases
 
 Somewhat considered as stable. These builds are usually older than the development builds. Bug fixes will happen a bit slower in these builds.
+
+
+```
+ $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.0/spirit"
+ $ chmod +x spirit
+ $ ./spirit # Use it now, or move it to /usr/bin/ to install
+```
 
 
 # Building from source
