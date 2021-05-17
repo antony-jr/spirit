@@ -183,49 +183,7 @@ int main(int ac, char **av) {
 				  << "\n";
 			return -1;
 		}
-
-		//// Remove trap commands from bashrc.
-		const QString bashrc = QDir::homePath() + QDir::separator() + ".bashrc";
-		{
-			QFile file(bashrc);
-			if(!file.open(QIODevice::ReadWrite)) {
-			std::cout << "Warning: cannot update .bashrc."
-				  << "\n";
-			}else {
-			   file.seek(0);
-			   bool write_empty = false;
-			   while(true) {
-				   QByteArray line;
-				   line = file.readLine(2096);
-				   if(line.size() == 0) {
-					   break;
-				   }
-
-				   if(line.contains("### spirit trap commands")) {
-					   write_empty = true;
-					   break;
-				   }
-			   }
-
-			   QString c = QString::fromUtf8("### ");
-			   if(write_empty) {
-				   file.write(c.toUtf8());
-
-				   auto line = file.readLine(1024);
-
-				   file.write(c.toUtf8());
-			   }
-
-			   std::cout << termcolor::bold
-			     << "~/.bashrc updated. Please restart your terminal for full effect."
-			     << termcolor::reset
-			     << "\n";
-			}
-
-			file.close();
-		}
-
-
+		
 		std::cout << termcolor::bold
 			  << termcolor::cyan
 			  << "Spirit De-Initialized Successfully."
@@ -271,10 +229,8 @@ int main(int ac, char **av) {
 			return -1;
 		}
 
-                auto program = QFileInfo(arguments.at(0)).absolutePath() + 
-			       QDir::separator() +
-			       QFileInfo(arguments.at(0)).fileName();
-
+                auto program = QCoreApplication::applicationFilePath();
+		
 		arguments.removeFirst();
 		arguments.replaceInStrings(
 			QString::fromUtf8("init"),
@@ -344,7 +300,7 @@ int main(int ac, char **av) {
 		socket.connectToServer(socketName);
 		socket.waitForConnected();
 		if(socket.state() == QLocalSocket::ConnectedState) {
-			socket.disconnect();
+			socket.write("ping");
 			socket.waitForDisconnected();
 			return 0;
 		}
@@ -450,6 +406,37 @@ int main(int ac, char **av) {
 	   socket->disconnectFromServer();
 
 	   if(dataSent.contains("quit")) {
+	   	//// Remove trap commands from bashrc.
+		const QString bashrc = QDir::homePath() + QDir::separator() + ".bashrc";
+		{
+			QFile file(bashrc);
+			if(file.open(QIODevice::ReadWrite)) {
+			   file.seek(0);
+			   bool write_empty = false;
+			   while(true) {
+				   QByteArray line;
+				   line = file.readLine(2096);
+				   if(line.size() == 0) {
+					   break;
+				   }
+
+				   if(line.contains("### spirit trap commands")) {
+					   write_empty = true;
+					   break;
+				   }
+			   }
+
+			   QString c = QString::fromUtf8("### ");
+			   if(write_empty) {
+				   file.write(c.toUtf8());
+
+				   auto line = file.readLine(1024);
+
+				   file.write(c.toUtf8());
+			   }
+			}
+			file.close();
+		}
 	   	QTimer::singleShot(1000, &app, &QApplication::quit);   
 	   }else if(dataSent.contains("check")) {
 	      auto args = dataSent.split(" ");

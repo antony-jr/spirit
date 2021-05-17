@@ -41,7 +41,7 @@ void WindowInfoPrivate::start() {
 
 	m_Timer = new QTimer(this);
 	m_Timer->setSingleShot(false);
-	m_Timer->setInterval(500);
+	m_Timer->setInterval(200);
 
 	connect(m_Timer, &QTimer::timeout,
 		 this, &WindowInfoPrivate::loop);
