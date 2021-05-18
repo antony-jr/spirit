@@ -92,7 +92,8 @@ int main(int ac, char **av) {
 	}
 	QApplication app(ac, av);
 	QApplication::setQuitOnLastWindowClosed(false);
-	
+	QApplication::setStyle("Fusion");
+
 	QCommandLineParser parser;
 
 	parser.addPositionalArgument("subcommand", 

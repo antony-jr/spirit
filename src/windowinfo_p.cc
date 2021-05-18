@@ -15,7 +15,8 @@ WindowInfoPrivate::WindowInfoPrivate(QObject *parent)
 	/// All supported default program signs.
 	m_ProgramSigns << "konsole"
 		       << "gnome-terminal"
-	       	       << "io.elementary.terminal";	       
+	       	       << "io.elementary.terminal"
+		       << "mate-terminal";
 }
 
 WindowInfoPrivate::~WindowInfoPrivate() {
@@ -115,6 +116,8 @@ void WindowInfoPrivate::loop() {
 				emit yOffHint(0);
 			} else if(program == "io.elementary.terminal") {
 				emit yOffHint(-40);
+			} else if(program == "mate-terminal") {
+				emit yOffHint(80);
 			}
 			show = true;	
 			break;
