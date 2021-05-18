@@ -196,7 +196,12 @@ int main(int ac, char **av) {
 				  << "\n";
 			return -1;
 		}
-		
+	
+		std::cout << termcolor::bold
+			  << "Please restart your Terminal."
+			  << termcolor::reset
+			  << "\n";
+
 		std::cout << termcolor::bold
 			  << termcolor::cyan
 			  << "Spirit De-Initialized Successfully."
