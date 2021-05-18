@@ -37,7 +37,7 @@ bool BashRCWriter::write() {
 		QString::fromUtf8("trap \"%1 %2\" ERR\n");
 	QString prompt_line = 
 		QString::fromUtf8(
-		"PROMPT_COMMAND+=\"if [ 0 -eq \\$? ]; then %1 %2; fi\"\n");
+		"PROMPT_COMMAND=\"if [ 0 -eq \\$? ]; then %1 %2; fi\"\n");
 	const QString bashrc = QDir::homePath() + QDir::separator() + ".bashrc";
 	
 	QFile file(bashrc);
