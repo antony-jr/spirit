@@ -64,14 +64,13 @@ void WindowInfoPrivate::loop() {
 	Window wid = 0;
 	int r = XDOWrapper::xdo_get_focused_window_sane(ctx, &wid);
 	if(r) {
+		emit hintHide();
 		return;
 	}
 	if(bDebug) {
 		qDebug() << "WindowInfo::loop():: " 
 			 << "Window in Focus:: "
 			 << wid;
-
-		emit hintHide();
 	}
 	
 	int pid = XDOWrapper::xdo_get_pid_window(ctx, wid);
