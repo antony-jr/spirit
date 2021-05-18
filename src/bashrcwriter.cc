@@ -33,9 +33,11 @@ bool BashRCWriter::write() {
 	}
 	QString comment = QString::fromUtf8("### spirit trap commands\n");
 	QString commentWithNewLine = QString::fromUtf8("\n### spirit trap commands\n");
+	QString trap_error =
+		QString::fromUtf8("trap \"%1 %2\" ERR\n");
 	QString prompt_line = 
 		QString::fromUtf8(
-		"PROMPT_COMMAND+=\"if [ \\\"0\\\" -eq \\\"\\$?\\\" ]; then %1 %2; else %1 %3;fi\"\n");
+		"PROMPT_COMMAND+=\"if [ 0 -eq \\$? ]; then %1 %2; fi\"\n");
 	const QString bashrc = QDir::homePath() + QDir::separator() + ".bashrc";
 	
 	QFile file(bashrc);
@@ -56,10 +58,13 @@ bool BashRCWriter::write() {
 			}else {
 			   contents << commentWithNewLine;
 			}
-			contents << prompt_line.arg(m_Program).arg("nonerror").arg("error");
-			/// Go past one lines
+			
+			contents << trap_error.arg(m_Program).arg("error");
+			contents << prompt_line.arg(m_Program).arg("nonerror");
+			
+			/// Go past two  lines
 			line = file.readLine();
-
+			line = file.readLine();
 			appended = true;
 		}else {
 			contents << line;
@@ -73,7 +78,9 @@ bool BashRCWriter::write() {
 		}else {
 			contents << commentWithNewLine;
 		}
-		contents << prompt_line.arg(m_Program).arg("nonerror").arg("error");
+
+		contents << trap_error.arg(m_Program).arg("error");	
+		contents << prompt_line.arg(m_Program).arg("nonerror");
 	}
 	file.close();
 
@@ -97,7 +104,8 @@ bool BashRCWriter::unwrite() {
 	while(!file.atEnd()) {
 		auto line = file.readLine();
 		if(line.contains("### spirit trap commands")) {
-			/// Go past one line
+			/// Go past two lines
+			line = file.readLine();
 			line = file.readLine();
 		}else {
 			contents << line;

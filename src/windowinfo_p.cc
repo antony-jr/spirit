@@ -70,6 +70,8 @@ void WindowInfoPrivate::loop() {
 		qDebug() << "WindowInfo::loop():: " 
 			 << "Window in Focus:: "
 			 << wid;
+
+		emit hintHide();
 	}
 	
 	int pid = XDOWrapper::xdo_get_pid_window(ctx, wid);
@@ -80,6 +82,7 @@ void WindowInfoPrivate::loop() {
 				 << wid
 				 << ".";
 		}
+		emit hintHide();
 		return;
 	}
 
@@ -139,7 +142,7 @@ void WindowInfoPrivate::loop() {
 					<< "PID(" << pid << "):: " 
 					<< "Cannot get Window location.";
 			}
-			emit unFocused();
+			emit hintHide();
 			return;
 		}
 		ret = XDOWrapper::xdo_get_window_size(ctx, wid, &w, &h);
@@ -150,7 +153,7 @@ void WindowInfoPrivate::loop() {
 					<< "Cannot get Window szie.";
 	
 			}
-			emit unFocused();
+			emit hintHide();
 			return;
 		}
 
