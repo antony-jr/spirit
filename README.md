@@ -32,6 +32,13 @@ See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
  $ ./spirit deinit # To kill all instance of spirit # This is important
 ```
 
+# Installation / Update
+
+```
+ $ curl -Ls "https://git.io/JsgXK" | bash -s
+```
+
+
 # Get AppImages 
 
 **Spirit** can be used as an AppImage, please don't integrate this into your system. You can put it in your local bin 
