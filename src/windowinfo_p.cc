@@ -16,7 +16,8 @@ WindowInfoPrivate::WindowInfoPrivate(QObject *parent)
 	m_ProgramSigns << "konsole"
 		       << "gnome-terminal"
 	       	       << "io.elementary.terminal"
-		       << "mate-terminal";
+		       << "mate-terminal"
+		       << "xfce4-terminal";
 }
 
 WindowInfoPrivate::~WindowInfoPrivate() {
@@ -118,6 +119,8 @@ void WindowInfoPrivate::loop() {
 				emit yOffHint(-40);
 			} else if(program == "mate-terminal") {
 				emit yOffHint(80);
+			} else if(program == "xfce4-terminal") {
+				emit yOffHint(70);
 			}
 			show = true;	
 			break;

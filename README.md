@@ -3,12 +3,17 @@
 A C++ program which can attach a gif or any graphic image attach to a X11 application.
 **But using with a terminal emulator is recommended.**
 
-
-**SUPPORTS KDE,GNOME AND PANTHEON(ELEMENTARY OS). BUT PLEASE NOTE ONLY X11 Desktop Environments are supported, no Wayland support.**
-
+**This application is supported on all major desktop environments based on X11.**
 
 **IMPORTANT NOTE**: The pre-built binaries (AppImages) only supports gif and png files to be rendered. So please don't
 use webp or other formats with pre-built binaries, this will result in spirit not rendering the image.
+
+
+**NOTE FOR CINNAMON USERS:** Please add this argument to your init, ``` -y 80 ```.
+
+
+**NOTE FOR ELEMENTARY OS USERS:** Please execute this command(```$ echo "export QT_STYLE_OVERRIDE=Fusion" >> ~/.bashrc```) once before doing anything. You only have to do this once.
+
 
 
 See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
@@ -20,7 +25,7 @@ See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
 # Quick Start
 
 ```
- $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.1/spirit" 
+ $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.2/spirit" 
  $ chmod +x spirit
  $ ./spirit init 
  $ # Now only the focused terminal will have the overlay.
@@ -50,7 +55,7 @@ Somewhat considered as stable. These builds are usually older than the developme
 
 
 ```
- $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.1/spirit"
+ $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.2/spirit"
  $ chmod +x spirit
  $ ./spirit # Use it now, or move it to /usr/bin/ to install
 ```
