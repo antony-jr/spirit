@@ -12,13 +12,14 @@
 #include "termcolor.hpp"
 #include "windowinfo.hpp"
 #include "spirit.hpp"
+#include "bashrcwriter.hpp"
 
 static void info() {
 	std::cout << termcolor::bold << "Spirit"
 		  << termcolor::reset
 		  << " " 
 		  << termcolor::underline
-		  << "v0.1.0"
+		  << "v0.1.1"
 		  << termcolor::reset
 		  << ","
 		  << " Overlay gif over any XWindow."
@@ -162,6 +163,17 @@ int main(int ac, char **av) {
 		return 0;
 	}
 
+	QString programPath;
+	auto appimage = std::getenv("APPIMAGE");
+	if(appimage) {
+		programPath = QString::fromUtf8(appimage);
+	}else {
+		programPath = QCoreApplication::applicationFilePath();
+	}
+
+	BashRCWriter bashrc_writer;
+	bashrc_writer.setProgram(programPath);
+
 	const QString subcommand = args.at(0).toLower();
 	const QString socketName = QString::fromUtf8("com.github.antony-jr.spirit");
 	QLocalSocket socket;
@@ -230,20 +242,13 @@ int main(int ac, char **av) {
 			return -1;
 		}
 
-		QString program;
-		auto appimage = std::getenv("APPIMAGE");
-		if(appimage) {
-			program = QString::fromUtf8(appimage);
-		}else {
-			program = QCoreApplication::applicationFilePath();
-		}
 		arguments.removeFirst();
 		arguments.replaceInStrings(
 			QString::fromUtf8("init"),
 			QString::fromUtf8("server"),
 			Qt::CaseInsensitive);
 
-		bool r = QProcess::startDetached(program, arguments);
+		bool r = QProcess::startDetached(programPath, arguments);
 		if(!r) {
 			std::cout << termcolor::bold
 				  << termcolor::red
@@ -254,46 +259,16 @@ int main(int ac, char **av) {
 			return -1;
 		}
 
-		//// Write trap commands into bashrc.
-		const QString bashrc = QDir::homePath() + QDir::separator() + ".bashrc";
-		{
-			QFile file(bashrc);
-			if(!file.open(QIODevice::ReadWrite)) {
-			std::cout << "Warning: cannot update .bashrc."
-				  << "\n";
-			}else {
-			   file.seek(0);
-			   bool avoid_comment = false;
-			   while(true) {
-				   QByteArray line;
-				   line = file.readLine(2096);
-				   if(line.size() == 0) {
-					   break;
-				   }
-
-				   if(line.contains("### spirit trap commands")) {
-					   avoid_comment = true;
-					   break;
-				   }
-			   }
-
-			   QString comment = QString::fromUtf8("\n### spirit trap commands\n");
-			   QString trap_line = QString::fromUtf8("trap \"%1 %2\" %3\n");
-
-			   if(!avoid_comment) {
-				   file.write(comment.toUtf8());
-			   } 
-			   file.write(trap_line.arg(program).arg("error").arg("ERR").toUtf8());
-			   file.write(trap_line.arg(program).arg("nonerror").arg("DEBUG").toUtf8());
-
-			   std::cout << termcolor::bold
+		if(bashrc_writer.write()) {
+			std::cout << termcolor::bold
 			     << "~/.bashrc updated. Please restart your terminal for full effect."
 			     << termcolor::reset
 			     << "\n";
-			}
-
-			file.close();
+		}else {
+			std::cout << "Warning: cannot update .bashrc."
+				  << "\n";
 		}
+
 
 		std::cout << termcolor::bold
 			  << termcolor::yellow
@@ -400,7 +375,7 @@ int main(int ac, char **av) {
 	bool errored = false;
 
 	QObject::connect(&server, &QLocalServer::newConnection,
-	[&server, &app, &s, &error_file, &errored, &info, &filename, &error]() {
+	[&server, &app, &s, &error_file, &errored, &info, &filename, &error, &bashrc_writer]() {
 	   auto socket = server.nextPendingConnection();
 	   if(!socket || !socket->isValid()) {
 	   	return;
@@ -412,37 +387,7 @@ int main(int ac, char **av) {
 	   socket->disconnectFromServer();
 
 	   if(dataSent.contains("quit")) {
-	   	//// Remove trap commands from bashrc.
-		const QString bashrc = QDir::homePath() + QDir::separator() + ".bashrc";
-		{
-			QFile file(bashrc);
-			if(file.open(QIODevice::ReadWrite)) {
-			   file.seek(0);
-			   bool write_empty = false;
-			   while(true) {
-				   QByteArray line;
-				   line = file.readLine(2096);
-				   if(line.size() == 0) {
-					   break;
-				   }
-
-				   if(line.contains("### spirit trap commands")) {
-					   write_empty = true;
-					   break;
-				   }
-			   }
-
-			   QString c = QString::fromUtf8("### ");
-			   if(write_empty) {
-				   file.write(c.toUtf8());
-
-				   auto line = file.readLine(1024);
-
-				   file.write(c.toUtf8());
-			   }
-			}
-			file.close();
-		}
+	   	bashrc_writer.unwrite();
 	   	QTimer::singleShot(1000, &app, &QApplication::quit);   
 	   }else if(dataSent.contains("check")) {
 	      auto args = dataSent.split(" ");

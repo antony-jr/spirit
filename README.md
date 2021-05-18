@@ -20,7 +20,7 @@ See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
 # Quick Start
 
 ```
- $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.0/spirit" 
+ $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.1/spirit" 
  $ chmod +x spirit
  $ ./spirit init 
  $ # Now only the focused terminal will have the overlay.
@@ -50,7 +50,7 @@ Somewhat considered as stable. These builds are usually older than the developme
 
 
 ```
- $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.0/spirit"
+ $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.1/spirit"
  $ chmod +x spirit
  $ ./spirit # Use it now, or move it to /usr/bin/ to install
 ```

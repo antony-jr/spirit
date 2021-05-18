@@ -23,6 +23,8 @@ list(APPEND source include/termcolor.hpp
 		   include/windowinfo.hpp
 		   include/helpers_p.hpp
 		   include/spirit.hpp
+		   include/bashrcwriter.hpp
+		   src/bashrcwriter.cc
 		   src/spirit.cc
 		   src/windowinfo_p.cc
 		   src/windowinfo.cc
