@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QStyleFactory>
 #include <QTimer>
 #include <QThread>
 #include <QProcess>
@@ -92,7 +93,7 @@ int main(int ac, char **av) {
 	}
 	QApplication app(ac, av);
 	QApplication::setQuitOnLastWindowClosed(false);
-	QApplication::setStyle("Fusion");
+	QApplication::setStyle(QStyleFactory::create("Fusion"));
 
 	QCommandLineParser parser;
 
