@@ -384,11 +384,14 @@ int main(int ac, char **av) {
 	   socket->waitForReadyRead();
 
 	   auto dataSent = QString::fromUtf8(socket->readAll());
-	   socket->disconnectFromServer();
+	   if(!dataSent.contains("quit")) {
+	   	socket->disconnectFromServer();
+	   }
 
 	   if(dataSent.contains("quit")) {
 	   	bashrc_writer.unwrite();
-	   	QTimer::singleShot(1000, &app, &QApplication::quit);   
+		QObject::connect(&app, &QApplication::aboutToQuit, socket, &QLocalSocket::disconnectFromServer);
+		QTimer::singleShot(500, &app, &QApplication::quit);
 	   }else if(dataSent.contains("check")) {
 	      auto args = dataSent.split(" ");
 	      if(args.size() != 2) {

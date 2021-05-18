@@ -112,7 +112,7 @@ void WindowInfoPrivate::loop() {
 			} else if(program == "gnome-terminal") {
 				emit yOffHint(0);
 			} else if(program == "io.elementary.terminal") {
-				emit yOffHint(0);
+				emit yOffHint(-40);
 			}
 			show = true;	
 			break;

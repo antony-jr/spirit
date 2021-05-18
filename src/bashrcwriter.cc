@@ -32,6 +32,7 @@ bool BashRCWriter::write() {
 		return false;
 	}
 	QString comment = QString::fromUtf8("### spirit trap commands\n");
+	QString commentWithNewLine = QString::fromUtf8("\n### spirit trap commands\n");
 	QString trap_line = QString::fromUtf8("trap \"%1 %2\" %3\n");
 	const QString bashrc = QDir::homePath() + QDir::separator() + ".bashrc";
 	
@@ -47,7 +48,12 @@ bool BashRCWriter::write() {
 	while(!file.atEnd()) {
 		auto line = file.readLine();
 		if(line.contains("### spirit trap commands")) {
-			contents << comment;
+			auto prev = contents.at(contents.size() - 1);
+			if(prev == "\n") {
+			   contents << comment;
+			}else {
+			   contents << commentWithNewLine;
+			}
 			contents << trap_line.arg(m_Program).arg("error").arg("ERR");
 			contents << trap_line.arg(m_Program).arg("nonerror").arg("DEBUG");
 
@@ -62,7 +68,12 @@ bool BashRCWriter::write() {
 	}
 
 	if(!appended) {
-		contents << comment;
+		auto prev = contents.at(contents.size() - 1);
+		if(prev == "\n") {
+			contents << comment;
+		}else {
+			contents << commentWithNewLine;
+		}
 		contents << trap_line.arg(m_Program).arg("error").arg("ERR");
 		contents << trap_line.arg(m_Program).arg("nonerror").arg("DEBUG");
 	}
