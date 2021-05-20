@@ -10,7 +10,8 @@ Qt::WindowFlags flags = Qt::FramelessWindowHint |
 			Qt::Tool |
 			Qt::WindowStaysOnTopHint |
 			Qt::WindowTransparentForInput |
-			Qt::WindowDoesNotAcceptFocus;
+			Qt::WindowDoesNotAcceptFocus | 
+			Qt::NoDropShadowWindowHint;
 
 static QPair<int,int> optimalSize(const QPixmap &pix, int w_thresh, int h_thresh) {
 	QPair<int,int> r;
