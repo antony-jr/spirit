@@ -1,6 +1,12 @@
-# Spirit
+<p align="center">
+  <img src="artwork/spirit_logo.png" height="200px" width=auto alt="Spirit Logo">  <br>
+</p>
 
-A C++ program which can attach a gif or any graphic image attach to a X11 application.
+
+# Spirit [![GitHub issues](https://img.shields.io/github/issues/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/issues) [![GitHub forks](https://img.shields.io/github/forks/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/network) [![GitHub stars](https://img.shields.io/github/stars/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/stargazers) [![GitHub license](https://img.shields.io/github/license/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/blob/master/LICENSE) [![Deploy](https://github.com/antony-jr/spirit/actions/workflows/deploy.yml/badge.svg)](https://github.com/antony-jr/spirit/actions/workflows/deploy.yml)
+
+
+Modern Window Sitter for X11 based Desktop Environments (Coming to Wayland, Windows and Mac soon-ish).
 **But using with a terminal emulator is recommended.**
 
 **This application is supported on all major desktop environments based on X11.**
