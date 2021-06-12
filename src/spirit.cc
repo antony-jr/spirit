@@ -1,34 +1,35 @@
+#include <QRect>
 #include <QPixmap>
 #include <QMovie>
 #include <QPair>
-#include <QDebug>
 
 #include "spirit.hpp"
-#include "windowinfo.hpp"
-
-Qt::WindowFlags flags = Qt::FramelessWindowHint |
-			Qt::Tool |
-			Qt::WindowStaysOnTopHint |
-			Qt::WindowTransparentForInput |
-			Qt::WindowDoesNotAcceptFocus | 
-			Qt::NoDropShadowWindowHint;
 
 static QPair<int,int> optimalSize(const QPixmap &pix, int w_thresh, int h_thresh) {
 	QPair<int,int> r;
 	r.first = 0;
 	r.second = 0;
-	
+
+	auto pw = pix.width(),
+	     ph = pix.height();
+
+	if(pw < w_thresh || ph < h_thresh) {
+		r.first = w_thresh;
+		r.second = h_thresh;
+		return r;
+	}
+
 	int w_factor = 2,
 	    h_factor = 2;
 
-	while(pix.width() / w_factor > w_thresh ||
-	      pix.height() / h_factor > h_thresh) {
+	while(pw / w_factor > w_thresh ||
+	      ph / h_factor > h_thresh) {
 		w_factor++;
 		h_factor++;
 	}
 
-	int pw = pix.width() / w_factor;
-	int ph = pix.height() / h_factor;
+	pw = pw / w_factor;
+	ph = ph / h_factor;
 
 	r.first = pw;
 	r.second = ph;
@@ -37,47 +38,23 @@ static QPair<int,int> optimalSize(const QPixmap &pix, int w_thresh, int h_thresh
 }
 
 Spirit::Spirit()
-	: QLabel("", nullptr, flags) {
+	: QLabel("", nullptr, Qt::FramelessWindowHint |
+			      Qt::Tool |
+			      Qt::WindowStaysOnTopHint |
+			      Qt::WindowTransparentForInput |
+			      Qt::WindowDoesNotAcceptFocus | 
+			      Qt::NoDropShadowWindowHint) {
 		
 	setAttribute(Qt::WA_TranslucentBackground, true);
         setAttribute(Qt::WA_TransparentForMouseEvents, true);
 	setAttribute(Qt::WA_ShowWithoutActivating, true);
 	setAttribute(Qt::WA_X11DoNotAcceptFocus, true);
-	setStyleSheet(QString::fromUtf8("background: transparent;"));
+	setStyleSheet(QString::fromUtf8("background: transparent; border: none;"));
 	resize(w, h);
 }
 
 Spirit::~Spirit() {
 	hide();
-}
-
-void Spirit::onTop() {
-#if 0
-	if(windowFlags() == flags) {
-		setWindowFlags(flags ^ Qt::WindowStaysOnTopHint);
-	}
-	show();
-#endif
-}
-
-void Spirit::setHorizontalAlignment(HAlign v) {
-	align = v;
-}
-
-void Spirit::setXOffset(int value) {
-	xoff = value;
-}
-
-void Spirit::setYOffset(int value) {
-	auto sender = qobject_cast<WindowInfo*>(QObject::sender());
-	if(!sender) {
-		guess = false;
-	}else {
-		if(!guess) {
-			return;
-		}
-	}
-	yoff = value;
 }
 
 void Spirit::setWidth(int value) {
@@ -88,55 +65,36 @@ void Spirit::setHeight(int value) {
 	h = value;
 }
 
-void Spirit::setDebug(bool value) {
-	debug = value;
-}
+void Spirit::setGraphic(const QString &file) {
+	QMovie *m = new QMovie(this);
+	m->setFileName(file);
+	m->start();
 
-void Spirit::setGraphic(const QString &file, bool is_png) {
-	hide();
-	QPair<int, int> s;
-
-	if(is_png) {
-		QPixmap pixmap(file);
-		setPixmap(pixmap);
-		setScaledContents(true);
-		s = optimalSize(pixmap, w, h);
-	}else {
-		QMovie *m = new QMovie(this);
-		setMovie(m);
-		m->setFileName(file);
-		m->start();
-
-		auto pix = m->currentPixmap();
-		s = optimalSize(pix, w, h);
-		m->setScaledSize(QSize(s.first, s.second));
-	}	
-	resize(s.first, s.second);
-}
-
-void Spirit::update(int xpos, int ypos, unsigned w, unsigned h) {
-	auto xfinal = xpos;
-
-	if(align == HAlign::Left) {
-		xfinal += int(width()*0.45f);
-	}else if(align == HAlign::Center) {
-		xfinal += int(w/2) - int(width()/2);
-	}else {
-		xfinal += w - width() - int(width()*0.25f);
-	}
+	auto pix = m->currentPixmap();
+	//auto s = optimalSize(pix, w, h);
+	//m->setScaledSize(QSize(s.first, s.second));
 	
-	move(xfinal + xoff, 
-	     ypos - int(height()*0.75f) - yoff);
+	setMovie(m);
+	//resize(s.first, s.second);
+	resize(pix.width(), pix.height());
+}
+
+void Spirit::update(int xpos, int ypos) {
+	move(xpos + 100, ypos - (frameRect().height()) + 46);
 	show();
 
-	if(debug) {
-		qDebug() << "Spirit:: X: "
-			 << x()
-			 << " Y: "
-			 << y();
-	}
-
-	if(y() < 0 || x() < 0) {
-		hide();
-	}
+	/*
+	LOG_START "Spirit::update(" 
+	LOG_REDIR xpos 
+	LOG_REDIR "," 
+	LOG_REDIR ypos 
+	LOG_REDIR "): "
+	LOG_REDIR "Moved x->" 
+	LOG_REDIR x()
+	LOG_REDIR ", y->"
+	LOG_REDIR y()
+	LOG_REDIR "."
+	LOG_END;
+	*/
 }
+

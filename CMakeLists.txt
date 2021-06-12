@@ -11,26 +11,33 @@ find_package(Qt5Core ${MIN_QT_VERSION})
 find_package(Qt5Widgets ${MIN_QT_VERSION})
 find_package(Qt5Network ${MIN_QT_VERSION})
 
+# KWindowSystem
+find_package(KF5WindowSystem)
+
+
 # Include Directories.
 include_directories(.)
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 
+if(ENABLE_DEBUGGING)
+   add_definitions(-DENABLE_DEBUGGING)
+endif()
+
 SET(source)
 list(APPEND source include/termcolor.hpp
-		   include/xdo_wrapper.hpp
-		   include/windowinfo_p.hpp
-		   include/windowinfo.hpp
+		   include/debug_p.hpp
 		   include/helpers_p.hpp
+		   include/activewindowtracker_p.hpp
+		   include/activewindowtracker.hpp
 		   include/spirit.hpp
-		   include/bashrcwriter.hpp
-		   src/bashrcwriter.cc
+		   src/activewindowtracker_p.cc
+		   src/activewindowtracker.cc
 		   src/spirit.cc
-		   src/windowinfo_p.cc
-		   src/windowinfo.cc
 		   src/helpers_p.cc
 		   src/main.cc
 		   resources.qrc)
 
 add_executable(spirit ${source})
-target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network xdo X11)
+target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network)
+target_link_libraries(spirit PUBLIC KF5::WindowSystem)
