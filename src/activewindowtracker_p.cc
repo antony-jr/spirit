@@ -13,13 +13,30 @@ ActiveWindowTrackerPrivate::~ActiveWindowTrackerPrivate() {
 
 void ActiveWindowTrackerPrivate::start() { 
 #ifdef Q_OS_LINUX
+   if(!b_RegisteredTypes) {
+   	qRegisterMetaType<WId>("WId");
+	qRegisterMetaType<NET::Properties>("NET::Properties");
+	qRegisterMetaType<NET::Properties2>("NET::Properties2");
+	b_RegisteredTypes = true;
+   }
    connect(KWindowSystem::self(),
 	   qOverload<WId, NET::Properties, NET::Properties2>(&KWindowSystem::windowChanged),
 	   this,
-	   &ActiveWindowTrackerPrivate::handleWindowChanged,
-	   Qt::DirectConnection);
-#endif // LINUX
+	   &ActiveWindowTrackerPrivate::handleWindowChanged);
 
+   connect(KWindowSystem::self(),
+	   &KWindowSystem::windowRemoved,
+	   this,
+	   &ActiveWindowTrackerPrivate::handleWindowRemoved);
+
+   connect(KWindowSystem::self(),
+	   &KWindowSystem::windowAdded,
+	   this,
+	   &ActiveWindowTrackerPrivate::handleWindowAdded);
+
+   // Initially no signal will be emitted so.
+   handleWindowAdded(KWindowSystem::activeWindow());
+#endif // LINUX
 }
 
 void ActiveWindowTrackerPrivate::stop() {
@@ -30,12 +47,9 @@ void ActiveWindowTrackerPrivate::stop() {
 }
 
 #ifdef Q_OS_LINUX
-void ActiveWindowTrackerPrivate::handleWindowChanged(WId id, 
-						     NET::Properties prop1, 
-						     NET::Properties2 prop2) {
-	Q_UNUSED(prop2);
+void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
 	if(id == KWindowSystem::activeWindow()) {
-	   auto properties = prop1 | NET::WMGeometry | NET::WMState | NET::WMFrameExtents;
+	   auto properties = NET::WMGeometry | NET::WMState | NET::WMFrameExtents;
 
 	   KWindowInfo info(id, properties);
 	   if(!info.valid()) {
@@ -53,8 +67,25 @@ void ActiveWindowTrackerPrivate::handleWindowChanged(WId id,
 	   auto point = geo.topLeft();
 
 	   emit update(point.x(), point.y());
+	   return;
+	}
+	
+	updateActiveWindowX(KWindowSystem::activeWindow());
+}
 
+void ActiveWindowTrackerPrivate::handleWindowChanged(WId id, 
+						     NET::Properties prop1, 
+						     NET::Properties2 prop2) {
+	Q_UNUSED(prop2);
+	Q_UNUSED(prop1);
+	updateActiveWindowX(id);
+}
 
-	}	
+void ActiveWindowTrackerPrivate::handleWindowRemoved(WId id) {
+	updateActiveWindowX(id);	
+}
+
+void ActiveWindowTrackerPrivate::handleWindowAdded(WId id) {
+	updateActiveWindowX(id);
 }
 #endif // LINUX

@@ -43,7 +43,8 @@ Spirit::Spirit()
 			      Qt::WindowStaysOnTopHint |
 			      Qt::WindowTransparentForInput |
 			      Qt::WindowDoesNotAcceptFocus | 
-			      Qt::NoDropShadowWindowHint) {
+			      Qt::NoDropShadowWindowHint |
+			      Qt::X11BypassWindowManagerHint) {
 		
 	setAttribute(Qt::WA_TranslucentBackground, true);
         setAttribute(Qt::WA_TransparentForMouseEvents, true);
