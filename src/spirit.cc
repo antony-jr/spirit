@@ -80,8 +80,10 @@ void Spirit::setGraphic(const QString &file) {
 	resize(pix.width(), pix.height());
 }
 
-void Spirit::update(int xpos, int ypos) {
-	move(xpos + 100, ypos - (frameRect().height()) + 46);
+void Spirit::update(QRect geometry) {
+	auto point = geometry.topLeft();
+
+	move(point.x() + 100, point.y() - (frameRect().height()) + 46);
 	show();
 
 	/*

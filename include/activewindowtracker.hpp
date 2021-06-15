@@ -1,6 +1,7 @@
 #ifndef ACTIVE_WINDOW_TRACKER_HPP
 #define ACTIVE_WINDOW_TRACKER_HPP
 #include <QObject>
+#include <QRect>
 
 class QThread;
 class ActiveWindowTrackerPrivate;
@@ -10,7 +11,7 @@ public:
 	ActiveWindowTracker(QObject *parent = nullptr);
 	~ActiveWindowTracker();
 Q_SIGNALS:
-	void update(int,int);
+	void update(QRect);
 	void hide();
 public Q_SLOTS:
 	void start();

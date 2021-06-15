@@ -1,6 +1,7 @@
 #ifndef ACTIVE_WINDOW_TRACKER_HPP_PRIVATE
 #define ACTIVE_WINDOW_TRACKER_HPP_PRIVATE
 #include <QObject>
+#include <QRect>
 #ifdef Q_OS_LINUX
 # include <kwindowsystem.h>
 # include <kwindowinfo.h>
@@ -24,7 +25,7 @@ private Q_SLOTS:
 #endif // LINUX
 
 Q_SIGNALS:
-	void update(int, int);
+	void update(QRect);
 	void hide();
 
 private:

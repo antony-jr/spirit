@@ -64,9 +64,8 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
 	   }
 	
 	   auto geo = info.frameGeometry();
-	   auto point = geo.topLeft();
 
-	   emit update(point.x(), point.y());
+	   emit update(geo);
 	   return;
 	}
 	

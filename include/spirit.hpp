@@ -1,5 +1,6 @@
 #ifndef SPIRIT_HPP_INCLUDED
 #define SPIRIT_HPP_INCLUDED
+#include <QRect>
 #include <QtWidgets/QLabel>
 
 class Spirit : public QLabel {
@@ -11,8 +12,7 @@ public Q_SLOTS:
 	void setGraphic(const QString&); 
 	void setWidth(int);
 	void setHeight(int);
-	void update(int, int);
-
+	void update(QRect);
 private:
 	int w = 200,
 	    h = 200;
