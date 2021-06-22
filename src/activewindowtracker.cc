@@ -11,6 +11,10 @@ ActiveWindowTracker::ActiveWindowTracker(QObject *parent)
 	worker->start();
 	d->moveToThread(worker);
 
+	connect(d, &ActiveWindowTrackerPrivate::error,
+		this, &ActiveWindowTracker::error,
+		Qt::DirectConnection);
+
 	connect(d, &ActiveWindowTrackerPrivate::update,
 		this, &ActiveWindowTracker::update,
 		Qt::DirectConnection);

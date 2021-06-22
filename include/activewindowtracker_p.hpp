@@ -7,9 +7,14 @@
 # include <kwindowinfo.h>
 #endif // LINUX 
 
+#include "activewindowtrackerenums.hpp"
+
 class ActiveWindowTrackerPrivate : public QObject {
 	Q_OBJECT
 public:
+
+	struct Error : public ActiveWindowTrackerEnums::Error { };
+
 	ActiveWindowTrackerPrivate(QObject *parent = nullptr);
 	~ActiveWindowTrackerPrivate();
 public Q_SLOTS:
@@ -25,6 +30,7 @@ private Q_SLOTS:
 #endif // LINUX
 
 Q_SIGNALS:
+	void error(short);
 	void update(QRect);
 	void hide();
 

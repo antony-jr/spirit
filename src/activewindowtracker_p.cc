@@ -13,6 +13,16 @@ ActiveWindowTrackerPrivate::~ActiveWindowTrackerPrivate() {
 
 void ActiveWindowTrackerPrivate::start() { 
 #ifdef Q_OS_LINUX
+   if(KWindowSystem::platform() != KWindowSystem::Platform::X11) {
+	   /// We need to handle this specially since there is no common api
+	   /// to get active window in wayland, we might need to DE specific stuff
+	   /// which is very painful.
+	   /// For now we will only support GNOME (Wayland) since it supports getting
+	   /// active window via gdbus command.
+	   
+	   emit error(Error::UnSupportedPlatform);
+	   return;
+   }
    if(!b_RegisteredTypes) {
    	qRegisterMetaType<WId>("WId");
 	qRegisterMetaType<NET::Properties>("NET::Properties");

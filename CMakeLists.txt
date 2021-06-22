@@ -28,6 +28,7 @@ SET(source)
 list(APPEND source include/termcolor.hpp
 		   include/debug_p.hpp
 		   include/helpers_p.hpp
+		   include/activewindowtrackerenums.hpp
 		   include/activewindowtracker_p.hpp
 		   include/activewindowtracker.hpp
 		   include/spirit.hpp
