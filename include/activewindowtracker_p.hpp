@@ -7,13 +7,13 @@
 # include <kwindowinfo.h>
 #endif // LINUX 
 
-#include "activewindowtrackerenums.hpp"
+#include "spiritenums.hpp"
 
 class ActiveWindowTrackerPrivate : public QObject {
 	Q_OBJECT
 public:
 
-	struct Error : public ActiveWindowTrackerEnums::Error { };
+	struct Error : public SpiritEnums::ActiveWindowTracker::Error { };
 
 	ActiveWindowTrackerPrivate(QObject *parent = nullptr);
 	~ActiveWindowTrackerPrivate();

@@ -14,6 +14,8 @@ find_package(Qt5Network ${MIN_QT_VERSION})
 # KWindowSystem
 find_package(KF5WindowSystem)
 
+# QArchive
+find_package(QArchive)
 
 # Include Directories.
 include_directories(.)
@@ -26,9 +28,8 @@ endif()
 
 SET(source)
 list(APPEND source include/termcolor.hpp
-		   include/debug_p.hpp
 		   include/helpers_p.hpp
-		   include/activewindowtrackerenums.hpp
+		   include/spiritenums.hpp
 		   include/activewindowtracker_p.hpp
 		   include/activewindowtracker.hpp
 		   include/spirit.hpp
@@ -42,3 +43,4 @@ list(APPEND source include/termcolor.hpp
 add_executable(spirit ${source})
 target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network)
 target_link_libraries(spirit PUBLIC KF5::WindowSystem)
+target_link_libraries(spirit PUBLIC QArchive)

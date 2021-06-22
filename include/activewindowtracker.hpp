@@ -3,14 +3,14 @@
 #include <QObject>
 #include <QRect>
 
-#include "activewindowtrackerenums.hpp"
+#include "spiritenums.hpp"
 
 class QThread;
 class ActiveWindowTrackerPrivate;
 class ActiveWindowTracker : public QObject {
 	Q_OBJECT
 public:
-	struct Error : public ActiveWindowTrackerEnums::Error { };
+	struct Error : public SpiritEnums::ActiveWindowTracker::Error { };
 
 	ActiveWindowTracker(QObject *parent = nullptr);
 	~ActiveWindowTracker();
