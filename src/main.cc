@@ -29,7 +29,27 @@ int main(int ac, char **av) {
 
 	QObject::connect(&tracker, &ActiveWindowTracker::update, &spirit, &Spirit::update);
 	QObject::connect(&tracker, &ActiveWindowTracker::hide, &spirit, &Spirit::hide);
-	
-	tracker.start();
+	QObject::connect(&spirit, &Spirit::initialized, &tracker, &ActiveWindowTracker::start);
+
+	QObject::connect(&spirit, &Spirit::initialized,
+	[&app]() {
+	   qDebug() << "Initialized.";
+	});
+
+	QObject::connect(&tracker, &ActiveWindowTracker::error,
+	[&app](short code) { 
+	   (void)code;
+	   qDebug() << "Active Window Tracker Error.";
+	   app.quit();
+	});
+
+	QObject::connect(&spirit, &Spirit::error,
+	[&app](short code) {
+	   (void)code;
+	   qDebug() << "Spirit Error.";
+	   app.quit();
+	});
+
+	spirit.init();
 	return app.exec();
 }
