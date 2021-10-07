@@ -15,8 +15,27 @@ struct SpiritEnums {
        struct Error {
           enum : short {
 	      NoError = 0,
-	      InvalidSpiritFile
+	      NoSpiritFile,
+	      InvalidSpiritFile,
+	      InvalidSpiritEdition,
+	      CannotFindMetaFile,
+	      CannotParseMetaFile,
+	      SpiritNotCanceled,
+	      CannotGetDefaultAction,
+	      CannotGetAction
           };
+       };
+
+       struct Status {
+	  enum : short {
+	      Idle = 0,
+	      Errored,
+	      Loading,
+	      Parsing,
+	      Animating,
+	      Stopped,
+	      Canceled	      
+	  }; 
        };
    };
 };
