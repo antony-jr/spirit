@@ -9,8 +9,8 @@
 #include "spiritworker_p.hpp"
 #include "helpers_p.hpp"
 
-SpiritWorkerPrivate::SpiritWorkerPrivate(QObject parent)
-    : QObject(parent) {
+SpiritWorkerPrivate::SpiritWorkerPrivate()
+    : QObject() {
     m_Actions.reset(new QHash<QString, Action*>);
     m_Extractor.reset(new QArchive::MemoryExtractor(/*parent=*/nullptr, /*single threaded=*/false));
 
@@ -46,7 +46,7 @@ void SpiritWorkerPrivate::setSpiritFile(const QString &file) {
 }
 
 void SpiritWorkerPrivate::setAction(const QString &ac) {
-   auto keys = m_Actions.keys();
+   auto keys = m_Actions->keys();
    if(!keys.contains(ac)) {
       return;
    }
@@ -56,7 +56,7 @@ void SpiritWorkerPrivate::setAction(const QString &ac) {
 }
 
 void SpiritWorkerPrivate::getActions() {
-   emit actions(m_Actions.keys());
+   emit actions(m_Actions->keys());
 }
 
 void SpiritWorkerPrivate::getCurrentAction() {
@@ -204,7 +204,7 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
 	       emit error(SpiritEnums::Spirit::Error::CannotParseMetaFile);
                output->deleteLater();
                return;
-           }
+          }
            
 	  buffer->close();
 
@@ -224,7 +224,7 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
 	  /// of the .spirit file.
 	  if(edition == "2021") { 
 	     /// The very first edition .spirit (aka. v0.1.0)
-	     animate = parseEdition2021(output);
+	     animate = parseEdition2021(files);
 	     break;
 	  } else {
 	     n_Status = SpiritEnums::Spirit::Status::Errored;
@@ -251,16 +251,14 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
        Action *currentAction = nullptr;
 
        if(!m_CurrentAction.isEmpty()) {
-	 auto v = m_Actions.value(m_CurrentAction, nullptr);
-	 if(v) {
-	    currentAction = v;
-	 }	    
+	 currentAction = m_Actions->value(m_CurrentAction, nullptr);
        }
 
        if(currentAction == nullptr) {
-	  auto v = m_Actions.value("default", nullptr);
+	  auto v = m_Actions->value("default", nullptr);
 	  if(v) {
 	     currentAction = v;
+	     m_CurrentAction = QString::fromUtf8("default");
 	  } else {
 	     /// Cannot get default action.
 	     /// Very unlikely.
@@ -270,7 +268,7 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
 	     emit error(SpiritEnums::Spirit::Error::CannotGetDefaultAction);
 	     return;
 	  }
-       }
+         }
 
        m_AnimationTimer.reset(new QTimer);
        m_AnimationTimer->setInterval(currentAction->interval);
@@ -284,10 +282,12 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
        n_Frame = 0;
        m_AnimationTimer->start();
        
-       n_Status = SpiritEums::Spirit::Status::Animating;
+       n_Status = SpiritEnums::Spirit::Status::Animating;
        emit status(n_Status);
        emit started(m_Meta);
        return;
+    } else {
+       output->deleteLater();
     }
 
     /// No valid meta.json file found in the archive.
@@ -319,7 +319,7 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
 /// Animation Loop
 //---
 void SpiritWorkerPrivate::animationLoop() {
-   auto currentAction = m_Actions.value(m_CurrentAction, nullptr);
+   auto currentAction = m_Actions->value(m_CurrentAction, nullptr);
    if(!currentAction) {
       m_AnimationTimer->stop();
       n_Status = SpiritEnums::Spirit::Status::Errored;
@@ -332,11 +332,13 @@ void SpiritWorkerPrivate::animationLoop() {
       auto range = (currentAction->frame_order).at(n_FrameUnit); 
       auto currentFrame = range.first + n_Frame;
 
-      if(currentFrame > range.second) {
+      if(currentFrame > range.second && range.second != -1) {
 	 n_Frame = 0;
 	 ++n_FrameUnit;
 	 return;
       }
+
+      qDebug() << currentFrame;
 
       if(currentFrame > (currentAction->frames).size()) {
 	 if(range.second == -1) {
@@ -379,7 +381,7 @@ void SpiritWorkerPrivate::animationLoop() {
 //---
 
 /// Edition 2021 (v0.1.0 spirit file spec)
-bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *output) {
+bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &files) {
     QHash<QString, int> frame_count;
     QHash<QString, QBuffer*> audio_entry;
     QHash<QString, QBuffer*> audio_buffers;
@@ -404,12 +406,10 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
         auto fileName = info.value("FileName").toString();
         auto fileNameParts = fileName.split("/");
 
-
         if(fileNameParts.size() == 0) { // Highly unlikely event.
             n_Status = SpiritEnums::Spirit::Status::Errored;
 	    emit status(n_Status);
 	    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-            output->deleteLater();
             return false;
         }
 
@@ -421,17 +421,15 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
                 n_Status = SpiritEnums::Spirit::Status::Errored;
 	    	emit status(n_Status);
 	        emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                output->deleteLater();
                 return false;
             } else {
-                /// Parse the json file.
-                QBuffer *buffer = (*iter).buffer();
+                /// Parse the json file. 
+	        QBuffer *buffer = (*iter).buffer();
 
                 if(!buffer->open(QIODevice::ReadOnly)) {
                     n_Status = SpiritEnums::Spirit::Status::Errored;
 	    	    emit status(n_Status);
 		    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                    output->deleteLater();
                     return false;
                 }
 
@@ -442,7 +440,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
                     n_Status = SpiritEnums::Spirit::Status::Errored;
 		    emit status(n_Status); 
 		    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                    output->deleteLater();
                     return false;
                 }
                 buffer->close();
@@ -471,7 +468,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 		emit status(n_Status);
 
                 emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                output->deleteLater();
                 return false;
             }
         }
@@ -479,15 +475,15 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 
     /// Store the meta information 
     /// for later use.
-    QJsonObject meta {
+    QJsonObject meta_head {
        { "name" , meta.value("name").toString() },
        { "edition", "2021" },
        { "version", meta.value("version").toString() },
        { "author", meta.value("author").toString() }, 
-       { "copyright", meta.value("copyright").toString() }
-       { "positions", meta.value("positions").toString() }
+       { "copyright", meta.value("copyright").toString() },
+       { "positions", meta.value("positions").toObject() }
     };
-    m_Meta = meta;
+    m_Meta = meta_head;
 
     /// Now check the json file.
     if(!meta.contains("name") ||
@@ -498,7 +494,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 	emit status(n_Status);
 
         emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-        output->deleteLater();
         return false;
     }
 
@@ -511,7 +506,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 	    emit status(n_Status);
 
 	    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-            output->deleteLater();
             return false;
         }
 
@@ -519,7 +513,7 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
                 end = json_actions.end();
                 iter != end;
                 ++iter) {
-	    QCoreApplication::processEvent();
+	    QCoreApplication::processEvents();
             if(b_CancelRequested) {
                 clear();
                 return false;
@@ -529,7 +523,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 	    	emit status(n_Status);
 
 	        emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                output->deleteLater();
                 return false;
             }
         }
@@ -542,7 +535,7 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
                 iter != end;
                 ++iter) {
             // Check if cancel requested
-	   QCoreApplication::processEvents();
+	    QCoreApplication::processEvents();
             if(b_CancelRequested) {
                 clear();
                 return false;
@@ -555,7 +548,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 	    	emit status(n_Status);
 
 	       	emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                output->deleteLater();
                 return false;
             }
 
@@ -566,7 +558,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 	    	    emit status(n_Status);
 
 		    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                    output->deleteLater();
                     return false;
                 } else {
                     audio_entry.insert(*iter, audio_buffers.value(object.value("play").toString() + ".mp3"));
@@ -590,8 +581,10 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 	       if(msecs > 0) {
 		  interval_entry.insert(*iter, msecs);
 	       } else {
-		  interval_entry.insert(*iter, 500);
+		  interval_entry.insert(*iter, 200);
 	       }
+	    } else {
+	       interval_entry.insert(*iter, 200);
 	    }
 
 	    if(object.contains("next")) {
@@ -620,7 +613,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 		    emit status(n_Status);
 
 		    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                    output->deleteLater();
                     return false;
                 }
 
@@ -631,7 +623,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 	    		emit status(n_Status);
 
 		        emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                        output->deleteLater();
                         return false;
                     }
                 } else {
@@ -651,7 +642,6 @@ bool SpiritWorkerPrivate::parseEdition2021(QArchive::MemoryExtractorOutput *outp
 	    		emit status(n_Status);
 
 		        emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                        output->deleteLater();
                         return false;
                     }
 

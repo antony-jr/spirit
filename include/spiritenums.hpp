@@ -12,6 +12,15 @@ struct SpiritEnums {
    };
 
    struct Spirit {
+       struct Position {
+	enum : short {
+	  TopRight = 0,
+	  TopLeft,
+	  BottomRight,
+	  BottomLeft	  
+	};
+       };
+
        struct Error {
           enum : short {
 	      NoError = 0,

@@ -1,19 +1,19 @@
 #ifndef SPIRIT_WORKER_HPP_INCLUDED
 #define SPIRIT_WORKER_HPP_INCLUDED
 #include <QRect>
-#include <QWidget>
+#include <QJsonObject>
+#include <QBuffer>
 #include <QThread>
-#include <QScopedPointer>
 
-#include "spirtworker_p.hpp"
 #include "spiritenums.hpp"
 
+class SpiritWorkerPrivate;
 class SpiritWorker : public QObject {
 	Q_OBJECT
 public:
-	struct Error : SpiritEnums::Spirit::Error { };
-	struct Status : SpiritEnums::Spirit::Status { };
-
+	struct Error : public SpiritEnums::Spirit::Error { };
+	struct Status : public SpiritEnums::Spirit::Status { };
+	
 	SpiritWorker(QObject *parent = nullptr);
 	~SpiritWorker();
 
@@ -80,8 +80,8 @@ Q_SIGNALS:
 	void info(QJsonObject);
 
 private:
-	QScopedPointer<QThread> m_WorkerThread;
-	QScopedPointer<SpiritWorkerPrivate> m_Worker;
+	QThread *m_WorkerThread;
+	SpiritWorkerPrivate *m_Worker;
 };
 
 #endif // SPIRIT_WORKER_HPP_INCLUDED

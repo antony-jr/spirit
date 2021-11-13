@@ -1,53 +1,40 @@
 #ifndef SPIRIT_HPP_INCLUDED
 #define SPIRIT_HPP_INCLUDED
 #include <QRect>
-#include <QWidget>
-#include <QHash>
-#include <QScopedPointer>
-#include <QArchive/QArchive>
+#include <QPixmap>
+#include <QLabel>
+#include <QBuffer>
 
 #include "spiritenums.hpp"
 
-class Spirit : public QWidget {
+/// This is the GUI Widget for 
+/// the spirit.
+/// This runs in the main thread and all 
+/// heavy lifting is done in the spirit worker which
+/// runs all calculations and parsing in a separate 
+/// thread.
+class Spirit : public QLabel {
 	Q_OBJECT
 public:
-	struct Error : SpiritEnums::Spirit::Error { };
+	struct Position : public SpiritEnums::Spirit::Position { };
 
-	Spirit(const QString&);
+	Spirit();
 	~Spirit();
-
 public Q_SLOTS:
-	void init();
-	void update(QRect);
+   	void setPosition(short);
+	void setYOffset(int);
 
-private Q_SLOTS:
-	void doInit();
-	void handleArchiveError(short);
-	void handleArchiveContents(QArchive::MemoryExtractorOutput*);
-
-Q_SIGNALS:
-	void initialized();
-	void error(short);
+   	// Moves the widget to the given rect.
+   	void update(QRect);
+	
+	// Given a frame, draw it. 
+	void capture(QBuffer*);
 private:
-	struct Action {
-	   QString action;
-	   QVector<QBuffer*> frames;
-	   QVector<QPair<int, int>> frame_order;
-	   QBuffer *play = nullptr;
-	   bool loop = false;
-	};
-private:
-	/// All data required for a spirit is in the .spirit file which is a 
-	/// ZIP file with a specific directory structure. 
-	QString m_SpiritPath;
-	QScopedPointer<QArchive::MemoryExtractorOutput> m_Spirit;
-	QJsonObject meta;
+	short n_Position = Position::TopLeft;
+	int n_YOff = -1,
+	    n_XOff = -1;
 
-	QScopedPointer<QArchive::MemoryExtractor> m_Extractor;
-
-
-	/// Actions 
-	QScopedPointer<QHash<QString, Action*>> m_Actions;
+	QPixmap m_CurrentFrame;
 };
 
 #endif // SPIRIT_HPP_INCLUDED

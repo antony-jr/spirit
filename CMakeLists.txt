@@ -32,9 +32,13 @@ list(APPEND source include/termcolor.hpp
 		   include/spiritenums.hpp
 		   include/activewindowtracker_p.hpp
 		   include/activewindowtracker.hpp
+		   include/spiritworker_p.hpp
+		   include/spiritworker.hpp
 		   include/spirit.hpp
 		   src/activewindowtracker_p.cc
 		   src/activewindowtracker.cc
+		   src/spiritworker_p.cc
+		   src/spiritworker.cc
 		   src/spirit.cc
 		   src/helpers_p.cc
 		   src/main.cc

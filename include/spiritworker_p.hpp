@@ -1,16 +1,19 @@
 #ifndef SPIRIT_WORKER_PRIVATE_HPP_INCLUDED
 #define SPIRIT_WORKER_PRIVATE_HPP_INCLUDED
+#include <QObject>
 #include <QRect>
 #include <QWidget>
 #include <QHash>
-#include <QMutex>
+#include <QBuffer>
+#include <QTimer>
+#include <QJsonObject>
 #include <QScopedPointer>
 #include <QArchive/QArchive>
 
 class SpiritWorkerPrivate : public QObject {
 	Q_OBJECT
 public:
-	SpiritWorkerPrivate(QObject *parent = nullptr);
+	SpiritWorkerPrivate();
 	~SpiritWorkerPrivate();
 
 public Q_SLOTS:
@@ -26,6 +29,7 @@ public Q_SLOTS:
 
 private Q_SLOTS:
    	void handleProgress();
+	void handleArchiveStarted();
 	void handleArchiveCancel();
    	void handleArchiveError(short);
 	void handleArchiveContents(QArchive::MemoryExtractorOutput*);
@@ -42,7 +46,7 @@ private Q_SLOTS:
 	 *
 	 * 1. 2021 (aka. v0.1.0)
 	 */
-	bool parseEdition2021(QArchive::MemoryExtractorOutput*);
+	bool parseEdition2021(const QVector<QArchive::MemoryFile>&);
 
 private:
 	void clear(bool emitCanceled = true);
