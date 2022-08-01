@@ -54,22 +54,24 @@ void Spirit::update(QRect geometry) {
      x = point.x();
      y = point.y();
 
-     x = x + frameGeometry().width() - w;
+     x = x + frameGeometry().width() - (w*2);
      y = y - frameGeometry().height() + (n_YOff < 0 ? 0 : n_YOff);
    } else if(n_Position == Position::BottomLeft) {
      point = geometry.bottomLeft();
      x = point.x();
      y = point.y();
-     
-     x += w;
-     y = y + frameGeometry().height() - h + (n_YOff < 0 ? 0 : n_YOff); 
+ 
+     x = x - frameGeometry().width() + w;
+     y = y - frameGeometry().height() - (n_YOff < 0 ? 0 : n_YOff); 
+  
    } else if(n_Position == Position::BottomRight) {
      point = geometry.bottomRight();
      x = point.x();
      y = point.y();
 
-     x = x + frameGeometry().width() - w;
-     y = y + frameGeometry().height() - h + (n_YOff < 0 ? 0 : n_YOff); 
+     x = x - frameGeometry().width() - (w/2);
+     y = y - frameGeometry().height() - (n_YOff < 0 ? 0 : n_YOff); 
+
    } else {
       x += w; 
       y = y - frameGeometry().height() + (n_YOff < 0 ? 0 : n_YOff);

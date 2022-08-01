@@ -35,7 +35,8 @@ int main(int ac, char **av) {
 	      qDebug() << "Started.";
 	      auto positions = info["positions"].toObject();
 	      spirit.setYOffset(positions["yoff-px"].toInt());
-              tracker.start();	      
+              //spirit.setPosition(Spirit::Position::TopRight);
+	      tracker.start();	      
 	});
 	
 
