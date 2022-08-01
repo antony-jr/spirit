@@ -11,6 +11,34 @@ struct SpiritEnums {
       };
    };
 
+   struct SpiritFile {
+      struct Error {
+       enum : short {
+	 NoError = 0,
+	 NoSpiritFile,
+	 InvalidSpiritFile,
+	 InvalidSpiritEdition,
+	 CannotFindMetaFile,
+	 CannotParseMetaFile,
+	 SpiritNotCanceled,
+	 CannotGetDefaultAction,
+	 CannotGetAction
+       };
+      };
+
+      struct Status {
+	  enum : short {
+	      Idle = 0,
+	      Errored,
+	      Loading,
+	      Parsing,
+	      Loaded,
+	      Canceled	      
+	  }; 
+       };
+
+   };
+
    struct Spirit {
        struct Position {
 	enum : short {
@@ -23,27 +51,14 @@ struct SpiritEnums {
 
        struct Error {
           enum : short {
-	      NoError = 0,
-	      NoSpiritFile,
-	      InvalidSpiritFile,
-	      InvalidSpiritEdition,
-	      CannotFindMetaFile,
-	      CannotParseMetaFile,
-	      SpiritNotCanceled,
-	      CannotGetDefaultAction,
-	      CannotGetAction
+	      NoError = 0
           };
        };
 
        struct Status {
 	  enum : short {
 	      Idle = 0,
-	      Errored,
-	      Loading,
-	      Parsing,
-	      Animating,
-	      Stopped,
-	      Canceled	      
+	      Errored
 	  }; 
        };
    };

@@ -12,7 +12,10 @@ SpiritWorker::SpiritWorker(QObject *parent)
 
    connect(m_Worker, &SpiritWorkerPrivate::status,
 	   this, &SpiritWorker::status, Qt::DirectConnection);
-   
+  
+   connect(m_Worker, &SpiritWorkerPrivate::initialized,
+	   this, &SpiritWorker::initialized, Qt::DirectConnection);
+
    connect(m_Worker, &SpiritWorkerPrivate::started,
 	   this, &SpiritWorker::started, Qt::DirectConnection);
    
@@ -22,17 +25,11 @@ SpiritWorker::SpiritWorker(QObject *parent)
    connect(m_Worker, &SpiritWorkerPrivate::error,
 	   this, &SpiritWorker::error, Qt::DirectConnection);
   
-   connect(m_Worker, &SpiritWorkerPrivate::frame,
-	   this, &SpiritWorker::frame, Qt::DirectConnection);
-   
    connect(m_Worker, &SpiritWorkerPrivate::actions,
 	   this, &SpiritWorker::actions, Qt::DirectConnection);
 
    connect(m_Worker, &SpiritWorkerPrivate::action,
 	   this, &SpiritWorker::action, Qt::DirectConnection);
-
-   connect(m_Worker, &SpiritWorkerPrivate::actionChanged,
-	   this, &SpiritWorker::actionChanged, Qt::DirectConnection);
 
    connect(m_Worker, &SpiritWorkerPrivate::info,
 	   this, &SpiritWorker::info, Qt::DirectConnection);
@@ -80,8 +77,8 @@ void SpiritWorker::getInfo() {
       .invoke(m_Worker, Qt::QueuedConnection);
 }
 
-void SpiritWorker::start() {
-   getMethod(m_Worker, "start()")
+void SpiritWorker::init() {
+   getMethod(m_Worker, "init()")
       .invoke(m_Worker, Qt::QueuedConnection);
 }
 

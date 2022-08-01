@@ -16,11 +16,22 @@ Spirit::Spirit()
 	setAttribute(Qt::WA_ShowWithoutActivating, true);
 	setAttribute(Qt::WA_X11DoNotAcceptFocus, true);
 	setStyleSheet(QString::fromUtf8("background: transparent; border: none;"));
+
+	m_Movie.reset(new QMovie);
+	setMovie(m_Movie.data());
 }
 
 Spirit::~Spirit() {
    disconnect();
    hide();
+}
+
+void Spirit::setScale(int scale) {
+   n_Scale = scale;
+}
+
+void Spirit::setSpeed(int speed) {
+   n_Speed = speed;
 }
 
 void Spirit::setPosition(short pos) {
@@ -31,11 +42,7 @@ void Spirit::setYOffset(int yoff) {
    n_YOff = yoff;
 }
 
-#include <QDebug> 
-
 void Spirit::update(QRect geometry) {
-   qDebug() << "update";
-
    auto point = geometry.topLeft();
    auto w = width() + 40;
    auto h = height();
@@ -72,25 +79,31 @@ void Spirit::update(QRect geometry) {
    show();
 }
 
-void Spirit::capture(QBuffer *data) {
-   /// The QBuffer pointer ownership is not with us so don't free 
-   /// it.
+void Spirit::animate(QString action, 
+	      	     QBuffer *buffer,
+	      	     QBuffer *play,
+	      	     bool loop,
+		     int scale,
+		     int speed,
+		     QString nxt) {
+  b_Loop = loop;
+  n_Scale = scale;
+  n_Speed = speed;
+  m_Next = nxt;
 
-   qDebug() << "capture";
+  m_Movie->stop();
+  m_Movie->setDevice(buffer);
+  m_Movie->setSpeed(n_Speed); 
+  m_Movie->start();
+}
 
-   data->open(QIODevice::ReadOnly);
+void Spirit::handleMovieStarted() {
 
-   auto bytes = data->readAll();
-   QPixmap pix;
-   pix.loadFromData(bytes);
+}
 
-   data->close();
-
-   if(width() != pix.width() ||
-	height() != pix.height()) {
-      resize(pix.width(), pix.height());
+void Spirit::handleMovieFinished() {
+   if(!b_Loop) {
+      //m_Movie->stop();
+      emit requestAction(m_Next);
    }
-
-   clear();
-   setPixmap(pix);
 }

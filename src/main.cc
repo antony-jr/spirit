@@ -24,17 +24,17 @@ int main(int ac, char **av) {
 	worker.setSpiritFile(":default.spirit");
 	ActiveWindowTracker tracker;
 
-	QObject::connect(&worker, &SpiritWorker::frame, &spirit, &Spirit::capture, Qt::QueuedConnection);
-
+	QObject::connect(&worker, &SpiritWorker::action, &spirit, &Spirit::animate, Qt::QueuedConnection);
+	QObject::connect(&spirit, &Spirit::requestAction, &worker, &SpiritWorker::setAction, Qt::QueuedConnection);
 
 	QObject::connect(&tracker, &ActiveWindowTracker::update, &spirit, &Spirit::update, Qt::QueuedConnection);
 
 	QObject::connect(&tracker, &ActiveWindowTracker::hide, &spirit, &Spirit::hide, Qt::QueuedConnection);
 
-	QObject::connect(&worker, &SpiritWorker::started, [&tracker, &spirit](QJsonObject info) {
+	QObject::connect(&worker, &SpiritWorker::initialized, [&tracker, &spirit](QJsonObject info) {
 	      qDebug() << "Started.";
 	      auto positions = info["positions"].toObject();
-	      spirit.setYOffset(positions["yoff"].toInt());
+	      spirit.setYOffset(positions["yoff-px"].toInt());
               tracker.start();	      
 	});
 	
@@ -58,6 +58,6 @@ int main(int ac, char **av) {
 	   qDebug() << "STATUS:: " << code;
 	});
 
-	worker.start();
+	worker.init();	
 	return app.exec();
 }

@@ -21,7 +21,7 @@ public Q_SLOTS:
 	void getCurrentAction();
 	void getInfo();
 
-   	void start();
+	void init();
 	void cancel();
 
 	void setSpiritFile(const QString&);
@@ -33,10 +33,6 @@ private Q_SLOTS:
 	void handleArchiveCancel();
    	void handleArchiveError(short);
 	void handleArchiveContents(QArchive::MemoryExtractorOutput*);
-
-	/// Animation Loop
-	void animationLoop();
-
 
 	/*
 	 * Different Parsing Methods for 
@@ -52,44 +48,42 @@ private:
 	void clear(bool emitCanceled = true);
 
 Q_SIGNALS:
-	/// Gives the current frame to 
+	/// Gives the current webp to 
 	/// to display in binary.
-	/// Assume this binary is a image file.
-	void frame(QBuffer*);
-
+	/// Assume this binary is a webp file.
+	void  action(QString /*current action name*/,
+	      	     QBuffer* /*current webp file*/,
+	      	     QBuffer* /*audio file if given else nullptr*/,
+	      	     bool /*loop*/,
+		     int /*scale percentage*/,
+		     int /*speed percentage*/,
+		     QString /*next action if available*/);
+	
 	void status(short);
 
-	/// Emitted with basic info about rendering
-	/// the spirit like y offset.
-	void started(QJsonObject);
+	void initialized(QJsonObject);
+	void started();
 	void canceled();	
 	void error(short);
 	void actions(QList<QString>);
-	void action(QString);
-	void actionChanged(QString);
 	void info(QJsonObject);
 private:
 	struct Action {
 	   QString action;
-	   QString next_action; /// Optional 
-	   QVector<QBuffer*> frames;
-	   QVector<QPair<int, int>> frame_order;
-	   int interval = 500; // Interval in msecs.
+	   QString next_action; /// Optional
+	   QBuffer *buffer = nullptr; 
 	   QBuffer *play = nullptr;
 	   bool loop = false;
+	   int speed = 100;
+	   int scale = 100;
 	};
 
 private:
 	QJsonObject m_Meta;
 	short n_Status = 0; /// 0 => Idle (Always).
 	bool b_CancelRequested = false;
-	QString m_CurrentAction;
-
-	/// Animation State
-	/// ---
-	int n_FrameUnit = 0; // Which frame order to use.
-	int n_Frame = 0; // Which frame in the frame range 
-	QScopedPointer<QTimer> m_AnimationTimer;
+	QString m_CurrentActionId;
+	Action *m_CurrentAction = nullptr;
 
 	/// All data required for a spirit is in the .spirit file which is a 
 	/// ZIP file with a specific directory structure. 

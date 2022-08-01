@@ -42,6 +42,8 @@ list(APPEND source include/termcolor.hpp
 		   src/spirit.cc
 		   src/helpers_p.cc
 		   src/main.cc
+
+		   # Resources
 		   resources.qrc)
 
 add_executable(spirit ${source})

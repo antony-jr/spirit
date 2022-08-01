@@ -35,9 +35,9 @@ SpiritWorkerPrivate::~SpiritWorkerPrivate() {
 }
 
 void SpiritWorkerPrivate::setSpiritFile(const QString &file) {
-    if(n_Status != SpiritEnums::Spirit::Status::Idle &&
-            n_Status != SpiritEnums::Spirit::Status::Canceled) {
-        emit error(SpiritEnums::Spirit::Error::SpiritNotCanceled);
+    if(n_Status != SpiritEnums::SpiritFile::Status::Idle &&
+            n_Status != SpiritEnums::SpiritFile::Status::Canceled) {
+        emit error(SpiritEnums::SpiritFile::Error::SpiritNotCanceled);
         return;
     }
 
@@ -50,9 +50,14 @@ void SpiritWorkerPrivate::setAction(const QString &ac) {
    if(!keys.contains(ac)) {
       return;
    }
-   n_Frame = 0;
-   m_CurrentAction = ac;
-   emit actionChanged(m_CurrentAction);
+   m_CurrentActionId = ac;
+   m_CurrentAction = m_Actions->value(m_CurrentActionId, m_CurrentAction);
+   if(m_CurrentActionId != m_CurrentAction->action) {
+      m_CurrentActionId = m_CurrentAction->action;
+   }
+
+   // Emit action when current action is changed.
+   getCurrentAction();
 }
 
 void SpiritWorkerPrivate::getActions() {
@@ -60,38 +65,47 @@ void SpiritWorkerPrivate::getActions() {
 }
 
 void SpiritWorkerPrivate::getCurrentAction() {
-   emit action(m_CurrentAction.isEmpty() ? "default" : 
-	       m_CurrentAction);
+   if(!m_CurrentAction) {
+      return;
+   }
+
+   emit action(m_CurrentAction->action,
+	 m_CurrentAction->buffer,
+	 m_CurrentAction->play,
+	 m_CurrentAction->loop,
+	 m_CurrentAction->scale,
+	 m_CurrentAction->speed,
+	 m_CurrentAction->next_action);
 }
 
 void SpiritWorkerPrivate::getInfo() {
    emit info(m_Meta);
 }
 
-void SpiritWorkerPrivate::start() {
-    if(n_Status == SpiritEnums::Spirit::Status::Loading ||
-            n_Status == SpiritEnums::Spirit::Status::Parsing ||
-            n_Status == SpiritEnums::Spirit::Status::Animating) {
+void SpiritWorkerPrivate::init() {
+    if(n_Status == SpiritEnums::SpiritFile::Status::Loading ||
+            n_Status == SpiritEnums::SpiritFile::Status::Parsing ||
+            n_Status == SpiritEnums::SpiritFile::Status::Loaded) {
         return;
     }
 
     if(m_SpiritPath.isEmpty()) {
-        emit error(SpiritEnums::Spirit::Error::NoSpiritFile);
+        emit error(SpiritEnums::SpiritFile::Error::NoSpiritFile);
         return;
     }
 
     m_Extractor->setArchive(m_SpiritPath);
     m_Extractor->start();
-    n_Status = SpiritEnums::Spirit::Status::Loading;
+    n_Status = SpiritEnums::SpiritFile::Status::Loading;
     emit status(n_Status);
 }
 
 void SpiritWorkerPrivate::cancel() {
-    if(b_CancelRequested || n_Status == SpiritEnums::Spirit::Status::Idle ||
-            n_Status == SpiritEnums::Spirit::Status::Canceled) {
+    if(b_CancelRequested || n_Status == SpiritEnums::SpiritFile::Status::Idle ||
+            n_Status == SpiritEnums::SpiritFile::Status::Canceled) {
         return;
     }
-    if(n_Status == SpiritEnums::Spirit::Status::Stopped || n_Status == SpiritEnums::Spirit::Status::Errored) {
+    if(n_Status == SpiritEnums::SpiritFile::Status::Errored) {
         clear();
         return;
     }
@@ -101,10 +115,7 @@ void SpiritWorkerPrivate::cancel() {
 void SpiritWorkerPrivate::clear(bool emitCanceled) {
     b_CancelRequested = false;
     b_IsExtractorRunning = false;
-    n_Status = SpiritEnums::Spirit::Status::Idle;
-    n_Frame = 0;
-    n_FrameUnit = 0;
-    m_AnimationTimer.reset(nullptr);
+    n_Status = SpiritEnums::SpiritFile::Status::Idle;
     m_Spirit.reset(nullptr);
     m_Extractor->clear();
     m_SpiritPath.clear();
@@ -119,7 +130,7 @@ void SpiritWorkerPrivate::clear(bool emitCanceled) {
     }
 
     if(emitCanceled) {
-        n_Status = SpiritEnums::Spirit::Status::Canceled;
+        n_Status = SpiritEnums::SpiritFile::Status::Canceled;
         emit status(n_Status);
     }
 }
@@ -150,12 +161,12 @@ void SpiritWorkerPrivate::handleArchiveError(short code) {
         return;
     }
     b_IsExtractorRunning = false;
-    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+    emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
 }
 
 void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput *output) {
     b_IsExtractorRunning = false;
-    n_Status = SpiritEnums::Spirit::Status::Parsing;
+    n_Status = SpiritEnums::SpiritFile::Status::Parsing;
     emit status(n_Status);
 
     /// Check if cancel was requested.
@@ -186,10 +197,10 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
           QBuffer *buffer = (*iter).buffer();
 
           if(!buffer->open(QIODevice::ReadOnly)) {
-             n_Status = SpiritEnums::Spirit::Status::Errored;
+             n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	     emit status(n_Status);
 
-	     emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+	     emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
              output->deleteLater();
              return;
           }
@@ -198,10 +209,10 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
           auto document = QJsonDocument::fromJson(buffer->readAll(), &e);
 	  
 	  if(e.error != QJsonParseError::NoError || !document.isObject()) {
-               n_Status = SpiritEnums::Spirit::Status::Errored;
+               n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	       emit status(n_Status);
 
-	       emit error(SpiritEnums::Spirit::Error::CannotParseMetaFile);
+	       emit error(SpiritEnums::SpiritFile::Error::CannotParseMetaFile);
                output->deleteLater();
                return;
           }
@@ -210,10 +221,10 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
 
           auto meta = document.object();
 	  if(!meta.contains("edition")) {
-	     n_Status = SpiritEnums::Spirit::Status::Errored;
+	     n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	     emit status(n_Status);
 
-	     emit error(SpiritEnums::Spirit::Error::InvalidSpiritEdition);
+	     emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritEdition);
 	     output->deleteLater();
 	     return;
 	  }
@@ -227,10 +238,10 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
 	     animate = parseEdition2021(files);
 	     break;
 	  } else {
-	     n_Status = SpiritEnums::Spirit::Status::Errored;
+	     n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	     emit status(n_Status);
  
-	     emit error(SpiritEnums::Spirit::Error::InvalidSpiritEdition);
+	     emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritEdition);
 	     output->deleteLater();
 	     return;
 	  }
@@ -243,155 +254,60 @@ void SpiritWorkerPrivate::handleArchiveContents(QArchive::MemoryExtractorOutput 
        //// memory since we will be using it later on.
        m_Spirit.reset(output);
 
-
-       //// Start Animation.
        // Get the current action to 
        // animate.
 
-       Action *currentAction = nullptr;
+       m_CurrentAction = nullptr;
 
-       if(!m_CurrentAction.isEmpty()) {
-	 currentAction = m_Actions->value(m_CurrentAction, nullptr);
+       if(!m_CurrentActionId.isEmpty()) {
+	 m_CurrentAction = m_Actions->value(m_CurrentActionId, nullptr);
        }
 
-       if(currentAction == nullptr) {
+       if(m_CurrentAction == nullptr) {
 	  auto v = m_Actions->value("default", nullptr);
 	  if(v) {
-	     currentAction = v;
-	     m_CurrentAction = QString::fromUtf8("default");
+	     m_CurrentAction = v;
+	     m_CurrentActionId = QString::fromUtf8("default");
 	  } else {
 	     /// Cannot get default action.
 	     /// Very unlikely.
-	     n_Status = SpiritEnums::Spirit::Status::Errored;
+	     n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	     emit status(n_Status);
 
-	     emit error(SpiritEnums::Spirit::Error::CannotGetDefaultAction);
+	     emit error(SpiritEnums::SpiritFile::Error::CannotGetDefaultAction);
 	     return;
 	  }
-         }
+       }
 
-       m_AnimationTimer.reset(new QTimer);
-       m_AnimationTimer->setInterval(currentAction->interval);
-       m_AnimationTimer->setSingleShot(false);
-
-       connect(m_AnimationTimer.data(), &QTimer::timeout,
-	        this, &SpiritWorkerPrivate::animationLoop);
-
-
-       n_FrameUnit = 0;
-       n_Frame = 0;
-       m_AnimationTimer->start();
-       
-       n_Status = SpiritEnums::Spirit::Status::Animating;
+       n_Status = SpiritEnums::SpiritFile::Status::Loaded;
        emit status(n_Status);
-       emit started(m_Meta);
+       emit initialized(m_Meta);
+       
+       getCurrentAction();
        return;
     } else {
        output->deleteLater();
     }
 
     /// No valid meta.json file found in the archive.
-    if(n_Status != SpiritEnums::Spirit::Status::Errored &&
-       n_Status != SpiritEnums::Spirit::Status::Canceled) {
+    if(n_Status != SpiritEnums::SpiritFile::Status::Errored &&
+       n_Status != SpiritEnums::SpiritFile::Status::Canceled) {
      /// Only emit error in case no error was emitted previously. 
-     n_Status = SpiritEnums::Spirit::Status::Errored;
+     n_Status = SpiritEnums::SpiritFile::Status::Errored;
      emit status(n_Status);
-     emit error(SpiritEnums::Spirit::Error::CannotFindMetaFile);
+     emit error(SpiritEnums::SpiritFile::Error::CannotFindMetaFile);
     }
-
-#if 0
-    for(auto iter = m_Actions->begin(),
-            end = m_Actions->end();
-            iter != end;
-            ++iter) {
-        qDebug() << iter.key() << ": ";
-        if((iter.value())->play) {
-            qDebug() << "Play size:: " << (iter.value())->play->size();
-        }
-        qDebug() << "Frames:: " << (iter.value())->frames.size();
-        qDebug() << "Frame Order:: " << (iter.value())->frame_order;
-        qDebug() << "Loop:: " << (iter.value())->loop;
-        qDebug() << "---\n";
-    }
-#endif
 }
-
-/// Animation Loop
-//---
-void SpiritWorkerPrivate::animationLoop() {
-   auto currentAction = m_Actions->value(m_CurrentAction, nullptr);
-   if(!currentAction) {
-      m_AnimationTimer->stop();
-      n_Status = SpiritEnums::Spirit::Status::Errored;
-      emit status(n_Status);
-      emit error(SpiritEnums::Spirit::Error::CannotGetAction);
-      return;
-   }
-
-   if(n_FrameUnit < (currentAction->frame_order).size()) {
-      auto range = (currentAction->frame_order).at(n_FrameUnit); 
-      auto currentFrame = range.first + n_Frame;
-
-      if(currentFrame > range.second && range.second != -1) {
-	 n_Frame = 0;
-	 ++n_FrameUnit;
-	 return;
-      }
-
-      qDebug() << currentFrame;
-
-      if(currentFrame > (currentAction->frames).size()) {
-	 if(range.second == -1) {
-	    n_Frame = 0;
-	    return;
-	 }
-	 m_AnimationTimer->stop();
-      	 n_Status = SpiritEnums::Spirit::Status::Errored;
-      	 emit status(n_Status);
-         emit error(SpiritEnums::Spirit::Error::CannotGetAction);
-	 return;
-      }
-
-      QBuffer *buffer = (currentAction->frames).at(currentFrame);
-      emit frame(buffer);
-
-      ++n_Frame;
-   } else {
-      if(currentAction->loop) {
-	 n_Frame = 0;
-	 n_FrameUnit = 0;
-	 return;
-      }
-
-      if(!((currentAction->next_action).isEmpty()) && 
-	    m_Actions->contains(currentAction->next_action)) {
-	setAction(currentAction->next_action);
-	return;
-      }
-
-      m_AnimationTimer->stop();
-      n_Status = SpiritEnums::Spirit::Status::Stopped;
-      emit status(n_Status);
-      return;
-   }
-}
-
 
 //// Parse Method for Different Editions of .spirit file
 //---
 
 /// Edition 2021 (v0.1.0 spirit file spec)
 bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &files) {
-    QHash<QString, int> frame_count;
-    QHash<QString, QBuffer*> audio_entry;
-    QHash<QString, QBuffer*> audio_buffers;
-    QHash<QString, bool> loop_entry;
-    QHash<QString, int> interval_entry;
-    QHash<QString, QString> next_entry;
-    QHash<QString, QVector<QPair<int, int>>> frame_ranges;
-    QHash<QString, QStringList> frame_files;
-    QHash<QString, QBuffer*> frame_buffers;
     QVector<QString> audio_files;
+    QHash<QString, QBuffer*> audio_buffers;
+    QVector<QString> action_files;
+    QHash<QString, QBuffer*> action_buffers;
 
     for(auto iter = files.begin(),
             end = files.end();
@@ -407,9 +323,9 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
         auto fileNameParts = fileName.split("/");
 
         if(fileNameParts.size() == 0) { // Highly unlikely event.
-            n_Status = SpiritEnums::Spirit::Status::Errored;
+	    n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	    emit status(n_Status);
-	    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+	    emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
             return false;
         }
 
@@ -418,18 +334,18 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
         if(fileNameParts.size() == 1) {
             /// It should be meta.json file
             if(fileNameParts.at(0) != "meta.json") {
-                n_Status = SpiritEnums::Spirit::Status::Errored;
+	        n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	    	emit status(n_Status);
-	        emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+	        emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
                 return false;
             } else {
                 /// Parse the json file. 
 	        QBuffer *buffer = (*iter).buffer();
 
                 if(!buffer->open(QIODevice::ReadOnly)) {
-                    n_Status = SpiritEnums::Spirit::Status::Errored;
+                    n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	    	    emit status(n_Status);
-		    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+		    emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
                     return false;
                 }
 
@@ -437,9 +353,9 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
                 auto document = QJsonDocument::fromJson(buffer->readAll(), &e);
 
                 if(e.error != QJsonParseError::NoError || !document.isObject()) {
-                    n_Status = SpiritEnums::Spirit::Status::Errored;
+                    n_Status = SpiritEnums::SpiritFile::Status::Errored;
 		    emit status(n_Status); 
-		    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+		    emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
                     return false;
                 }
                 buffer->close();
@@ -447,27 +363,21 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
                 meta = document.object();
             }
         } else {
-            if(fileNameParts.at(0) == "actions" && fileNameParts.size() == 3) {
-                if(!frame_count.contains(fileNameParts.at(1))) {
-                    frame_count.insert(fileNameParts.at(1), 0);
-                }
-                frame_count[fileNameParts.at(1)] += 1;
-
-                if(!frame_files.contains(fileNameParts.at(1))) {
-                    frame_files.insert(fileNameParts.at(1), QStringList());
-                }
-                frame_files[fileNameParts.at(1)] << fileName;
-                frame_buffers.insert(fileName, (*iter).buffer());
-            } else if(fileNameParts.at(0) == "audio" && fileNameParts.size() == 2) {
+            if(fileNameParts.at(0) == "actions" && fileNameParts.size() == 2) {
+	       if(!action_files.contains(fileNameParts.at(1))) {
+		  action_files.append(fileNameParts.at(1));
+		  action_buffers.insert(fileNameParts.at(1), (*iter).buffer());
+	       }	  
+	    } else if(fileNameParts.at(0) == "audio" && fileNameParts.size() == 2) {
                 if(!audio_files.contains(fileNameParts.at(1))) {
                     audio_files.append(fileNameParts.at(1));
                     audio_buffers.insert(fileNameParts.at(1), (*iter).buffer());
                 }
             } else {
-	       	n_Status = SpiritEnums::Spirit::Status::Errored;
+	        n_Status = SpiritEnums::SpiritFile::Status::Errored;
 		emit status(n_Status);
 
-                emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+                emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
                 return false;
             }
         }
@@ -490,45 +400,43 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
        !meta.contains("version") ||
        !meta.contains("positions") ||
        !meta.contains("actions")) {
-        n_Status = SpiritEnums::Spirit::Status::Errored;
+        n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	emit status(n_Status);
 
-        emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+        emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
         return false;
     }
 
+    /// Free anything that was left over.
+    for(auto iter = m_Actions->begin(),
+            end = m_Actions->end();
+            iter != end;
+            ++iter) {
+        delete *iter;
+    }
+    m_Actions->clear();
+
     {
         auto json_actions = meta.value("actions").toObject().keys();
-        auto archive_actions = frame_count.keys();
 
-        if(json_actions.size() != archive_actions.size()) {
-            n_Status = SpiritEnums::Spirit::Status::Errored;
+        if(json_actions.size() > action_files.size()) {
+            n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	    emit status(n_Status);
 
-	    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+	    emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
             return false;
         }
 
-        for(auto iter = json_actions.begin(),
-                end = json_actions.end();
-                iter != end;
-                ++iter) {
-	    QCoreApplication::processEvents();
-            if(b_CancelRequested) {
-                clear();
-                return false;
-            }
-            if(!archive_actions.contains(*iter)) {
-                n_Status = SpiritEnums::Spirit::Status::Errored;
-	    	emit status(n_Status);
-
-	        emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                return false;
-            }
-        }
-
-        // Check frames and play now.
+        // Check options to each action.
         auto actions = meta.value("actions").toObject();
+
+	if(actions.isEmpty()) {
+	   n_Status = SpiritEnums::SpiritFile::Status::Errored;
+	   emit status(n_Status);
+
+	   emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
+           return false;
+	}
 
         for(auto iter = json_actions.begin(),
                 end = json_actions.end();
@@ -542,171 +450,79 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
             }
 
             auto object = actions.value(*iter).toObject();
+	    QBuffer *play = nullptr;
+	    bool loop = *iter == "default" ? true : false; 
+	    int speed = 100;
+	    int scale = 100;
+	    QString next_action;
 
-            if(object.isEmpty() || !object.contains("frames")) {
-                n_Status = SpiritEnums::Spirit::Status::Errored;
+	    // Get the buffer
+	    // for the webp file.
+	    if(!action_files.contains(*iter + ".webp")) {
+                n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	    	emit status(n_Status);
 
-	       	emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+	        emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
                 return false;
             }
 
             // Check audio file too.
             if(object.contains("play")) {
                 if(!audio_files.contains(object.value("play").toString() + ".mp3")) {
-                    n_Status = SpiritEnums::Spirit::Status::Errored;
+                    n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	    	    emit status(n_Status);
 
-		    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
+		    emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
                     return false;
                 } else {
-                    audio_entry.insert(*iter, audio_buffers.value(object.value("play").toString() + ".mp3"));
-                }
+                   play = audio_buffers.value(object.value("play").toString() + ".mp3");
+		}
             }
 
             if(object.contains("loop")) {
-                if(object.value("loop").toBool()) {
-                    loop_entry.insert(*iter, true);
-                } else {
-                    if(*iter == "default") {
-                        loop_entry.insert(*iter, true);
-                    } else {
-                        loop_entry.insert(*iter, false);
-                    }
-                }
+                loop = object.value("loop").toBool(); 
             }
 
-	    if(object.contains("interval")) {
-	       int msecs = object.value("interval").toInt();
-	       if(msecs > 0) {
-		  interval_entry.insert(*iter, msecs);
-	       } else {
-		  interval_entry.insert(*iter, 200);
+	    if(object.contains("scale")) { 
+	       int percent = object.value("scale").toInt();
+	       if(percent > 0) {
+		 scale = percent;
+	       } 
+	    }
+	    
+	    if(object.contains("speed")) {
+	       int percent = object.value("speed").toInt();
+	       if(percent > 0) {
+		  speed = percent;
 	       }
-	    } else {
-	       interval_entry.insert(*iter, 200);
 	    }
 
 	    if(object.contains("next")) {
-	       next_entry.insert(*iter, object.value("next").toString());
+	       next_action = object.value("next").toString();
 	    }
+	    
+	    auto action_obj = new Action;
+            action_obj->action = *iter;
+	    action_obj->next_action = next_action;
+	    action_obj->buffer = action_buffers.value(*iter + ".webp", nullptr);
+            if(action_obj->buffer == nullptr) {
+	       delete action_obj;
+	       
+	       n_Status = SpiritEnums::SpiritFile::Status::Errored;
+	       emit status(n_Status);
+	       
+	       emit error(SpiritEnums::SpiritFile::Error::InvalidSpiritFile);
+	       return false;
 
-            auto frames = object.value("frames").toArray();
-            if(!frame_ranges.contains(*iter)) {
-                frame_ranges.insert(*iter, QVector<QPair<int, int>>());
-            }
-            for(auto i = frames.begin(),
-                    e = frames.end();
-                    i != e;
-                    ++i) {
-	        QCoreApplication::processEvents();
-                if(b_CancelRequested) {
-                    clear();
-                    return false;
-                }
-                auto range = (*i).toString();
-                auto rangeParts = range.split("-");
-                bool ok = false;
-
-                if(rangeParts.size() == 0) {
-                    n_Status = SpiritEnums::Spirit::Status::Errored;
-		    emit status(n_Status);
-
-		    emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                    return false;
-                }
-
-                if(rangeParts.size() == 1) {
-                    int f = rangeParts.at(0).toInt(&ok);
-                    if(!ok || f > frame_count.value(*iter)) {
-                        n_Status = SpiritEnums::Spirit::Status::Errored;
-	    		emit status(n_Status);
-
-		        emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                        return false;
-                    }
-                } else {
-                    bool er = false;
-                    int f = rangeParts.at(0).toInt(&ok);
-                    er = !ok;
-                    int t = -1;
-                    if(rangeParts.at(1) != "*") {
-                        t = rangeParts.at(1).toInt(&ok);
-                        if(!er) {
-                            er = !ok;
-                        }
-                    }
-
-                    if(er || f > frame_count.value(*iter) || t > frame_count.value(*iter)) {
-                        n_Status = SpiritEnums::Spirit::Status::Errored;
-	    		emit status(n_Status);
-
-		        emit error(SpiritEnums::Spirit::Error::InvalidSpiritFile);
-                        return false;
-                    }
-
-                    frame_ranges[*iter].append(qMakePair<int, int>(f, t));
-                }
-            }
+	    }
+	    action_obj->play = play;
+	    action_obj->scale = scale;
+            action_obj->speed = speed;
+	    action_obj->loop = loop;
+            
+	    m_Actions->insert(*iter, action_obj);
         }
     }
-
-    for(auto iter = m_Actions->begin(),
-            end = m_Actions->end();
-            iter != end;
-            ++iter) {
-        delete *iter;
-    }
-    m_Actions->clear();
-
-
-    {
-        QHash<QString, QVector<QBuffer*>> frame_ac_buffers;
-        for(auto iter = frame_files.begin(),
-                end = frame_files.end();
-                iter != end;
-                ++iter) {
-	    QCoreApplication::processEvents();
-            if(b_CancelRequested) {
-                clear();
-                return false;
-            }
-            iter.value().sort();
-
-            frame_ac_buffers.insert(iter.key(), QVector<QBuffer*>());
-
-            for(auto i = iter.value().begin(),
-                    e = iter.value().end();
-                    i != e;
-                    ++i) {
-                frame_ac_buffers[iter.key()] << frame_buffers.value(*i);
-            }
-        }
-
-        for(auto iter = frame_ac_buffers.begin(),
-                end = frame_ac_buffers.end();
-                iter != end;
-                ++iter) {
-	    QCoreApplication::processEvents();
-            if(b_CancelRequested) {
-                clear();
-                return false;
-            }
-            auto a = new Action;
-            a->action  = iter.key();
-	    a->next_action= next_entry.value(iter.key());
-            if(audio_entry.contains(iter.key())) {
-                a->play = audio_entry.value(iter.key());
-            } else {
-                a->play = nullptr;
-            }
-            a->frames = iter.value();
-            a->frame_order = frame_ranges.value(iter.key());
-            a->interval = interval_entry.value(iter.key());
-	    a->loop = loop_entry.value(iter.key());
-            m_Actions->insert(iter.key(), a);
-        }
-    }
-
+    
     return true;
 }

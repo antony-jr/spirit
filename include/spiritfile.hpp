@@ -1,5 +1,5 @@
-#ifndef SPIRIT_WORKER_HPP_INCLUDED
-#define SPIRIT_WORKER_HPP_INCLUDED
+#ifndef SPIRIT_FILE_HPP_INCLUDED
+#define SPIRIT_FILE_HPP_INCLUDED
 #include <QRect>
 #include <QJsonObject>
 #include <QBuffer>
@@ -7,25 +7,25 @@
 
 #include "spiritenums.hpp"
 
-class SpiritWorkerPrivate;
-class SpiritWorker : public QObject {
+class SpiritFilePrivate;
+class SpiritFile : public QObject {
 	Q_OBJECT
 public:
-	struct Error : public SpiritEnums::Spirit::Error { };
-	struct Status : public SpiritEnums::Spirit::Status { };
+	struct Error : public SpiritEnums::SpiritFile::Error { };
+	struct Status : public SpiritEnums::SpiritFile::Status { };
 	
-	SpiritWorker(QObject *parent = nullptr);
-	~SpiritWorker();
+	SpiritFile(QObject *parent = nullptr);
+	~SpiritFile();
 
 public Q_SLOTS:
-	void getActions();
-	void getCurrentAction();
-	void getInfo();
-
+   	/// Initialize the .spirit file into memory,
+	/// and validate it. 
    	void init();
+
+	/// Cancel the current .spirit file.
 	void cancel();
 
-   	/// Set the current .spirit file.
+	/// Set the current .spirit file.
 	void setSpiritFile(const QString&);
 
 	/// Set the current action to be emitted.
@@ -33,22 +33,24 @@ public Q_SLOTS:
 	/// The action string should be valid and should present
 	/// in the .spirit file.
 	void setAction(const QString&);
+
+	void getActions();
+	void getCurrentAction();
+	void getInfo();
 Q_SIGNALS:
 	// Emits the current state of the worker.
 	// Which could be,
 	// 1. Idle
 	// 2. Errored
 	// 3. Loading
-	// 4. Animating
-	// 5. Stopped (Meaning the default action is not loop and stopped).
-	// 6. Canceled (Stopped intentionally).
+	// 4. Loaded
+	// 5. Canceled (Stopped intentionally).
 	void status(short);
 
-	// Emitted when a spirit is initialized successfully.
+	// Emitted when the init is finished.
+	// Also gives the same json object as 
+	// get info.
 	void initialized(QJsonObject);
-
-	// Emitted when the status is animating.
-	void started();
 
 	// Emitted when call to cancel is successful.
 	void canceled();
@@ -62,25 +64,20 @@ Q_SIGNALS:
 	void actions(QList<QString>);
 
 	/// Emittted from getCurrentAction()
-	/// Gives the current webp to 
-	/// to display in binary.
-	/// Assume this binary is a webp file.
-	void  action(QString /*current action name*/,
+	void action(QString /*current action name*/, 
 	      	     QBuffer* /*current webp file*/,
-	      	     QBuffer* /*audio file if given else nullptr*/,
+	      	     QBuffer* /*audio file if given*/,
 	      	     bool /*loop*/,
 		     int /*scale percentage*/,
 		     int /*speed percentage*/,
 		     QString /*next action if available*/);
-	
 
 	/// Emits all the meta info on this
 	/// .spirit file.
 	void info(QJsonObject);
-
 private:
 	QThread *m_WorkerThread;
-	SpiritWorkerPrivate *m_Worker;
+	SpiritFilePrivate *m_Worker;
 };
 
-#endif // SPIRIT_WORKER_HPP_INCLUDED
+#endif // SPIRIT_FILE_HPP_INCLUDED
