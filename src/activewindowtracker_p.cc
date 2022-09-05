@@ -63,16 +63,24 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
 
 	   KWindowInfo info(id, properties);
 	   if(!info.valid()) {
-	   	emit hide();	   
+	      	emit hide();	   
 		return;
 	   }
 	
 	   auto state = info.state();
-	   if(state != NET::State::Focused) {
+	   qDebug() << "State:: " << state;
+	   if(!(state & NET::State::Focused)) {
 		emit hide();
 	 	return;
 	   }
-	
+
+	   if(state & NET::State::SkipTaskbar ||
+	      state & NET::State::Modal || 
+	      state & NET::State::KeepBelow) {
+	      emit hide();
+	      return;
+	   }
+
 	   auto geo = info.frameGeometry();
 
 	   emit update(geo);

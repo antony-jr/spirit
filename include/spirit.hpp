@@ -33,37 +33,49 @@ public Q_SLOTS:
 	/// The position of the widget.
    	void setPosition(short);
 
-	/// The YOffset to use.
-	void setYOffset(int);
-
    	// Moves the widget to the given rect.
    	void update(QRect);
 
 	// Animates a given action 
  	void animate(QString /*current action name*/, 
 	             QBuffer* /*current webp file*/,
-	      	     QBuffer* /*audio file if given*/,
+	      	     QBuffer* /*current webp variant*/,
+		     QBuffer* /*audio file if given*/,
 	      	     bool /*loop*/,
 		     int /*scale percentage*/,
 		     int /*speed percentage*/,
-		     QString /*next action if available*/);
+		     QString /*next action if available*/,
+		     QVector<int> /*offsets*/);
+
+	void clear();
+
 private Q_SLOTS:
    	void handleMovieStarted();
 	void handleMovieFinished();
 
+	void handleFrameChanged(int);
 Q_SIGNALS:
 	// Request or set action for the current 
 	// animation cycle.
 	void requestAction(QString);
+	void cleared();
 
 private:
 	QScopedPointer<QMovie> m_Movie;
 	short n_Position = Position::TopLeft;
-	int n_YOff = -1,
-	    n_XOff = -1;
+	int n_YOff = 0,
+	    n_XOff = 0,
+	    n__YOff = 0,
+	    n__XOff = 0;
+
 	int n_Scale = 100,
 	    n_Speed = 100;
 	bool b_Loop = true;
+	bool b_Flipped = false;
+	bool b_ClearRequested = false;
+	QBuffer *m_Buffer = nullptr;
+	QBuffer *m_Variant = nullptr;
+	QString m_Action;	
 	QString m_Next;
 };
 

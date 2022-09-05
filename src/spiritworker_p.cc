@@ -48,6 +48,7 @@ void SpiritWorkerPrivate::setSpiritFile(const QString &file) {
 void SpiritWorkerPrivate::setAction(const QString &ac) {
    auto keys = m_Actions->keys();
    if(!keys.contains(ac)) {
+      getCurrentAction();
       return;
    }
    m_CurrentActionId = ac;
@@ -71,11 +72,13 @@ void SpiritWorkerPrivate::getCurrentAction() {
 
    emit action(m_CurrentAction->action,
 	 m_CurrentAction->buffer,
+	 m_CurrentAction->_buffer,
 	 m_CurrentAction->play,
 	 m_CurrentAction->loop,
 	 m_CurrentAction->scale,
 	 m_CurrentAction->speed,
-	 m_CurrentAction->next_action);
+	 m_CurrentAction->next_action,
+	 m_CurrentAction->offsets);
 }
 
 void SpiritWorkerPrivate::getInfo() {
@@ -105,9 +108,10 @@ void SpiritWorkerPrivate::cancel() {
             n_Status == SpiritEnums::SpiritFile::Status::Canceled) {
         return;
     }
-    if(n_Status == SpiritEnums::SpiritFile::Status::Errored) {
-        clear();
-        return;
+    if(n_Status == SpiritEnums::SpiritFile::Status::Errored  || 
+       n_Status == SpiritEnums::SpiritFile::Status::Loaded) {
+       clear();
+       return;
     }
     b_CancelRequested = true;
 }
@@ -119,6 +123,7 @@ void SpiritWorkerPrivate::clear(bool emitCanceled) {
     m_Spirit.reset(nullptr);
     m_Extractor->clear();
     m_SpiritPath.clear();
+
     if(!m_Actions->isEmpty()) {
         for(auto iter = m_Actions->begin(),
 	         end = m_Actions->end();
@@ -390,15 +395,13 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
        { "edition", "2021" },
        { "version", meta.value("version").toString() },
        { "author", meta.value("author").toString() }, 
-       { "copyright", meta.value("copyright").toString() },
-       { "positions", meta.value("positions").toObject() }
+       { "copyright", meta.value("copyright").toString() } 
     };
     m_Meta = meta_head;
 
     /// Now check the json file.
     if(!meta.contains("name") ||
        !meta.contains("version") ||
-       !meta.contains("positions") ||
        !meta.contains("actions")) {
         n_Status = SpiritEnums::SpiritFile::Status::Errored;
 	emit status(n_Status);
@@ -454,6 +457,10 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
 	    bool loop = *iter == "default" ? true : false; 
 	    int speed = 100;
 	    int scale = 100;
+	    int yoff = 0;
+	    int xoff = 0;
+	    int _yoff = 0;
+	    int _xoff = 0;
 	    QString next_action;
 
 	    // Get the buffer
@@ -483,6 +490,34 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
                 loop = object.value("loop").toBool(); 
             }
 
+	    if(object.contains("yoff")) { 
+	       int pixels = object.value("yoff").toInt();
+	       if(pixels > 0) {
+		 yoff = pixels;
+	       } 
+	    }
+
+	    if(object.contains("_yoff")) { 
+	       int pixels = object.value("_yoff").toInt();
+	       if(pixels > 0) {
+		 _yoff = pixels;
+	       } 
+	    }
+
+	    if(object.contains("xoff")) { 
+	       int pixels = object.value("xoff").toInt();
+	       if(pixels > 0) {
+		 xoff = pixels;
+	       } 
+	    }
+	    
+	    if(object.contains("_xoff")) { 
+	       int pixels = object.value("_xoff").toInt();
+	       if(pixels > 0) {
+		 _xoff = pixels;
+	       } 
+	    }
+
 	    if(object.contains("scale")) { 
 	       int percent = object.value("scale").toInt();
 	       if(percent > 0) {
@@ -505,7 +540,8 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
             action_obj->action = *iter;
 	    action_obj->next_action = next_action;
 	    action_obj->buffer = action_buffers.value(*iter + ".webp", nullptr);
-            if(action_obj->buffer == nullptr) {
+	    action_obj->_buffer = action_buffers.value("_" + *iter + ".webp", nullptr);
+	    if(action_obj->buffer == nullptr) {
 	       delete action_obj;
 	       
 	       n_Status = SpiritEnums::SpiritFile::Status::Errored;
@@ -519,7 +555,11 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
 	    action_obj->scale = scale;
             action_obj->speed = speed;
 	    action_obj->loop = loop;
-            
+	    action_obj->offsets[0] = xoff;
+	    action_obj->offsets[1] = yoff;
+	    action_obj->offsets[2] = _xoff;
+	    action_obj->offsets[3] = _yoff;
+
 	    m_Actions->insert(*iter, action_obj);
         }
     }

@@ -55,7 +55,8 @@ void SpiritWorker::setSpiritFile(const QString &file) {
 
 
 void SpiritWorker::setAction(const QString &action) {
-   getMethod(m_Worker, "setAction(const QStirng&)")
+   qDebug() << "setAction: " << action;
+   getMethod(m_Worker, "setAction(const QString&)")
       .invoke(m_Worker,
 	    	Qt::QueuedConnection,
 		Q_ARG(QString, action));

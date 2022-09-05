@@ -53,12 +53,14 @@ Q_SIGNALS:
 	/// Assume this binary is a webp file.
 	void  action(QString /*current action name*/,
 	      	     QBuffer* /*current webp file*/,
-	      	     QBuffer* /*audio file if given else nullptr*/,
+	      	     QBuffer* /*current webp file varaint*/,
+		     QBuffer* /*audio file if given else nullptr*/,
 	      	     bool /*loop*/,
 		     int /*scale percentage*/,
 		     int /*speed percentage*/,
-		     QString /*next action if available*/);
-	
+		     QString /*next action if available*/,
+		     QVector<int> /*offsets*/);
+
 	void status(short);
 
 	void initialized(QJsonObject);
@@ -72,8 +74,10 @@ private:
 	   QString action;
 	   QString next_action; /// Optional
 	   QBuffer *buffer = nullptr; 
+	   QBuffer *_buffer = nullptr;
 	   QBuffer *play = nullptr;
 	   bool loop = false;
+	   QVector<int> offsets = {0, 0, 0, 0};
 	   int speed = 100;
 	   int scale = 100;
 	};

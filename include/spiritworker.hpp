@@ -67,12 +67,13 @@ Q_SIGNALS:
 	/// Assume this binary is a webp file.
 	void  action(QString /*current action name*/,
 	      	     QBuffer* /*current webp file*/,
-	      	     QBuffer* /*audio file if given else nullptr*/,
+	      	     QBuffer* /*current webp variant*/,
+		     QBuffer* /*audio file if given else nullptr*/,
 	      	     bool /*loop*/,
 		     int /*scale percentage*/,
 		     int /*speed percentage*/,
-		     QString /*next action if available*/);
-	
+		     QString /*next action if available*/,
+		     QVector<int> /*offsets*/);
 
 	/// Emits all the meta info on this
 	/// .spirit file.

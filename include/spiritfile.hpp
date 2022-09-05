@@ -66,7 +66,8 @@ Q_SIGNALS:
 	/// Emittted from getCurrentAction()
 	void action(QString /*current action name*/, 
 	      	     QBuffer* /*current webp file*/,
-	      	     QBuffer* /*audio file if given*/,
+	      	     QBuffer* /*webp file variant*/,
+		     QBuffer* /*audio file if given*/,
 	      	     bool /*loop*/,
 		     int /*scale percentage*/,
 		     int /*speed percentage*/,
