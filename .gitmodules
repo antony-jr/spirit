@@ -1,3 +1,0 @@
-[submodule "libs/civetweb"]
-	path = libs/civetweb
-	url = https://github.com/civetweb/civetweb
