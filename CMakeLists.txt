@@ -20,13 +20,6 @@ find_package(QArchive)
 # CivetWeb
 find_package(civetweb)
 
-#set(CIVETWEB_ENABLE_CXX ON)
-#set(CIVETWEB_SERVE_NO_FILES ON)
-#set(CIVETWEB_DISABLE_CGI ON)
-#set(CIVETWEB_ENABLE_SERVER_EXECUTABLE OFF)
-#add_subdirectory(libs/civetweb)
-#include_directories(libs/civetweb/include)
-
 # Include Directories.
 include_directories(.)
 include_directories(include)
@@ -35,6 +28,11 @@ include_directories(${CMAKE_BINARY_DIR})
 if(ENABLE_DEBUGGING)
    add_definitions(-DENABLE_DEBUGGING)
 endif()
+
+# Program information
+add_compile_definitions(SPIRIT_VERSION="unknown")
+add_compile_definitions(SPIRIT_COMMIT="none")
+add_compile_definitions(SPIRIT_BUILD="dev")
 
 SET(source)
 list(APPEND source include/termcolor.hpp

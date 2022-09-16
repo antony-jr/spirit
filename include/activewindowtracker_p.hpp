@@ -10,33 +10,33 @@
 #include "spiritenums.hpp"
 
 class ActiveWindowTrackerPrivate : public QObject {
-	Q_OBJECT
-public:
+    Q_OBJECT
+  public:
 
-	struct Error : public SpiritEnums::ActiveWindowTracker::Error { };
+    struct Error : public SpiritEnums::ActiveWindowTracker::Error { };
 
-	ActiveWindowTrackerPrivate(QObject *parent = nullptr);
-	~ActiveWindowTrackerPrivate();
-public Q_SLOTS:
-	void start();
-	void stop();
+    ActiveWindowTrackerPrivate(QObject *parent = nullptr);
+    ~ActiveWindowTrackerPrivate();
+  public Q_SLOTS:
+    void start();
+    void stop();
 
 #ifdef Q_OS_LINUX
-private Q_SLOTS:
-	void updateActiveWindowX(WId);
-	void handleWindowChanged(WId, NET::Properties, NET::Properties2);
-	void handleWindowRemoved(WId);
-	void handleWindowAdded(WId);
+  private Q_SLOTS:
+    void updateActiveWindowX(WId);
+    void handleWindowChanged(WId, NET::Properties, NET::Properties2);
+    void handleWindowRemoved(WId);
+    void handleWindowAdded(WId);
 #endif // LINUX
 
-Q_SIGNALS:
-	void error(short);
-	void update(QRect);
-	void hide();
+  Q_SIGNALS:
+    void error(short);
+    void update(QRect);
+    void hide();
 
-private:
+  private:
 #ifdef Q_OS_LINUX
-	bool b_RegisteredTypes = false;
+    bool b_RegisteredTypes = false;
 #endif // LINUX
 };
 

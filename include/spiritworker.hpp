@@ -9,79 +9,79 @@
 
 class SpiritWorkerPrivate;
 class SpiritWorker : public QObject {
-	Q_OBJECT
-public:
-	struct Error : public SpiritEnums::Spirit::Error { };
-	struct Status : public SpiritEnums::Spirit::Status { };
-	
-	SpiritWorker(QObject *parent = nullptr);
-	~SpiritWorker();
+    Q_OBJECT
+  public:
+    struct Error : public SpiritEnums::Spirit::Error { };
+    struct Status : public SpiritEnums::Spirit::Status { };
 
-public Q_SLOTS:
-	void getActions();
-	void getCurrentAction();
-	void getInfo();
+    SpiritWorker(QObject *parent = nullptr);
+    ~SpiritWorker();
 
-   	void init();
-	void cancel();
+  public Q_SLOTS:
+    void getActions();
+    void getCurrentAction();
+    void getInfo();
 
-   	/// Set the current .spirit file.
-	void setSpiritFile(const QString&);
+    void init();
+    void cancel();
 
-	/// Set the current action to be emitted.
-	/// By default the default action will be running
-	/// The action string should be valid and should present
-	/// in the .spirit file.
-	void setAction(const QString&);
-Q_SIGNALS:
-	// Emits the current state of the worker.
-	// Which could be,
-	// 1. Idle
-	// 2. Errored
-	// 3. Loading
-	// 4. Animating
-	// 5. Stopped (Meaning the default action is not loop and stopped).
-	// 6. Canceled (Stopped intentionally).
-	void status(short);
+    /// Set the current .spirit file.
+    void setSpiritFile(const QString&);
 
-	// Emitted when a spirit is initialized successfully.
-	void initialized(QJsonObject);
+    /// Set the current action to be emitted.
+    /// By default the default action will be running
+    /// The action string should be valid and should present
+    /// in the .spirit file.
+    void setAction(const QString&);
+  Q_SIGNALS:
+    // Emits the current state of the worker.
+    // Which could be,
+    // 1. Idle
+    // 2. Errored
+    // 3. Loading
+    // 4. Animating
+    // 5. Stopped (Meaning the default action is not loop and stopped).
+    // 6. Canceled (Stopped intentionally).
+    void status(short);
 
-	// Emitted when the status is animating.
-	void started();
+    // Emitted when a spirit is initialized successfully.
+    void initialized(QJsonObject);
 
-	// Emitted when call to cancel is successful.
-	void canceled();
+    // Emitted when the status is animating.
+    void started();
 
-	// Emitted when some error in validating the 
-	// .spirit file occurs or some invalid action
-	// was requested.
-	void error(short);
+    // Emitted when call to cancel is successful.
+    void canceled();
 
-	/// Emitted when called by getActions()
-	void actions(QList<QString>);
+    // Emitted when some error in validating the
+    // .spirit file occurs or some invalid action
+    // was requested.
+    void error(short);
 
-	/// Emittted from getCurrentAction()
-	/// Gives the current webp to 
-	/// to display in binary.
-	/// Assume this binary is a webp file.
-	void  action(QString /*current action name*/,
-	      	     QBuffer* /*current webp file*/,
-	      	     QBuffer* /*current webp variant*/,
-		     QBuffer* /*audio file if given else nullptr*/,
-	      	     bool /*loop*/,
-		     int /*scale percentage*/,
-		     int /*speed percentage*/,
-		     QString /*next action if available*/,
-		     QVector<int> /*offsets*/);
+    /// Emitted when called by getActions()
+    void actions(QList<QString>);
 
-	/// Emits all the meta info on this
-	/// .spirit file.
-	void info(QJsonObject);
+    /// Emittted from getCurrentAction()
+    /// Gives the current webp to
+    /// to display in binary.
+    /// Assume this binary is a webp file.
+    void  action(QString /*current action name*/,
+                 QBuffer* /*current webp file*/,
+                 QBuffer* /*current webp variant*/,
+                 QBuffer* /*audio file if given else nullptr*/,
+                 bool /*loop*/,
+                 int /*scale percentage*/,
+                 int /*speed percentage*/,
+                 QString /*next action if available*/,
+                 QVector<int> /*offsets*/);
 
-private:
-	QThread *m_WorkerThread;
-	SpiritWorkerPrivate *m_Worker;
+    /// Emits all the meta info on this
+    /// .spirit file.
+    void info(QJsonObject);
+
+  private:
+    QThread *m_WorkerThread;
+    SpiritWorkerPrivate *m_Worker;
 };
 
 #endif // SPIRIT_WORKER_HPP_INCLUDED

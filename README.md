@@ -76,6 +76,8 @@ Somewhat considered as stable. These builds are usually older than the developme
 
 # Building from source
 
+**Dependencies:** CivetWeb, QArchive 
+
 ```
  $ sudo apt-get install libxdo-dev # deps, also you need qtbase for sure.
  $ git clone https://github.com/antony-jr/spirit 
