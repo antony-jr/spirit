@@ -312,13 +312,12 @@ SpiritDaemonPrivate::~SpiritDaemonPrivate() { }
 void SpiritDaemonPrivate::run() {
     mg_init_library(0);
     b_StopRequested = false;
-    const char *options[] = { "listening_ports", "4499", 0};
-    std::vector<std::string> cpp_options;
-    for (int i=0; i<(sizeof(options)/sizeof(options[0])-1); i++) {
-        cpp_options.push_back(options[i]);
-    }
+    
+    std::vector<std::string> opts;
+    opts.push_back("listening_ports");
+    opts.push_back("4499");
 
-    CivetServer server(cpp_options, 0, /*user context*/(void*)this);
+    CivetServer server(/*options*/opts, 0, /*user context*/(void*)this);
 
     IndexHandler index;
     server.addHandler("", index);
