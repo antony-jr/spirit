@@ -10,6 +10,7 @@ set(MIN_QT_VERSION "5.6.0")
 find_package(Qt5Core ${MIN_QT_VERSION})
 find_package(Qt5Widgets ${MIN_QT_VERSION})
 find_package(Qt5Network ${MIN_QT_VERSION})
+find_package(Qt5Multimedia ${MIN_QT_VERSION})
 
 # KWindowSystem
 find_package(KF5WindowSystem)
@@ -61,7 +62,7 @@ list(APPEND source include/termcolor.hpp
 		   resources.qrc)
 
 add_executable(spirit ${source})
-target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network)
+target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network Qt5::Multimedia)
 target_link_libraries(spirit PUBLIC KF5::WindowSystem)
 target_link_libraries(spirit PUBLIC QArchive)
 target_link_libraries(spirit PUBLIC civetweb civetweb-cpp)

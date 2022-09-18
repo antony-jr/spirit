@@ -3,6 +3,7 @@
 #include <QRect>
 #include <QLabel>
 #include <QMovie>
+#include <QMediaPlayer>
 #include <QBuffer>
 #include <QScopedPointer>
 
@@ -60,6 +61,7 @@ class Spirit : public QLabel {
     void cleared();
 
   private:
+    QScopedPointer<QMediaPlayer> m_Player;
     QScopedPointer<QMovie> m_Movie;
     short n_Position = Position::TopLeft;
     int n_YOff = 0,

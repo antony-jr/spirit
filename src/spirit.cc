@@ -68,6 +68,8 @@ Spirit::Spirit()
     setAttribute(Qt::WA_X11DoNotAcceptFocus, true);
     setStyleSheet(QString::fromUtf8("background: transparent; border: none;"));
     setScaledContents(true);
+
+    m_Player.reset(new QMediaPlayer);
 }
 
 Spirit::~Spirit() {
@@ -246,11 +248,23 @@ void Spirit::animate(QString action,
     b_Paused = false;
 
     emit requestUpdate();
+
+    if(play) {
+       if(!play->isOpen()) {
+	  play->open(QIODevice::ReadOnly);
+       }
+       play->reset();
+       m_Player->setMedia(QUrl("audio/mp3"), (QIODevice*)play);
+       m_Player->setVolume(100);
+       m_Player->play();
+    }
 }
 
 void Spirit::clear() {
     b_ClearRequested = true;
     hide();
+    m_Player->stop();
+    m_Player->setMedia(QUrl("audio/mp3"), nullptr);
     b_Paused = true;
     b_Loop = false;
     n_Scale = n_Speed = 100;
@@ -291,6 +305,9 @@ void Spirit::handleFrameChanged(int frame) {
 
     if(frame + 1 == m_Movie->frameCount()) {
         if(!b_Loop) {
+	    if (m_Player->state() == QMediaPlayer::PlayingState) {
+	       return;
+	    }
             emit requestAction(m_Next);
         }
     }
