@@ -45,6 +45,8 @@ list(APPEND source include/termcolor.hpp
 		   include/spirit.hpp
 		   include/spiritdaemon_p.hpp
 		   include/spiritdaemon.hpp
+		   include/spiritapp.hpp
+		   src/spiritapp.cc
 		   src/activewindowtracker_p.cc
 		   src/activewindowtracker.cc
 		   src/spiritworker_p.cc

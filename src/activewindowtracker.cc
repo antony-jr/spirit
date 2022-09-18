@@ -37,6 +37,10 @@ void ActiveWindowTracker::start() {
     getMethod(d, "start()").invoke(d, Qt::QueuedConnection);
 }
 
+void ActiveWindowTracker::rescan() {
+    getMethod(d, "rescan()").invoke(d, Qt::QueuedConnection);
+}
+
 void ActiveWindowTracker::stop() {
     getMethod(d, "stop()").invoke(d, Qt::QueuedConnection);
 }

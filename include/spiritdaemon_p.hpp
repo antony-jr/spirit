@@ -20,6 +20,7 @@ class SpiritDaemonPrivate : public QObject {
     void updateSpiritMeta(QJsonObject);
 
   Q_SIGNALS:
+    void started();
     void cachedAction();
     void cachedSpirit();
     void cachedSpiritMeta();

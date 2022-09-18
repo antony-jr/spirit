@@ -21,6 +21,7 @@ class SpiritDaemon : public QObject {
     void updateSpiritMeta(QJsonObject);
 
   Q_SIGNALS:
+    void started();
     void quit();
 
     void pause();

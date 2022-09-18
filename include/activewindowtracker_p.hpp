@@ -19,6 +19,7 @@ class ActiveWindowTrackerPrivate : public QObject {
     ~ActiveWindowTrackerPrivate();
   public Q_SLOTS:
     void start();
+    void rescan();
     void stop();
 
 #ifdef Q_OS_LINUX

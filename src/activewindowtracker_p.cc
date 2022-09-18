@@ -48,6 +48,12 @@ void ActiveWindowTrackerPrivate::start() {
 #endif // LINUX
 }
 
+void ActiveWindowTrackerPrivate::rescan() {
+#ifdef Q_OS_LINUX
+    updateActiveWindowX(KWindowSystem::activeWindow());
+#endif // LINUX 
+}
+
 void ActiveWindowTrackerPrivate::stop() {
 #ifdef Q_OS_LINUX
     this->disconnect();

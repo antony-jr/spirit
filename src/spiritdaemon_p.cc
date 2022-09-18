@@ -2,6 +2,12 @@
 #include <QThread>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QTcpServer>
+#include <QDir>
+#include <QFile>
 #include <QDebug>
 
 #include "spiritdaemon_p.hpp"
@@ -12,6 +18,67 @@
 #else
 #include <unistd.h>
 #endif
+
+static bool is_daemon_active(int port) {
+    bool status = false;
+    QNetworkAccessManager manager;
+    QEventLoop loop;
+
+    QObject::connect(&manager, &QNetworkAccessManager::finished,
+    [&loop, &status](QNetworkReply *reply) {
+        if(reply->error() != QNetworkReply::NoError) {
+            qDebug() << "error Reply";
+            qDebug() << reply->error();
+            loop.quit();
+            reply->deleteLater();
+            return;
+        }
+
+        auto arr = reply->readAll();
+        QJsonParseError error;
+        auto json = QJsonDocument::fromJson(arr, &error);
+        if (error.error != QJsonParseError::NoError || !json.isObject()) {
+            reply->deleteLater();
+            loop.quit();
+            return;
+        }
+
+        auto obj = json.object();
+
+        if (obj.empty() ||
+                !obj.contains("app")) {
+            reply->deleteLater();
+            loop.quit();
+            return;
+        }
+
+        auto app = obj["app"].toString();
+
+        if (app == "spirit") {
+            status = true;
+        }
+
+        reply->deleteLater();
+        loop.quit();
+    });
+
+    manager.get(QNetworkRequest(QUrl(QString("http://127.1:") + QString::number(port))));
+
+    loop.exec();
+    return status;
+}
+
+static QString get_free_port() {
+    QTcpServer tcpServer;
+    if(!tcpServer.listen()) {
+        return "4499";
+    }
+
+    int randomPort = (int)tcpServer.serverPort();
+    tcpServer.close();
+
+    return QString::number(randomPort);
+}
 
 static void http_json_header(struct mg_connection *conn) {
     mg_printf(conn,
@@ -312,12 +379,67 @@ SpiritDaemonPrivate::~SpiritDaemonPrivate() { }
 void SpiritDaemonPrivate::run() {
     mg_init_library(0);
     b_StopRequested = false;
-    
+
+    auto tempFilePath = QDir::toNativeSeparators(
+                            QDir::tempPath() + "/" + "com.github.antony-jr.spirit"
+                        );
+
+    if (QFile::exists(tempFilePath)) {
+        // Possible there is another instance so, let's
+        // see if it's a valid one, if not we delete this
+        // file.
+
+        QFile file(tempFilePath);
+        if(!file.open(QIODevice::ReadOnly)) {
+            emit quit();
+            return;
+        }
+
+        auto arr = file.readAll();
+        QString contents(arr);
+        file.close();
+
+        contents = contents.trimmed();
+
+        // Now let's request the server and see if it's
+        // a valid spirit daemon instance.
+
+        bool ok = true;
+        int port = contents.toInt(&ok);
+
+        if (ok) {
+            if(is_daemon_active(port)) {
+                qDebug() << "Daemon Active";
+                emit quit();
+                return;
+            } else {
+                qDebug() << "Daemon Inactive";
+                qDebug() << "Port: " << port;
+                file.remove();
+            }
+        } else {
+            file.remove();
+        }
+    }
+
+    QString port = get_free_port();
+    QByteArray portArr = port.toUtf8();
+
     std::vector<std::string> opts;
     opts.push_back("listening_ports");
-    opts.push_back("4499");
+    opts.push_back(portArr.constData());
 
     CivetServer server(/*options*/opts, 0, /*user context*/(void*)this);
+
+    // Write the port in use to the temporary file
+    QFile file(tempFilePath);
+    if(!file.open(QIODevice::WriteOnly)) {
+        emit quit();
+        return;
+    }
+
+    file.write(portArr);
+    file.close();
 
     IndexHandler index;
     server.addHandler("", index);
@@ -336,6 +458,8 @@ void SpiritDaemonPrivate::run() {
     ActionHandler action;
     server.addHandler("/spirit/v1/action", action);
 
+    emit started();
+
     while(true) {
         QCoreApplication::processEvents();
         if(b_StopRequested) {
@@ -344,6 +468,8 @@ void SpiritDaemonPrivate::run() {
         }
         QThread::sleep(5);
     }
+
+    file.remove(); // Remove the temporary file
 }
 
 void SpiritDaemonPrivate::stop() {

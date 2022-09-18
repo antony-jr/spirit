@@ -20,6 +20,7 @@ class ActiveWindowTracker : public QObject {
     void hide();
   public Q_SLOTS:
     void start();
+    void rescan();
     void stop();
   private:
     ActiveWindowTrackerPrivate *d;

@@ -2,6 +2,7 @@
 #include <QScreen>
 #include <QGuiApplication>
 #include <QApplication>
+#include <QDebug>
 
 #include "spirit.hpp"
 
@@ -11,12 +12,12 @@ struct Coordinates {
 };
 
 static Coordinates getCoordinates(short pos, QRect geometry, QRect frame, int w, int h, int yoff, int _yoff) {
-    w += 40;
+    int offset = frame.width() / 10;
+    w += offset;
 
     auto point = geometry.topLeft();
     auto x = point.x();
     auto y = point.y();
-
 
     if(pos == Spirit::Position::TopRight) {
         point = geometry.topRight();
@@ -66,6 +67,7 @@ Spirit::Spirit()
     setAttribute(Qt::WA_ShowWithoutActivating, true);
     setAttribute(Qt::WA_X11DoNotAcceptFocus, true);
     setStyleSheet(QString::fromUtf8("background: transparent; border: none;"));
+    setScaledContents(true);
 }
 
 Spirit::~Spirit() {
@@ -75,18 +77,21 @@ Spirit::~Spirit() {
 
 void Spirit::setScale(int scale) {
     n_Scale = scale;
+    emit requestUpdate();
 }
 
 void Spirit::setSpeed(int speed) {
     n_Speed = speed;
+    emit requestUpdate();
 }
 
 void Spirit::setPosition(short pos) {
-   n_Position = pos;
+    n_Position = pos;
+    emit requestUpdate();
 }
 
 void Spirit::update(QRect geometry) {
-    if (m_Movie.isNull() || b_ClearRequested) {
+    if (b_Paused || m_Movie.isNull() || b_ClearRequested) {
         return;
     }
 
@@ -94,7 +99,8 @@ void Spirit::update(QRect geometry) {
     auto x = pos.x;
     auto y = pos.y;
 
-    if ( y < 0 || x < 0) {
+    if ( y < 0 || x < 0 ||
+            ((n_Position == Position::BottomRight || n_Position == Position::BottomLeft) && m_Variant)) {
         if(!b_Flipped && m_Variant != nullptr) {
             b_Flipped = true;
             hide();
@@ -109,12 +115,7 @@ void Spirit::update(QRect geometry) {
 
             QObject::connect(m_Movie.data(), &QMovie::frameChanged, this, &Spirit::handleFrameChanged);
             m_Movie->start();
-            show();
         }
-        pos = getCoordinates(Position::BottomRight, geometry, frameGeometry(), width(), height(), n_YOff, n__YOff);
-
-        x = pos.x;
-        y = pos.y;
     } else {
         if(b_Flipped) {
             b_Flipped = false;
@@ -129,16 +130,21 @@ void Spirit::update(QRect geometry) {
 
             QObject::connect(m_Movie.data(), &QMovie::frameChanged, this, &Spirit::handleFrameChanged);
             m_Movie->start();
-
-            show();
-
-
-            pos = getCoordinates(n_Position, geometry, frameGeometry(), width(), height(), n_YOff, n__YOff);
-            x = pos.x;
-            y = pos.y;
         }
     }
 
+    auto percentage = n_Scale / 100.0;
+    if (n_OrigWidth && n_OrigHeight && n_OrigWidthVar && n_OrigHeightVar) {
+        resize((b_Flipped ? n_OrigWidthVar : n_OrigWidth) * percentage,
+               (b_Flipped ? n_OrigHeightVar : n_OrigHeight) * percentage);
+
+        qDebug() << "Percentage: " << percentage;
+    }
+
+    pos = getCoordinates(b_Flipped ? Position::BottomRight : n_Position, geometry, frameGeometry(), width(), height(), n_YOff * percentage, n__YOff * percentage);
+
+    x = pos.x;
+    y = pos.y;
 
     move(x,y);
     show();
@@ -154,6 +160,7 @@ void Spirit::animate(QString action,
                      QString nxt,
                      QVector<int> offsets) {
     hide();
+    b_Paused = true;
     n_XOff = offsets[0];
     n_YOff = offsets[1];
     n__XOff = offsets[2];
@@ -189,14 +196,29 @@ void Spirit::animate(QString action,
         m_Variant->reset();
     }
 
+    if (m_Variant) {
+        m_Movie.reset(new QMovie);
+        setMovie(m_Movie.data());
+
+        m_Variant->reset();
+        m_Movie->setDevice(m_Variant);
+        m_Movie->start();
+
+        auto pixmap = m_Movie->currentPixmap();
+        n_OrigWidthVar = pixmap.width();
+        n_OrigHeightVar = pixmap.height();
+    }
+
     if(!m_Movie.isNull()) {
         m_Movie->stop();
+        if (m_Variant) {
+            m_Variant->reset();
+        }
     }
     m_Movie.reset(new QMovie);
     setMovie(m_Movie.data());
 
     QObject::connect(m_Movie.data(), &QMovie::frameChanged, this, &Spirit::handleFrameChanged);
-
 
     if(n_Position == Position::TopRight ||
             n_Position == Position::TopLeft) {
@@ -211,17 +233,32 @@ void Spirit::animate(QString action,
 
     m_Movie->setSpeed(n_Speed);
     m_Movie->start();
-    show();
+
+    auto pixmap = m_Movie->currentPixmap();
+    n_OrigWidth = pixmap.width();
+    n_OrigHeight = pixmap.height();
+
+    qDebug() << "Width: " << n_OrigWidth;
+    qDebug() << "Height: " << n_OrigHeight;
+    qDebug() << "vWidth: " << n_OrigWidthVar;
+    qDebug() << "vHeight: " << n_OrigHeightVar;
+
+    b_Paused = false;
+
+    emit requestUpdate();
 }
 
 void Spirit::clear() {
     b_ClearRequested = true;
     hide();
+    b_Paused = true;
     b_Loop = false;
     n_Scale = n_Speed = 100;
     n_Position = Position::TopLeft;
     m_Action = "default";
     m_Next.clear();
+
+    n_OrigWidth = n_OrigHeight = 0;
 
     if(m_Buffer) {
         m_Buffer->close();

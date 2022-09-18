@@ -10,6 +10,10 @@ SpiritDaemon::SpiritDaemon(QObject *parent)
     m_Worker = new SpiritDaemonPrivate;
     m_Worker->moveToThread(m_WorkerThread);
 
+
+    connect(m_Worker, &SpiritDaemonPrivate::started,
+            this, &SpiritDaemon::started, Qt::DirectConnection);
+
     connect(m_Worker, &SpiritDaemonPrivate::quit,
             this, &SpiritDaemon::quit, Qt::DirectConnection);
 

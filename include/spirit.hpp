@@ -56,6 +56,7 @@ class Spirit : public QLabel {
     // Request or set action for the current
     // animation cycle.
     void requestAction(QString);
+    void requestUpdate();
     void cleared();
 
   private:
@@ -68,8 +69,15 @@ class Spirit : public QLabel {
 
     int n_Scale = 100,
         n_Speed = 100;
+
+    int n_OrigWidth = 0,
+        n_OrigHeight = 0;
+    int n_OrigWidthVar = 0,
+        n_OrigHeightVar = 0;
+
     bool b_Loop = true;
     bool b_Flipped = false;
+    bool b_Paused = true;
     bool b_ClearRequested = false;
     QBuffer *m_Buffer = nullptr;
     QBuffer *m_Variant = nullptr;
