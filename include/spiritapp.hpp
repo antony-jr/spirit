@@ -18,7 +18,7 @@ class SpiritApp : public QObject {
     ~SpiritApp();
 
   public Q_SLOTS:
-    void run();
+    bool run();
 
   private Q_SLOTS:
     void handleInit(QJsonObject);

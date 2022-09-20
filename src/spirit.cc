@@ -297,8 +297,10 @@ void Spirit::animate(QString action,
         m_Player->setVolume(100);
         m_Player->play();
     } else {
-        m_Player->stop();
-        m_Player->setMedia(QUrl("audio/mp3"), nullptr);
+        if(m_Player->mediaStream()) {
+            m_Player->stop();
+            m_Player->setMedia(QUrl("audio/mp3"), nullptr);
+        }
     }
 }
 
@@ -318,8 +320,10 @@ void Spirit::getProperties() {
 void Spirit::clear() {
     b_ClearRequested = true;
     hide();
-    m_Player->stop();
-    m_Player->setMedia(QUrl("audio/mp3"), nullptr);
+    if (m_Player->mediaStream()) {
+        m_Player->stop();
+        m_Player->setMedia(QUrl("audio/mp3"), nullptr);
+    }
     b_Paused = true;
     b_Loop = false;
     n_Position = Position::TopLeft;

@@ -9,7 +9,6 @@
 #include <QTcpServer>
 #include <QDir>
 #include <QFile>
-#include <QDebug>
 
 #include "spiritdaemon_p.hpp"
 #include "CivetServer.h"
@@ -453,12 +452,9 @@ void SpiritDaemonPrivate::run() {
 
         if (ok) {
             if(is_daemon_active(port)) {
-                qDebug() << "Daemon Active";
                 emit quit();
                 return;
             } else {
-                qDebug() << "Daemon Inactive";
-                qDebug() << "Port: " << port;
                 file.remove();
             }
         } else {

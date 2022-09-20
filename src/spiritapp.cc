@@ -19,11 +19,11 @@ SpiritApp::~SpiritApp() {
     spirit->deleteLater();
 }
 
-void SpiritApp::run() {
+bool SpiritApp::run() {
     if(!config->read()) {
         // TODO: handle this error better.
         emit quit();
-        return;
+        return false;
     }
 
     {
@@ -57,6 +57,8 @@ void SpiritApp::run() {
     worker->setSpiritFile(config->getDefaultSpiritFile());
     tracker->start();
     daemon->run();
+
+    return true;
 }
 
 

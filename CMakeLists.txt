@@ -6,6 +6,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(MIN_QT_VERSION "5.6.0")
+set(SPIRIT_VERSION "v0.2.0")
+set(SPIRIT_COMMIT "none")
+set(SPIRIT_BUILD "dev")
 
 find_package(Qt5Core ${MIN_QT_VERSION})
 find_package(Qt5Widgets ${MIN_QT_VERSION})
@@ -31,9 +34,9 @@ if(ENABLE_DEBUGGING)
 endif()
 
 # Program information
-add_compile_definitions(SPIRIT_VERSION="unknown")
-add_compile_definitions(SPIRIT_COMMIT="none")
-add_compile_definitions(SPIRIT_BUILD="dev")
+add_compile_definitions(SPIRIT_VERSION="${SPIRIT_VERSION}")
+add_compile_definitions(SPIRIT_COMMIT="${SPIRIT_COMMIT}")
+add_compile_definitions(SPIRIT_BUILD="${SPIRIT_BUILD}")
 
 SET(source)
 list(APPEND source include/termcolor.hpp
@@ -49,6 +52,8 @@ list(APPEND source include/termcolor.hpp
 		   include/spiritdaemon_p.hpp
 		   include/spiritdaemon.hpp
 		   include/spiritapp.hpp
+		   include/spiritmanager.hpp
+		   src/spiritmanager.cc
 		   src/spiritapp.cc
 		   src/activewindowtracker_p.cc
 		   src/activewindowtracker.cc
