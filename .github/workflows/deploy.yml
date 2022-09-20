@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - rewrite
 
 jobs:
   Check:
@@ -39,33 +40,46 @@ jobs:
 
       - name: Install Qt and other Dependencies
         run: |
+          sudo add-apt-repository ppa:beineri/opt-qt-5.12.9-bionic -y
           sudo apt-get update -qq
-          sudo apt-get -y install build-essential libgl1-mesa-dev xvfb \
+          sudo apt-get -y install build-essential libgl1-mesa-dev xvfb qt512base \
+               qt512quickcontrols2 qt512quickcontrols qt512declarative \
                automake libtool \
-               libcairo-dev libfuse-dev desktop-file-utils \
+               libcairo-dev libfuse-dev zsync desktop-file-utils \
                ca-certificates autoconf libtool patch wget \
                vim-common desktop-file-utils pkg-config \
-               libarchive-dev librsvg2-dev librsvg2-bin liblzma-dev \
-               libxdo-dev  
+               libarchive-dev librsvg2-dev librsvg2-bin liblzma-dev
 
-      - name: Static Build Qt 5.12.8
+      - name: Install CivetWeb
         run: |
-          bash build_resources/build_qt_static.sh
+          git clone https://github.com/civetweb/civetweb --recursive
+          cd civetweb
+          git checkout 4245a37b436da23e1e148fd35513732169f80b11
+          cmake .
+          make -j$(nproc)
+          sudo make install
+          cd ..
+
+      - name: Install QArchive
+        run: |
+          source /opt/qt*/bin/qt*-env.sh || true
+          git clone https://github.com/antony-jr/QArchive
+          cd QAppImageUpdate
+          git checkout 2d05e652ad9a2bff8c87962d5525e2b3c4d7351b 
+          cmake .
+          make -j$(nproc)
+          sudo make install
+          cd ..
 
       - name: Building Spirit
         id: appimage_build
         run: |
           export VERSION=$(git rev-parse --short HEAD)
-          /usr/local/Qt-5.12.8/bin/qmake .
-          make -j$(nproc)
-          mkdir -p appdir/usr/lib 
-          mkdir -p appdir/usr/bin ; 
-          strip spirit ; cp spirit appdir/usr/bin/
-          mkdir -p appdir/usr/share/applications ; 
-          cp build_resources/spirit.desktop appdir/usr/share/applications/
-          mkdir -p appdir/usr/share/icons/hicolor/256x256/apps/ ; 
-          cp build_resources/spirit.png appdir/usr/share/icons/hicolor/256x256/apps/spirit.png
-          
+          source /opt/qt*/bin/qt*-env.sh || true
+
+          export SPIRIT_COMMIT=$(git rev-parse --short HEAD)
+          export SPIRIT_BUILD="1"
+
           deploy=${{ needs.Check.outputs.deploy }} 
           if [ "$deploy" = "false" ]
             then
@@ -73,25 +87,44 @@ jobs:
             export VERSION=$(git rev-parse --short HEAD) 
           else
             export tag="latest"
+            exprot SPIRIT_VERSION=$deploy
             export VERSION=$deploy
           fi
 
-          wget "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
-          chmod +x linuxdeploy-x86_64.AppImage
+          mkdir build
+          cd build
+          cmake .. 
+          make -j$(nproc)
+          mv spirit .. 
+          cd ..
+          rm -rf build 
 
-          ./linuxdeploy-x86_64.AppImage --appdir appdir --output appimage
+          mkdir -p appdir/usr/lib 
+          mkdir -p appdir/usr/bin ; 
+          strip spirit ; cp spirit appdir/usr/bin/
+          mkdir -p appdir/usr/share/applications ; 
+          cp build_resources/spirit.desktop appdir/usr/share/applications/
+          mkdir -p appdir/usr/share/icons/hicolor/256x256/apps/ ; 
+          cp build_resources/spirit.png appdir/usr/share/icons/hicolor/256x256/apps/spirit.png
 
-          sed '0,/AI\x02/{s|AI\x02|\x00\x00\x00|}' -i spirit-$VERSION-x86_64.AppImage
+           wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+          chmod a+x linuxdeployqt-continuous-x86_64.AppImage
+          unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
+          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -bundle-non-qt-libs
 
-          mv spirit-$VERSION-x86_64.AppImage spirit
+          wget -c -nv "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool-x86_64.AppImage
+          ./appimagetool-x86_64.AppImage -u "gh-releases-zsync|antony-jr|spirit|$tag|spirit*-x86_64.AppImage.zsync" appdir
 
-          echo ::set-output name=appimagefile::spirit
+          # sed '0,/AI\x02/{s|AI\x02|\x00\x00\x00|}' -i spirit-$VERSION-x86_64.AppImage
+
+          echo ::set-output name=appimagefile::spirit-$VERSION-x86_64.AppImage
 
           # Remove development appimages.
           rm -rf linuxdeploy*
 
           # Check if all files needed are generated.
-          file spirit
+          file spirit-$VERSION-x86_64.AppImage
 
       - name: Delete Old Development Builds
         if: needs.Check.outputs.deploy == 'false'
