@@ -228,6 +228,29 @@ QJsonObject SpiritManager::waitForUpdatedProperties() {
     return result;
 }
 
+void SpiritManager::resetProperty() {
+
+    auto port = getDaemonPort();
+    if (port < 1) {
+        emit updatedProperties(false, QJsonObject {});
+        return;
+    }
+
+    QJsonObject obj {
+        {"opt", "reset"}
+    };
+    auto rawJson = QJsonDocument(obj).toJson();
+
+
+    QNetworkRequest req(QUrl(
+                            QString("http://127.1:") + QString::number(port) + QString("/spirit/v1/property")));
+
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    req.setRawHeader("X-ReqCat", "PROPERTYRESET");
+
+    m_Manager->post(req, rawJson);
+}
+
 
 void SpiritManager::getLoadedSpiritInfo() {
     auto port = getDaemonPort();
@@ -259,6 +282,67 @@ QJsonObject SpiritManager::waitForLoadedSpiritInfo() {
     QObject::disconnect(conn);
     return result;
 }
+
+void SpiritManager::getActions() {
+    auto port = getDaemonPort();
+    if (port < 1) {
+        emit properties(false, QJsonObject {});
+        return;
+    }
+    QNetworkRequest req(QUrl(
+                            QString("http://127.1:") + QString::number(port) + QString("/spirit/v1/action")));
+
+    req.setRawHeader("X-ReqCat", "ACTIONSGET");
+
+
+
+    m_Manager->get(req);
+}
+
+
+void SpiritManager::getAction() {
+    auto port = getDaemonPort();
+    if (port < 1) {
+        emit properties(false, QJsonObject {});
+        return;
+    }
+    QNetworkRequest req(QUrl(
+                            QString("http://127.1:") + QString::number(port) + QString("/spirit/v1/action")));
+
+    req.setRawHeader("X-ReqCat", "ACTIONGET");
+
+
+
+    m_Manager->get(req);
+}
+
+
+void SpiritManager::setAction(QString act) {
+    auto port = getDaemonPort();
+    if (port < 1) {
+        emit updatedProperties(false, QJsonObject {});
+        return;
+    }
+
+    QJsonObject obj {
+        {"opt", "set"},
+        {"action", act}
+    };
+
+    auto rawJson = QJsonDocument(obj).toJson();
+
+
+    QNetworkRequest req(QUrl(
+                            QString("http://127.1:") + QString::number(port) + QString("/spirit/v1/action")));
+
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    req.setRawHeader("X-ReqCat", "ACTIONSET");
+
+
+    m_Manager->post(req, rawJson);
+}
+
+
 
 int SpiritManager::getPort() {
     return getDaemonPort();
@@ -329,12 +413,18 @@ void SpiritManager::handleAPIResponse(QNetworkReply *reply) {
         handleDeinitReply(reply);
     } else if (cat == "LOADSET") {
         handleLoadSetReply(reply);
-    } else if (cat == "PROPERTYGET") {
+    } else if (cat == "PROPERTYGET" || cat == "PROPERTYRESET") {
         handleGetPropertyReply(reply);
     } else if (cat == "PROPERTYSET") {
         handleSetPropertyReply(reply);
     } else if (cat == "LOADEDGET") {
         handleSpiritInfo(reply);
+    } else if (cat == "ACTIONGET") {
+        handleGetAction(reply);
+    } else if (cat == "ACTIONSGET") {
+        handleGetActions(reply);
+    } else if (cat == "ACTIONSET") {
+        handleGetAction(reply);
     } else {
         reply->deleteLater();
     }
@@ -536,5 +626,78 @@ void SpiritManager::handleSpiritInfo(QNetworkReply *reply) {
 
     reply->deleteLater();
     emit loadedSpiritInfo(stat == "success", obj);
+}
+
+
+void SpiritManager::handleGetAction(QNetworkReply *reply) {
+    if(reply->error() != QNetworkReply::NoError) {
+        reply->deleteLater();
+        emit action(QString());
+        return;
+    }
+
+    auto arr = reply->readAll();
+    QJsonParseError error;
+    auto json = QJsonDocument::fromJson(arr, &error);
+    if (error.error != QJsonParseError::NoError || !json.isObject()) {
+        reply->deleteLater();
+        emit action(QString());
+        return;
+    }
+
+    auto obj = json.object();
+
+    if (obj.empty() ||
+            !obj.contains("status")) {
+        reply->deleteLater();
+        emit action(QString());
+        return;
+    }
+
+    auto stat = obj["status"].toString();
+    auto act = obj["action"].toString();
+
+    reply->deleteLater();
+    emit action(act);
+}
+
+
+void SpiritManager::handleGetActions(QNetworkReply *reply) {
+    if(reply->error() != QNetworkReply::NoError) {
+        reply->deleteLater();
+        emit actions(QStringList());
+        return;
+    }
+
+    auto arr = reply->readAll();
+    QJsonParseError error;
+    auto json = QJsonDocument::fromJson(arr, &error);
+    if (error.error != QJsonParseError::NoError || !json.isObject()) {
+        reply->deleteLater();
+        emit actions(QStringList());
+        return;
+    }
+
+    auto obj = json.object();
+
+    if (obj.empty() ||
+            !obj.contains("status")) {
+        reply->deleteLater();
+        emit actions(QStringList());
+        return;
+    }
+
+    auto stat = obj["status"].toString();
+    auto action_arr = obj["actions"].toArray();
+
+    reply->deleteLater();
+
+    QStringList acts;
+
+    for (auto action : action_arr) {
+        acts << action.toString();
+    }
+
+    emit actions(acts);
 }
 

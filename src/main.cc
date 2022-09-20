@@ -33,19 +33,28 @@ static void usage(const char *prog) {
 
     std::cout << termcolor::bold
               << "Usage: " << prog << " <SUBCOMMAND> [OPTIONS]\n"
-              << "       " << prog << " load <LOCAL SPIRIT FILE> [OPTIONS]"
+              << "       " << prog << " load <LOCAL SPIRIT FILE> [OPTIONS]\n"
+              << "       " << prog << " set-action <ACTION NAME> [OPTIONS]\n"
+              << "       " << prog << " set-property <Property=Value> ... [OPTIONS]\n"
               << termcolor::reset
               << "\n\n";
 
     std::cout << termcolor::bold
               << "SUBCOMMAND:\n\n"
               << termcolor::reset
-              << " init     " << "\t" << "Initialize spirit daemon.\n"
-              << " load     " << "\t" << "Load a spirit from local file.\n"
-              << " gh-load  " << "\t" << "Load a spirit file from github repo.\n"
-              // << " renit    " << "\t" << "Restart spirit daemon.\n"
-              << " deinit   " << "\t" << "Quit spirit daemon.\n"
-              << " get-port " << "\t" << "Get the port that spirit daemon uses.\n\n";
+              << " init           " << "\t" << "Initialize spirit daemon.\n"
+              << " load           " << "\t" << "Load a spirit from local file.\n"
+              << " info           " << "\t" << "Show info on current loaded spirit file.\n"
+              << " set-action     " << "\t" << "Set current action of the loaded spirit.\n"
+              << " list-actions   " << "\t" << "List all actions of the loaded spirit.\n"
+              << " show-action    " << "\t" << "Show current action.\n"
+              << " property       " << "\t" << "Show current action properties.\n"
+              << " set-property   " << "\t" << "Set properties for current spirit.\n"
+              << " reset-property " << "\t" << "Reset properties to default.\n"
+              << " gh-load        " << "\t" << "Load a spirit file from github repo.\n"
+              // << " renit     " << "\t" << "Restart spirit daemon.\n"
+              << " deinit         " << "\t" << "Quit spirit daemon.\n"
+              << " get-port       " << "\t" << "Get the port that spirit daemon uses.\n\n";
 
     std::cout << termcolor::bold
               << "OPTIONS [init]:\n\n"
@@ -231,7 +240,308 @@ int main(int ac, char **av) {
 
         return app.exec();
 
+    } else if(subcommand == "property") {
+        info();
+        QObject::connect(&manager, &SpiritManager::properties,
+        [&app](bool success, QJsonObject props) {
+            if (!success) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Failed to Get Spirit Properties."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+            } else {
+
+                auto keys = props.keys();
+                for (auto key : keys) {
+                    std::cout << termcolor::bold
+                              << termcolor::yellow
+                              << key.toStdString()
+                              << termcolor::reset
+                              << ": "
+                              << (props[key].isString() ?
+                                  props[key].toString().toStdString() :
+                                  QString::number(props[key].toInt()).toStdString())
+                              << "\n";
+                }
+
+                std::cout << "\n";
+            }
+
+
+            app.quit();
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, &manager, &SpiritManager::getProperties);
+        timer.start();
+
+        return app.exec();
+    } else if(subcommand == "set-property") {
+        if (args.size() < 2) {
+            usage(av[0]);
+            return 0;
+        }
+
+        info();
+
+        QObject::connect(&manager, &SpiritManager::updatedProperties,
+        [&app](bool success, QJsonObject props) {
+            if (!success) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Failed to Set Spirit Properties."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+            } else {
+
+                std::cout << termcolor::bold
+                          << "Properties Updated Successfully."
+                          << termcolor::reset
+                          << "\n\n";
+
+                auto keys = props.keys();
+                for (auto key : keys) {
+                    std::cout << termcolor::bold
+                              << termcolor::yellow
+                              << key.toStdString()
+                              << termcolor::reset
+                              << ": "
+                              << (props[key].isString() ?
+                                  props[key].toString().toStdString() :
+                                  QString::number(props[key].toInt()).toStdString())
+                              << "\n";
+                }
+
+                std::cout << "\n";
+            }
+
+
+            app.quit();
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, [&app, &manager, &args]() {
+            QJsonObject updateProps { };
+            for(auto i = 1; i < args.size(); ++i) {
+                auto opt = args.at(i);
+                auto st = opt.split("=");
+                if (st.size() != 2) {
+                    std::cout << termcolor::bold
+                              << termcolor::red
+                              << "Syntax Error, Failed to Set Spirit Properties."
+                              << termcolor::reset
+                              << "\n";
+
+                    app.exit(-1);
+                    return;
+
+                }
+
+                if (st.at(0) == "position") {
+                    updateProps.insert(st.at(0), st.at(1));
+                } else {
+                    bool ok = false;
+                    int v = st.at(1).toInt(&ok);
+
+                    if (ok) {
+                        updateProps.insert(st.at(0), v);
+                    }
+                }
+            }
+
+            manager.setProperties(updateProps);
+        });
+        timer.start();
+
+        return app.exec();
+    } else if(subcommand == "reset-property") {
+        info();
+        QObject::connect(&manager, &SpiritManager::properties,
+        [&app](bool success, QJsonObject props) {
+            if (!success) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Failed to Reset Spirit Properties."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+            } else {
+
+                auto keys = props.keys();
+                for (auto key : keys) {
+                    std::cout << termcolor::bold
+                              << termcolor::yellow
+                              << key.toStdString()
+                              << termcolor::reset
+                              << ": "
+                              << (props[key].isString() ?
+                                  props[key].toString().toStdString() :
+                                  QString::number(props[key].toInt()).toStdString())
+                              << "\n";
+                }
+
+                std::cout << "\n";
+            }
+
+
+            app.quit();
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, &manager, &SpiritManager::resetProperty);
+        timer.start();
+
+        return app.exec();
+
+    } else if(subcommand == "info") {
+        info();
+        QObject::connect(&manager, &SpiritManager::loadedSpiritInfo,
+        [&app](bool success, QJsonObject info) {
+            if (!success) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Failed to Get Spirit Info."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+            } else {
+
+                auto keys = info.keys();
+                for (auto key : keys) {
+                    std::cout << termcolor::bold
+                              << termcolor::yellow
+                              << key.toStdString()
+                              << termcolor::reset
+                              << ": "
+                              << (info[key].isString() ?
+                                  info[key].toString().toStdString() :
+                                  QString::number(info[key].toInt()).toStdString())
+                              << "\n";
+                }
+
+                std::cout << "\n";
+            }
+
+
+            app.quit();
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, &manager, &SpiritManager::getLoadedSpiritInfo);
+        timer.start();
+
+        return app.exec();
+    } else if(subcommand == "set-action") {
+
+        if (args.size() < 2) {
+            usage(av[0]);
+            return 0;
+        }
+
+        info();
+        QObject::connect(&manager, &SpiritManager::action,
+        [&app](QString action) {
+            std::cout << termcolor::bold
+                      << termcolor::yellow
+                      << "Action("
+                      << action.toStdString()
+                      << ") set Successfully."
+                      << termcolor::reset
+                      << "\n";
+            app.quit();
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, [&args, &manager]() {
+            manager.setAction(args.at(1));
+        });
+        timer.start();
+
+        return app.exec();
+    } else if(subcommand == "list-actions") {
+        info();
+
+        QObject::connect(&manager, &SpiritManager::actions,
+        [&app](QStringList actions) {
+            if (actions.size() == 0) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Failed to Get Spirit Actions."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+            }
+
+            for(auto action : actions) {
+                std::cout << termcolor::bold
+                          << termcolor::yellow
+                          << action.toStdString()
+                          << termcolor::reset
+                          << "\n";
+            }
+
+            std::cout << "\n";
+            app.quit();
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, &manager, &SpiritManager::getActions);
+        timer.start();
+
+        return app.exec();
+
+    } else if(subcommand == "show-action") {
+        info();
+
+        QObject::connect(&manager, &SpiritManager::action,
+        [&app](QString action) {
+            if (action.isEmpty()) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Failed to Show Current Spirit Action."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+            }
+
+            std::cout << termcolor::bold
+                      << termcolor::yellow
+                      << "Current Action: "
+                      << termcolor::reset
+                      << action.toStdString()
+                      << "\n";
+            app.quit();
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, &manager, &SpiritManager::getAction);
+        timer.start();
+
+        return app.exec();
     } else if(subcommand == "gh-load") {
+       // TODO: Implement gh-load
     } else if(subcommand == "daemon") {
         manager.daemon();
     } else {

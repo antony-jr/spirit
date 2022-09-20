@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -32,10 +33,15 @@ class SpiritManager : public QObject {
 
     void ghLoad(QString repo);
 
+    void getActions();
+    void getAction();
+    void setAction(QString);
+
     void getProperties();
     QJsonObject waitForProperties();
     void setProperties(QJsonObject);
     QJsonObject waitForUpdatedProperties();
+    void resetProperty();
 
     void getLoadedSpiritInfo();
     QJsonObject waitForLoadedSpiritInfo();
@@ -53,6 +59,8 @@ class SpiritManager : public QObject {
     void handleGetPropertyReply(QNetworkReply*);
     void handleSetPropertyReply(QNetworkReply*);
     void handleSpiritInfo(QNetworkReply*);
+    void handleGetAction(QNetworkReply*);
+    void handleGetActions(QNetworkReply*);
 
   private:
     int getDaemonPort();
@@ -68,6 +76,9 @@ class SpiritManager : public QObject {
     void updatedRunOnStartup(bool);
     void updatedDefaultSpiritFile(QString);
     void allowedPrograms(QStringList);
+    void actions(QStringList);
+    void action(QString);
+
 
   private:
     bool b_Daemon = false;
