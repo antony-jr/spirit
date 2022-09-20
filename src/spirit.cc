@@ -79,14 +79,17 @@ Spirit::~Spirit() {
 
 void Spirit::resetDefaults() {
     m_Settings.resetDefaults();
+    emit requestUpdate();
 }
 
 void Spirit::setXOffset(int x1, int x2) {
     m_Settings.setXOffset(x1, x2);
+    emit requestUpdate();
 }
 
 void Spirit::setYOffset(int y1, int y2) {
     m_Settings.setYOffset(y1, y2);
+    emit requestUpdate();
 }
 
 void Spirit::setScale(int scale) {
@@ -173,7 +176,7 @@ void Spirit::update(QRect geometry) {
     x = pos.x;
     y = pos.y;
 
-    x += b_Flipped ? xoff * percentage : _xoff * percentage;
+    x += b_Flipped ? _xoff : xoff;
 
     move(x,y);
     show();

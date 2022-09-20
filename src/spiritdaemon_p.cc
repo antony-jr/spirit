@@ -255,9 +255,9 @@ class PropertyHandler : public CivetHandler {
         http_json_header(conn);
 
         auto body = get_json_body(conn);
-        if(body.isEmpty()) {
+        if(body.isEmpty() || !body.contains("opt")) {
             success = false;
-        } else {
+        } else if (body["opt"].toString() == "set") {
             if (body.contains("position")) {
                 short pos = SpiritEnums::Spirit::Position::TopLeft;
                 auto position = body["position"].toString();
@@ -285,6 +285,29 @@ class PropertyHandler : public CivetHandler {
                     emit obj->setSpeed(speed);
                 }
             }
+
+            if (body.contains("topXOffset")) {
+                auto x1 = body["topXOffset"].toInt();
+                emit obj->setXOffset(x1, obj->n_x2);
+            }
+
+            if (body.contains("bottomXOffset")) {
+                auto x2 = body["bottomXOffset"].toInt();
+                emit obj->setXOffset(obj->n_x1, x2);
+            }
+
+            if (body.contains("topYOffset")) {
+                auto y1 = body["topYOffset"].toInt();
+                emit obj->setYOffset(y1, obj->n_y2);
+            }
+
+            if (body.contains("bottomYOffset")) {
+                auto y2 = body["bottomYOffset"].toInt();
+                emit obj->setYOffset(obj->n_y1, y2);
+            }
+
+        } else if (body["opt"].toString() == "reset") {
+            emit obj->resetProperties();
         }
 
         QEventLoop loop;
