@@ -1,13 +1,30 @@
 #include <QRect>
 #include <QPixmap>
 #include <QPair>
+#include <QFile>
 #include <QJsonParseError>
 #include <QJsonArray>
 #include <QCoreApplication>
+#include <QCryptographicHash>
 
 #include "spiritenums.hpp"
 #include "spiritworker_p.hpp"
 #include "helpers_p.hpp"
+
+
+static QString hashFile(QString fileName) {
+    QFile file(fileName);
+    if(!file.open(QIODevice::ReadOnly)) {
+        return QString();
+    }
+
+    QCryptographicHash hasher(QCryptographicHash::Md5);
+    while(!file.atEnd()) {
+        hasher.addData(file.read(1024));
+    }
+
+    return QString(hasher.result().toHex());
+}
 
 SpiritWorkerPrivate::SpiritWorkerPrivate()
     : QObject() {
@@ -70,6 +87,8 @@ void SpiritWorkerPrivate::getCurrentAction() {
         return;
     }
 
+    auto uniqueSign = m_Signature + m_CurrentAction->action;
+    auto sign = QString(QCryptographicHash::hash(uniqueSign.toUtf8(), QCryptographicHash::Md5).toHex());
     emit action(m_CurrentAction->action,
                 m_CurrentAction->buffer,
                 m_CurrentAction->_buffer,
@@ -78,7 +97,8 @@ void SpiritWorkerPrivate::getCurrentAction() {
                 m_CurrentAction->scale,
                 m_CurrentAction->speed,
                 m_CurrentAction->next_action,
-                m_CurrentAction->offsets);
+                m_CurrentAction->offsets,
+                sign);
 }
 
 void SpiritWorkerPrivate::getInfo() {
@@ -97,6 +117,7 @@ void SpiritWorkerPrivate::init() {
         return;
     }
 
+    m_Signature = hashFile(m_SpiritPath);
     m_Extractor->setArchive(m_SpiritPath);
     m_Extractor->start();
     n_Status = SpiritEnums::SpiritFile::Status::Loading;
@@ -395,7 +416,8 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
         { "edition", "2021" },
         { "version", meta.value("version").toString() },
         { "author", meta.value("author").toString() },
-        { "copyright", meta.value("copyright").toString() }
+        { "copyright", meta.value("copyright").toString() },
+        { "signature", m_Signature }
     };
     m_Meta = meta_head;
 

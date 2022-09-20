@@ -12,6 +12,7 @@ SpiritApp::SpiritApp(QObject *parent) :
     tracker = new ActiveWindowTracker(this);
     worker = new SpiritWorker(this);
     daemon = new SpiritDaemon(this);
+    config = new SpiritConfig(this);
 }
 
 SpiritApp::~SpiritApp() {
@@ -19,12 +20,18 @@ SpiritApp::~SpiritApp() {
 }
 
 void SpiritApp::run() {
-    // TODO: Load Configuration File
-    // spirit->setDefaultScale()
-    // spirit->setDefaultSpeed();
-    // Get Default Spirit File location
-    // Get List of Allowed Programs to Integrate
-    // Add the list to ActiveWindowTracker
+    if(!config->read()) {
+        // TODO: handle this error better.
+        emit quit();
+        return;
+    }
+
+    {
+        auto programs = config->getAllowedPrograms();
+        for (auto program : programs) {
+            tracker->addAllowedProgram(program);
+        }
+    }
 
     QObject::connect(daemon, &SpiritDaemon::started, worker, &SpiritWorker::init);
     QObject::connect(daemon, &SpiritDaemon::quit, this, &SpiritApp::quit, Qt::DirectConnection);
@@ -35,13 +42,19 @@ void SpiritApp::run() {
                      this, &SpiritApp::handleTrackerError, Qt::QueuedConnection);
     QObject::connect(worker, &SpiritWorker::error, this, &SpiritApp::handleSpiritFileError, Qt::QueuedConnection);
     QObject::connect(daemon, &SpiritDaemon::setAction, worker, &SpiritWorker::setAction);
-    QObject::connect(worker, &SpiritWorker::action, daemon, &SpiritDaemon::updateAction);
+    QObject::connect(worker, &SpiritWorker::action, this, &SpiritApp::handleActionChange, Qt::QueuedConnection);
     QObject::connect(daemon, &SpiritDaemon::setSpirit, this, &SpiritApp::handleSpiritFile, Qt::QueuedConnection);
     QObject::connect(daemon, &SpiritDaemon::setPosition, spirit, &Spirit::setPosition);
     QObject::connect(daemon, &SpiritDaemon::setScale, spirit, &Spirit::setScale);
     QObject::connect(daemon, &SpiritDaemon::setSpeed, spirit, &Spirit::setSpeed);
+    QObject::connect(daemon, &SpiritDaemon::setXOffset, spirit, &Spirit::setXOffset);
+    QObject::connect(daemon, &SpiritDaemon::setYOffset, spirit, &Spirit::setYOffset);
+    QObject::connect(daemon, &SpiritDaemon::requestLatestProperties, spirit, &Spirit::getProperties,
+                     Qt::QueuedConnection);
+    QObject::connect(daemon, &SpiritDaemon::resetProperties, spirit, &Spirit::resetDefaults, Qt::QueuedConnection);
+    QObject::connect(spirit, &Spirit::properties, daemon, &SpiritDaemon::updateProps, Qt::QueuedConnection);
 
-    worker->setSpiritFile(":default.spirit");
+    worker->setSpiritFile(config->getDefaultSpiritFile());
     tracker->start();
     daemon->run();
 }
@@ -51,7 +64,6 @@ void SpiritApp::run() {
 #include <QDebug>
 
 void SpiritApp::handleInit(QJsonObject info) {
-    qDebug() << "Init";
     daemon->updateSpiritMeta(info);
 
     QObject::connect(tracker, &ActiveWindowTracker::update, spirit, &Spirit::update, Qt::QueuedConnection);
@@ -60,6 +72,22 @@ void SpiritApp::handleInit(QJsonObject info) {
     QObject::connect(tracker, &ActiveWindowTracker::hide, spirit, &Spirit::hide, Qt::QueuedConnection);
 
     worker->getCurrentAction();
+}
+
+void SpiritApp::handleActionChange(QString action) {
+    QEventLoop loop;
+    QList<QString> actions;
+
+    auto conn = QObject::connect(worker, &SpiritWorker::actions,
+    [&actions, &loop](QList<QString> acts) {
+        actions = acts;
+        loop.quit();
+    });
+    worker->getActions();
+    loop.exec();
+
+    QObject::disconnect(conn);
+    daemon->updateAction(action, actions);
 }
 
 void SpiritApp::handleSpiritFile(QString location) {

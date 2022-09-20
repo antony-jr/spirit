@@ -34,6 +34,18 @@ SpiritDaemon::SpiritDaemon(QObject *parent)
     connect(m_Worker, &SpiritDaemonPrivate::unsetSpirit,
             this, &SpiritDaemon::unsetSpirit, Qt::DirectConnection);
 
+    connect(m_Worker, &SpiritDaemonPrivate::requestLatestProperties,
+            this, &SpiritDaemon::requestLatestProperties, Qt::DirectConnection);
+
+    connect(m_Worker, &SpiritDaemonPrivate::resetProperties,
+            this, &SpiritDaemon::resetProperties, Qt::DirectConnection);
+
+    connect(m_Worker, &SpiritDaemonPrivate::setXOffset,
+            this, &SpiritDaemon::setXOffset, Qt::DirectConnection);
+
+    connect(m_Worker, &SpiritDaemonPrivate::setYOffset,
+            this, &SpiritDaemon::setYOffset, Qt::DirectConnection);
+
     connect(m_Worker, &SpiritDaemonPrivate::setPosition,
             this, &SpiritDaemon::setPosition, Qt::DirectConnection);
 
@@ -42,6 +54,7 @@ SpiritDaemon::SpiritDaemon(QObject *parent)
 
     connect(m_Worker, &SpiritDaemonPrivate::setSpeed,
             this, &SpiritDaemon::setSpeed, Qt::DirectConnection);
+
 
 }
 
@@ -68,10 +81,10 @@ void SpiritDaemon::stop() {
             Qt::QueuedConnection);
 }
 
-void SpiritDaemon::updateAction(QString action) {
-    getMethod(m_Worker, "updateAction(QString)")
+void SpiritDaemon::updateAction(QString action, QList<QString> actions) {
+    getMethod(m_Worker, "updateAction(QString, QList<QString>)")
     .invoke(m_Worker,
-            Qt::QueuedConnection, Q_ARG(QString, action));
+            Qt::QueuedConnection, Q_ARG(QString, action), Q_ARG(QList<QString>, actions));
 }
 
 void SpiritDaemon::updateSpirit(QString spirit) {
@@ -84,4 +97,20 @@ void SpiritDaemon::updateSpiritMeta(QJsonObject meta) {
     getMethod(m_Worker, "updateSpiritMeta(QJsonObject)")
     .invoke(m_Worker,
             Qt::QueuedConnection, Q_ARG(QJsonObject, meta));
+}
+
+void SpiritDaemon::updateProps(
+    int x1, int x2,
+    int y1, int y2,
+    int scale, int speed,
+    int position,
+    QString signature
+) {
+    getMethod(m_Worker, "updateProps(int,int,int,int,int,int,int,QString)")
+    .invoke(m_Worker,
+            Qt::QueuedConnection, Q_ARG(int, x1), Q_ARG(int, x2),
+            Q_ARG(int, y1), Q_ARG(int, y2),
+            Q_ARG(int, scale), Q_ARG(int, speed),
+            Q_ARG(int, position),
+            Q_ARG(QString, signature));
 }

@@ -1,6 +1,7 @@
 #ifndef ACTIVE_WINDOW_TRACKER_HPP
 #define ACTIVE_WINDOW_TRACKER_HPP
 #include <QObject>
+#include <QStringList>
 #include <QRect>
 
 #include "spiritenums.hpp"
@@ -18,10 +19,16 @@ class ActiveWindowTracker : public QObject {
     void error(short);
     void update(QRect);
     void hide();
+
+    void allowedPrograms(QStringList);
   public Q_SLOTS:
     void start();
     void rescan();
     void stop();
+
+    void addAllowedProgram(QString);
+    void removeAllowedProgram(int);
+    void getAllowedPrograms();
   private:
     ActiveWindowTrackerPrivate *d;
     QThread *worker;

@@ -1,4 +1,5 @@
 #include <QRect>
+#include <QDebug>
 
 #include "activewindowtracker_p.hpp"
 
@@ -61,13 +62,43 @@ void ActiveWindowTrackerPrivate::stop() {
 
 }
 
+void ActiveWindowTrackerPrivate::addAllowedProgram(QString program) {
+    m_AllowedPrograms.append(program);
+}
+
+void ActiveWindowTrackerPrivate::removeAllowedProgram(int pos) {
+    if (pos < m_AllowedPrograms.size() &&
+            pos >= 0) {
+        m_AllowedPrograms.removeAt(pos);
+        emit allowedPrograms(m_AllowedPrograms);
+    }
+}
+
+void ActiveWindowTrackerPrivate::getAllowedPrograms() {
+    emit allowedPrograms(m_AllowedPrograms);
+}
+
 #ifdef Q_OS_LINUX
 void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
     if(id == KWindowSystem::activeWindow()) {
-        auto properties = NET::WMGeometry | NET::WMState | NET::WMFrameExtents;
+        auto properties = NET::WMGeometry | NET::WMState | NET::WMFrameExtents | NET::WMVisibleName;
 
         KWindowInfo info(id, properties);
         if(!info.valid()) {
+            emit hide();
+            return;
+        }
+
+        auto allowed = m_AllowedPrograms.isEmpty();
+        auto title = info.visibleName();
+        for (auto prog : m_AllowedPrograms) {
+            if (title.contains(prog)) {
+                allowed = true;
+                break;
+            }
+        }
+
+        if (!allowed) {
             emit hide();
             return;
         }

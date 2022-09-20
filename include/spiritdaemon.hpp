@@ -16,9 +16,14 @@ class SpiritDaemon : public QObject {
     void run();
     void stop();
 
-    void updateAction(QString);
+    void updateAction(QString, QList<QString>);
     void updateSpirit(QString);
     void updateSpiritMeta(QJsonObject);
+    void updateProps(int x1, int x2,
+                     int y1, int y2,
+                     int scale, int speed,
+                     int position,
+                     QString sign);
 
   Q_SIGNALS:
     void started();
@@ -30,6 +35,10 @@ class SpiritDaemon : public QObject {
     void resetAction();
     void setSpirit(QString);
     void unsetSpirit();
+    void requestLatestProperties();
+    void resetProperties();
+    void setXOffset(int, int);
+    void setYOffset(int, int);
     void setPosition(short);
     void setScale(int);
     void setSpeed(int);

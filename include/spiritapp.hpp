@@ -8,6 +8,7 @@
 #include "spiritworker.hpp"
 #include "spirit.hpp"
 #include "spiritdaemon.hpp"
+#include "spiritconfig.hpp"
 
 class SpiritApp : public QObject {
     Q_OBJECT
@@ -21,6 +22,7 @@ class SpiritApp : public QObject {
 
   private Q_SLOTS:
     void handleInit(QJsonObject);
+    void handleActionChange(QString);
     void handleSpiritFile(QString);
     void handleTrackerError(short);
     void handleSpiritFileError(short);
@@ -33,6 +35,7 @@ class SpiritApp : public QObject {
     Spirit *spirit;
     SpiritWorker *worker;
     SpiritDaemon *daemon;
+    SpiritConfig *config;
 };
 
 #endif // SPIRIT_APP_HPP_INCLUDED

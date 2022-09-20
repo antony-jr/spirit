@@ -59,7 +59,8 @@ class SpiritWorkerPrivate : public QObject {
                  int /*scale percentage*/,
                  int /*speed percentage*/,
                  QString /*next action if available*/,
-                 QVector<int> /*offsets*/);
+                 QVector<int> /*offsets*/,
+                 QString /*md5 hash of the spirit file*/);
 
     void status(short);
 
@@ -86,6 +87,7 @@ class SpiritWorkerPrivate : public QObject {
     QJsonObject m_Meta;
     short n_Status = 0; /// 0 => Idle (Always).
     bool b_CancelRequested = false;
+    QString m_Signature;
     QString m_CurrentActionId;
     Action *m_CurrentAction = nullptr;
 

@@ -2,6 +2,7 @@
 #include <QThread>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -27,8 +28,6 @@ static bool is_daemon_active(int port) {
     QObject::connect(&manager, &QNetworkAccessManager::finished,
     [&loop, &status](QNetworkReply *reply) {
         if(reply->error() != QNetworkReply::NoError) {
-            qDebug() << "error Reply";
-            qDebug() << reply->error();
             loop.quit();
             reply->deleteLater();
             return;
@@ -217,6 +216,13 @@ class PropertyHandler : public CivetHandler {
         SpiritDaemonPrivate *obj = qobject_cast<SpiritDaemonPrivate*>((QObject*)server->getUserContext());
         http_json_header(conn);
 
+        QEventLoop loop;
+
+        QObject::connect(obj, &SpiritDaemonPrivate::cachedProps, &loop, &QEventLoop::quit);
+        emit obj->requestLatestProperties();
+
+        loop.exec(); // wait for updateProps
+
         QString position = "topLeft";
 
         if (obj->m_Position == SpiritEnums::Spirit::Position::TopRight) {
@@ -231,7 +237,12 @@ class PropertyHandler : public CivetHandler {
             {"status", "success"},
             {"position", position},
             {"scale", obj->n_Scale},
-            {"speed", obj->n_Speed}
+            {"speed", obj->n_Speed},
+            {"topXOffset", obj->n_x1},
+            {"bottomXOffset", obj->n_x2},
+            {"topYOffset", obj->n_y1},
+            {"bottomYOffset", obj->n_y2},
+            {"signature", obj->m_Sign}
         }, conn);
 
         return true;
@@ -259,14 +270,12 @@ class PropertyHandler : public CivetHandler {
                 }
 
                 emit obj->setPosition(pos);
-                obj->m_Position = pos;
             }
 
             if (body.contains("scale")) {
                 auto scale = body["scale"].toInt();
                 if (scale > 0) {
                     emit obj->setScale(scale);
-                    obj->n_Scale = scale;
                 }
             }
 
@@ -274,10 +283,16 @@ class PropertyHandler : public CivetHandler {
                 auto speed = body["speed"].toInt();
                 if (speed > 0) {
                     emit obj->setSpeed(speed);
-                    obj->n_Speed = speed;
                 }
             }
         }
+
+        QEventLoop loop;
+
+        QObject::connect(obj, &SpiritDaemonPrivate::cachedProps, &loop, &QEventLoop::quit);
+        emit obj->requestLatestProperties();
+
+        loop.exec(); // wait for updateProps
 
         QString position = "topLeft";
 
@@ -293,9 +308,13 @@ class PropertyHandler : public CivetHandler {
             {"status", success ? "success" : "failed"},
             {"position", position},
             {"scale", obj->n_Scale},
-            {"speed", obj->n_Speed}
+            {"speed", obj->n_Speed},
+            {"topXOffset", obj->n_x1},
+            {"bottomXOffset", obj->n_x2},
+            {"topYOffset", obj->n_y1},
+            {"bottomYOffset", obj->n_y2},
+            {"signature", obj->m_Sign}
         }, conn);
-
 
         return true;
     }
@@ -308,8 +327,9 @@ class ActionHandler : public CivetHandler {
         http_json_header(conn);
 
         write_json(QJsonObject {
-            {"status", "success"},
-            {"action", "default"}
+            {"status", (obj->m_Action.isEmpty() || obj->m_ActionList.isEmpty()) ? "failed" : "success"},
+            {"action", obj->m_Action},
+            {"actions", QJsonArray::fromStringList(obj->m_ActionList)}
         }, conn);
 
         return true;
@@ -320,7 +340,7 @@ class ActionHandler : public CivetHandler {
         http_json_header(conn);
 
         bool success = true;
-        QString action = "default";
+        QString action = obj->m_Action;
 
         auto body = get_json_body(conn);
 
@@ -334,8 +354,6 @@ class ActionHandler : public CivetHandler {
                     if(!body.contains("action")) {
                         success = false;
                     } else {
-                        qDebug() << "Set Action:: " << body["action"].toString();
-
                         QEventLoop loop;
 
                         QObject::connect(obj, &SpiritDaemonPrivate::cachedAction,
@@ -343,6 +361,7 @@ class ActionHandler : public CivetHandler {
 
                         emit obj->setAction(body["action"].toString());
                         loop.exec();
+                        action = obj->m_Action;
                     }
                 } else {
                     if(body["opt"].toString() == "reset") {
@@ -353,6 +372,7 @@ class ActionHandler : public CivetHandler {
 
                         emit obj->resetAction();
                         loop.exec();
+                        action = obj->m_Action;
 
                     }
                 }
@@ -361,7 +381,8 @@ class ActionHandler : public CivetHandler {
 
         write_json(QJsonObject {
             {"status", success ? "success" : "failed"},
-            {"action", action}
+            {"action", action},
+            {"actions", QJsonArray::fromStringList(obj->m_ActionList)}
         }, conn);
 
         return true;
@@ -476,8 +497,9 @@ void SpiritDaemonPrivate::stop() {
     b_StopRequested = true;
 }
 
-void SpiritDaemonPrivate::updateAction(QString action) {
+void SpiritDaemonPrivate::updateAction(QString action, QList<QString> actions) {
     m_Action = action;
+    m_ActionList = actions;
     emit cachedAction();
 }
 
@@ -489,4 +511,19 @@ void SpiritDaemonPrivate::updateSpirit(QString loc) {
 void SpiritDaemonPrivate::updateSpiritMeta(QJsonObject meta) {
     m_Meta = meta;
     emit cachedSpiritMeta();
+}
+
+void SpiritDaemonPrivate::updateProps(int x1, int x2,
+                                      int y1, int y2,
+                                      int scale, int speed,
+                                      int position,
+                                      QString sign) {
+    n_x1 = x1;
+    n_x2 = x2;
+    n_y1 = y1;
+    n_y2 = y2;
+    n_Scale = scale;
+    n_Speed = speed;
+    m_Sign = sign;
+    emit cachedProps();
 }

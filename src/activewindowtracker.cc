@@ -22,6 +22,10 @@ ActiveWindowTracker::ActiveWindowTracker(QObject *parent)
     connect(d, &ActiveWindowTrackerPrivate::hide,
             this, &ActiveWindowTracker::hide,
             Qt::DirectConnection);
+
+    connect(d, &ActiveWindowTrackerPrivate::allowedPrograms,
+            this, &ActiveWindowTracker::allowedPrograms,
+            Qt::DirectConnection);
 }
 
 ActiveWindowTracker::~ActiveWindowTracker() {
@@ -45,3 +49,14 @@ void ActiveWindowTracker::stop() {
     getMethod(d, "stop()").invoke(d, Qt::QueuedConnection);
 }
 
+void ActiveWindowTracker::addAllowedProgram(QString program) {
+    getMethod(d, "addAllowedProgram(QString)").invoke(d, Qt::QueuedConnection, Q_ARG(QString, program));
+}
+
+void ActiveWindowTracker::removeAllowedProgram(int pos) {
+    getMethod(d, "removeAllowedProgram(int)").invoke(d, Qt::QueuedConnection, Q_ARG(int, pos));
+}
+
+void ActiveWindowTracker::getAllowedPrograms() {
+    getMethod(d, "getAllowedPrograms()").invoke(d, Qt::QueuedConnection);
+}

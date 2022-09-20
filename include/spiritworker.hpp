@@ -73,7 +73,8 @@ class SpiritWorker : public QObject {
                  int /*scale percentage*/,
                  int /*speed percentage*/,
                  QString /*next action if available*/,
-                 QVector<int> /*offsets*/);
+                 QVector<int> /*offsets*/,
+                 QString /*md5 hash of spirit file*/);
 
     /// Emits all the meta info on this
     /// .spirit file.

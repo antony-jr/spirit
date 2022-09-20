@@ -12,9 +12,6 @@ struct Coordinates {
 };
 
 static Coordinates getCoordinates(short pos, QRect geometry, QRect frame, int w, int h, int yoff, int _yoff) {
-    int offset = frame.width() / 10;
-    w += offset;
-
     auto point = geometry.topLeft();
     auto x = point.x();
     auto y = point.y();
@@ -70,6 +67,9 @@ Spirit::Spirit()
     setScaledContents(true);
 
     m_Player.reset(new QMediaPlayer);
+    QObject::connect(m_Player.data(), &QMediaPlayer::stateChanged,
+                     this, &Spirit::handlePlayerStateChanged, Qt::QueuedConnection);
+
 }
 
 Spirit::~Spirit() {
@@ -77,18 +77,31 @@ Spirit::~Spirit() {
     hide();
 }
 
+void Spirit::resetDefaults() {
+    m_Settings.resetDefaults();
+}
+
+void Spirit::setXOffset(int x1, int x2) {
+    m_Settings.setXOffset(x1, x2);
+}
+
+void Spirit::setYOffset(int y1, int y2) {
+    m_Settings.setYOffset(y1, y2);
+}
+
 void Spirit::setScale(int scale) {
-    n_Scale = scale;
+    m_Settings.setScale(scale);
     emit requestUpdate();
 }
 
 void Spirit::setSpeed(int speed) {
-    n_Speed = speed;
+    m_Settings.setSpeed(speed);
     emit requestUpdate();
 }
 
 void Spirit::setPosition(short pos) {
     n_Position = pos;
+    m_Settings.setPosition(pos);
     emit requestUpdate();
 }
 
@@ -97,7 +110,15 @@ void Spirit::update(QRect geometry) {
         return;
     }
 
-    auto pos = getCoordinates(n_Position, geometry, frameGeometry(), width(), height(), n_YOff, n__YOff);
+    auto xoffsets = m_Settings.getXOffset();
+    auto xoff = xoffsets.first;
+    auto _xoff = xoffsets.second;
+
+    auto yoffsets = m_Settings.getYOffset();
+    auto yoff = yoffsets.first;
+    auto _yoff = yoffsets.second;
+
+    auto pos = getCoordinates(n_Position, geometry, frameGeometry(), width(), height(), yoff, _yoff);
     auto x = pos.x;
     auto y = pos.y;
 
@@ -112,7 +133,7 @@ void Spirit::update(QRect geometry) {
 
             m_Variant->reset();
             m_Movie->setDevice(m_Variant);
-            m_Movie->setSpeed(n_Speed);
+            m_Movie->setSpeed(m_Settings.getSpeed());
 
 
             QObject::connect(m_Movie.data(), &QMovie::frameChanged, this, &Spirit::handleFrameChanged);
@@ -128,25 +149,31 @@ void Spirit::update(QRect geometry) {
 
             m_Buffer->reset();
             m_Movie->setDevice(m_Buffer);
-            m_Movie->setSpeed(n_Speed);
+            m_Movie->setSpeed(m_Settings.getSpeed());
 
             QObject::connect(m_Movie.data(), &QMovie::frameChanged, this, &Spirit::handleFrameChanged);
             m_Movie->start();
         }
     }
 
-    auto percentage = n_Scale / 100.0;
+    auto percentage = m_Settings.getScale() / 100.0;
     if (n_OrigWidth && n_OrigHeight && n_OrigWidthVar && n_OrigHeightVar) {
         resize((b_Flipped ? n_OrigWidthVar : n_OrigWidth) * percentage,
                (b_Flipped ? n_OrigHeightVar : n_OrigHeight) * percentage);
-
-        qDebug() << "Percentage: " << percentage;
     }
 
-    pos = getCoordinates(b_Flipped ? Position::BottomRight : n_Position, geometry, frameGeometry(), width(), height(), n_YOff * percentage, n__YOff * percentage);
+    pos = getCoordinates(b_Flipped ?
+                         (n_Position == Position::BottomLeft ?
+                          Position::BottomLeft : Position::BottomRight)
+                         : n_Position,
+                         geometry,
+                         frameGeometry(), width(), height(),
+                         yoff * percentage, _yoff * percentage);
 
     x = pos.x;
     y = pos.y;
+
+    x += b_Flipped ? xoff * percentage : _xoff * percentage;
 
     move(x,y);
     show();
@@ -160,19 +187,30 @@ void Spirit::animate(QString action,
                      int scale,
                      int speed,
                      QString nxt,
-                     QVector<int> offsets) {
+                     QVector<int> offsets,
+                     QString signature) {
     hide();
     b_Paused = true;
-    n_XOff = offsets[0];
-    n_YOff = offsets[1];
-    n__XOff = offsets[2];
-    n__YOff =   offsets[3];
-
     b_Loop = loop;
-    n_Scale = scale;
-    n_Speed = speed;
     m_Action = action;
     m_Next = nxt;
+    m_Sign = signature;
+
+    auto ok = m_Settings.setSpiritSignature(
+                  signature,
+                  /*x1=*/offsets[0], /*x2=*/offsets[2],
+                  /*y1=*/offsets[1], /*y2=*/offsets[3],
+                  scale,
+                  speed,
+                  n_Position
+              );
+
+    if (!ok) {
+        // TODO: Handle this better.
+        return;
+    }
+
+    n_Position = m_Settings.getPosition();
 
     if(m_Buffer) {
         m_Buffer->close();
@@ -233,31 +271,45 @@ void Spirit::animate(QString action,
         }
     }
 
-    m_Movie->setSpeed(n_Speed);
+    m_Movie->setSpeed(m_Settings.getSpeed());
     m_Movie->start();
 
     auto pixmap = m_Movie->currentPixmap();
     n_OrigWidth = pixmap.width();
     n_OrigHeight = pixmap.height();
 
-    qDebug() << "Width: " << n_OrigWidth;
-    qDebug() << "Height: " << n_OrigHeight;
-    qDebug() << "vWidth: " << n_OrigWidthVar;
-    qDebug() << "vHeight: " << n_OrigHeightVar;
-
     b_Paused = false;
 
     emit requestUpdate();
 
     if(play) {
-       if(!play->isOpen()) {
-	  play->open(QIODevice::ReadOnly);
-       }
-       play->reset();
-       m_Player->setMedia(QUrl("audio/mp3"), (QIODevice*)play);
-       m_Player->setVolume(100);
-       m_Player->play();
+        if (play == m_Player->mediaStream()) {
+            return;
+        }
+        if(!play->isOpen()) {
+            play->open(QIODevice::ReadOnly);
+        }
+        play->reset();
+        m_Player->setMedia(QUrl("audio/mp3"), (QIODevice*)play);
+        m_Player->setVolume(100);
+        m_Player->play();
+    } else {
+        m_Player->stop();
+        m_Player->setMedia(QUrl("audio/mp3"), nullptr);
     }
+}
+
+void Spirit::getProperties() {
+    auto xoffset = m_Settings.getXOffset();
+    auto yoffset = m_Settings.getYOffset();
+    emit properties(
+        xoffset.first, xoffset.second,
+        yoffset.first, yoffset.second,
+        m_Settings.getScale(), m_Settings.getSpeed(),
+        m_Settings.getPosition(),
+        m_Sign
+    );
+    return;
 }
 
 void Spirit::clear() {
@@ -267,7 +319,6 @@ void Spirit::clear() {
     m_Player->setMedia(QUrl("audio/mp3"), nullptr);
     b_Paused = true;
     b_Loop = false;
-    n_Scale = n_Speed = 100;
     n_Position = Position::TopLeft;
     m_Action = "default";
     m_Next.clear();
@@ -305,10 +356,16 @@ void Spirit::handleFrameChanged(int frame) {
 
     if(frame + 1 == m_Movie->frameCount()) {
         if(!b_Loop) {
-	    if (m_Player->state() == QMediaPlayer::PlayingState) {
-	       return;
-	    }
+            if (m_Player->state() == QMediaPlayer::PlayingState) {
+                return;
+            }
             emit requestAction(m_Next);
         }
+    }
+}
+
+void Spirit::handlePlayerStateChanged(QMediaPlayer::State state) {
+    if (b_Loop && m_Player->state() == QMediaPlayer::StoppedState) {
+        m_Player->play();
     }
 }

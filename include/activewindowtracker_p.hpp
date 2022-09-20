@@ -2,6 +2,7 @@
 #define ACTIVE_WINDOW_TRACKER_HPP_PRIVATE
 #include <QObject>
 #include <QRect>
+#include <QStringList>
 #ifdef Q_OS_LINUX
 # include <kwindowsystem.h>
 # include <kwindowinfo.h>
@@ -22,6 +23,10 @@ class ActiveWindowTrackerPrivate : public QObject {
     void rescan();
     void stop();
 
+    void addAllowedProgram(QString);
+    void removeAllowedProgram(int);
+    void getAllowedPrograms();
+
 #ifdef Q_OS_LINUX
   private Q_SLOTS:
     void updateActiveWindowX(WId);
@@ -35,7 +40,10 @@ class ActiveWindowTrackerPrivate : public QObject {
     void update(QRect);
     void hide();
 
+    void allowedPrograms(QStringList);
+
   private:
+    QStringList m_AllowedPrograms;
 #ifdef Q_OS_LINUX
     bool b_RegisteredTypes = false;
 #endif // LINUX

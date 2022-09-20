@@ -8,6 +8,7 @@
 #include <QScopedPointer>
 
 #include "spiritenums.hpp"
+#include "spiritsettings.hpp"
 
 /// This is the GUI Widget for
 /// the spirit.
@@ -23,6 +24,11 @@ class Spirit : public QLabel {
     Spirit();
     ~Spirit();
   public Q_SLOTS:
+    void resetDefaults();
+
+    void setXOffset(int, int);
+    void setYOffset(int, int);
+
     /// Set the scale of the
     /// displayed animation.
     void setScale(int);
@@ -46,16 +52,21 @@ class Spirit : public QLabel {
                  int /*scale percentage*/,
                  int /*speed percentage*/,
                  QString /*next action if available*/,
-                 QVector<int> /*offsets*/);
+                 QVector<int> /*offsets*/,
+                 QString /*md5 hash of the spirit file*/);
+
+    void getProperties();
 
     void clear();
 
   private Q_SLOTS:
     void handleMovieStarted();
     void handleFrameChanged(int);
+    void handlePlayerStateChanged(QMediaPlayer::State);
   Q_SIGNALS:
     // Request or set action for the current
     // animation cycle.
+    void properties(int, int, int, int, int, int, int, QString);
     void requestAction(QString);
     void requestUpdate();
     void cleared();
@@ -63,14 +74,8 @@ class Spirit : public QLabel {
   private:
     QScopedPointer<QMediaPlayer> m_Player;
     QScopedPointer<QMovie> m_Movie;
+    SpiritSettings m_Settings;
     short n_Position = Position::TopLeft;
-    int n_YOff = 0,
-        n_XOff = 0,
-        n__YOff = 0,
-        n__XOff = 0;
-
-    int n_Scale = 100,
-        n_Speed = 100;
 
     int n_OrigWidth = 0,
         n_OrigHeight = 0;
@@ -85,6 +90,7 @@ class Spirit : public QLabel {
     QBuffer *m_Variant = nullptr;
     QString m_Action;
     QString m_Next;
+    QString m_Sign;
 };
 
 #endif // SPIRIT_HPP_INCLUDED
