@@ -30,10 +30,23 @@ if(ENABLE_DEBUGGING)
    add_definitions(-DENABLE_DEBUGGING)
 endif()
 
-# Program information
-add_compile_definitions(SPIRIT_VERSION="${SPIRIT_VERSION}")
-add_compile_definitions(SPIRIT_COMMIT="${SPIRIT_COMMIT}")
-add_compile_definitions(SPIRIT_BUILD="${SPIRIT_BUILD}")
+if(SPIRIT_VERSION)
+   add_compile_definitions(SPIRIT_VERSION="${SPIRIT_VERSION}")
+else()
+   add_compile_definitions(SPIRIT_VERSION="v1")
+endif()
+
+if(SPIRIT_COMMIT) 
+   add_compile_definitions(SPIRIT_COMMIT="${SPIRIT_COMMIT}")
+else()
+   add_compile_definitions(SPIRIT_COMMIT="none")
+endif()
+
+if(SPIRIT_BUILD)
+   add_compile_definitions(SPIRIT_BUILD="${SPIRIT_BUILD}")
+else()
+   add_compile_definitions(SPIRIT_BUILD="1")
+endif()
 
 SET(source)
 list(APPEND source include/termcolor.hpp
@@ -72,3 +85,8 @@ target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network Qt5::Mul
 target_link_libraries(spirit PUBLIC KF5::WindowSystem)
 target_link_libraries(spirit PUBLIC QArchive)
 target_link_libraries(spirit PUBLIC civetweb civetweb-cpp)
+
+# Hotfix for CI/CD
+if (UNIX AND NOT APPLE) 
+   target_link_libraries(spirit PUBLIC pthread dl util)
+endif ()

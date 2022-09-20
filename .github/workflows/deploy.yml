@@ -40,31 +40,79 @@ jobs:
 
       - name: Install Qt and other Dependencies
         run: |
-          sudo add-apt-repository ppa:beineri/opt-qt-5.12.9-bionic -y
+          sudo add-apt-repository ppa:beineri/opt-qt-5.15.2-bionic -y
           sudo apt-get update -qq
-          sudo apt-get -y install build-essential libgl1-mesa-dev xvfb qt512base \
-               qt512quickcontrols2 qt512quickcontrols qt512declarative \
-               automake libtool \
+          sudo apt-get -y install build-essential libgl1-mesa-dev xvfb qt515base \
+               qt515multimedia qt515x11extras qt515tools qt515imageformats \
+               qt515wayland automake libtool \
                libcairo-dev libfuse-dev zsync desktop-file-utils \
                ca-certificates autoconf libtool patch wget \
                vim-common desktop-file-utils pkg-config \
-               libarchive-dev librsvg2-dev librsvg2-bin liblzma-dev
+               librsvg2-dev librsvg2-bin liblzma-dev \
+               libxrender-dev libxcb-icccm4-dev \
+               libxcb-keysyms1-dev libxcb-res0-dev git
 
-      - name: Install CivetWeb
+      - name: Install KWindowSystem
         run: |
-          git clone https://github.com/civetweb/civetweb --recursive
-          cd civetweb
-          git checkout 4245a37b436da23e1e148fd35513732169f80b11
-          cmake .
+          source /opt/qt*/bin/qt*-env.sh || true 
+          git clone https://github.com/KDE/extra-cmake-modules
+          cd extra-cmake-modules
+          #git checkout v5.68.0
+          mkdir build 
+          cd build
+          cmake ..
           make -j$(nproc)
           sudo make install
           cd ..
+          cd ..
+          rm -rf extra-cmake-modules
+          
+          git clone https://github.com/KDE/kwindowsystem
+          cd kwindowsystem
+          #git checkout v5.68.0
+          mkdir build
+          cd build
+          cmake ..
+          make -j$(nproc)
+          sudo make install
+          cd ..
+          cd ..
+          rm -rf kwindowsystem
+
+      - name: Install CivetWeb
+        run: |
+          wget "https://github.com/civetweb/civetweb/archive/refs/tags/v1.15.tar.gz"
+          tar -xvf v1.15.tar.gz
+          cd civetweb-1.15
+          mkdir libbuild
+          cd libbuild
+          
+          cmake -DCIVETWEB_ENABLE_CXX=ON -DCIVETWEB_DISABLE_CGI=ON -DCIVETWEB_SERVE_NO_FILES=ON -DCIVETWEB_ENABLE_SERVER_EXECUTABLE=OFF -DCIVETWEB_INSTALL_EXECUTABLE=OFF -DCIVETWEB_BUILD_TESTING=OFF ..
+          
+          make -j$(nproc)
+          sudo make install 
+          cd ..
+          cd ..
+          rm -rf v1.15.tar.gz civetweb-1.15
+
+      - name: Install LibArchive
+        run: |
+          git clone https://github.com/libarchive/libarchive
+          cd libarchive
+          git checkout "v3.5.1"
+          cmake .
+          make -j$(nproc)
+          sudo make install -j$(nproc)
+          cd ..
+          rm -rf libarchive
+          sudo cp -fp /usr/local/lib/pkgconfig/libarchive.pc /usr/lib/pkgconfig/libarchive.pc
+          sudo cp -fp /usr/local/lib/libarchive.* /usr/lib/
 
       - name: Install QArchive
         run: |
           source /opt/qt*/bin/qt*-env.sh || true
           git clone https://github.com/antony-jr/QArchive
-          cd QAppImageUpdate
+          cd QArchive
           git checkout 2d05e652ad9a2bff8c87962d5525e2b3c4d7351b 
           cmake .
           make -j$(nproc)
@@ -74,16 +122,17 @@ jobs:
       - name: Building Spirit
         id: appimage_build
         run: |
-          export VERSION=$(git rev-parse --short HEAD)
           source /opt/qt*/bin/qt*-env.sh || true
-
-          export SPIRIT_COMMIT=$(git rev-parse --short HEAD)
-          export SPIRIT_BUILD="1"
+          
+          export VERSION=$(git rev-parse --short HEAD)
+          export COMMIT=$(git rev-parse --short HEAD)
+          export BUILD="1"
 
           deploy=${{ needs.Check.outputs.deploy }} 
           if [ "$deploy" = "false" ]
             then
             export tag="development"
+            export SPIRIT_VERSION="v1"
             export VERSION=$(git rev-parse --short HEAD) 
           else
             export tag="latest"
@@ -93,24 +142,29 @@ jobs:
 
           mkdir build
           cd build
-          cmake .. 
+          cmake -DSPIRIT_VERSION="$SPIRIT_VERSION" -DSPIRIT_COMMIT="$COMMIT" -DSPIRIT_BUILD="$BUILD" .. 
           make -j$(nproc)
           mv spirit .. 
           cd ..
           rm -rf build 
 
           mkdir -p appdir/usr/lib 
-          mkdir -p appdir/usr/bin ; 
-          strip spirit ; cp spirit appdir/usr/bin/
+          mkdir -p appdir/usr/bin
+
+          strip spirit ; mv spirit appdir/usr/bin/
           mkdir -p appdir/usr/share/applications ; 
           cp build_resources/spirit.desktop appdir/usr/share/applications/
           mkdir -p appdir/usr/share/icons/hicolor/256x256/apps/ ; 
-          cp build_resources/spirit.png appdir/usr/share/icons/hicolor/256x256/apps/spirit.png
+          cp build_resources/spirit.png appdir/usr/share/icons/hicolor/256x256/apps/spirit.png 
 
-           wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+          wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
           chmod a+x linuxdeployqt-continuous-x86_64.AppImage
           unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
           ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -bundle-non-qt-libs
+        
+          # IMPORTANT: KWindowSystem does not work without this plugin. 
+          cp -r /usr/local/lib/x86_64-linux-gnu/plugins/kf5 appdir/usr/plugins/
+          cp -r $(qmake -query QT_INSTALL_PLUGINS)/* appdir/usr/plugins/
 
           wget -c -nv "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool-x86_64.AppImage
@@ -121,10 +175,7 @@ jobs:
           echo ::set-output name=appimagefile::spirit-$VERSION-x86_64.AppImage
 
           # Remove development appimages.
-          rm -rf linuxdeploy*
-
-          # Check if all files needed are generated.
-          file spirit-$VERSION-x86_64.AppImage
+          rm -rf linuxdeploy* appimagetool*
 
       - name: Delete Old Development Builds
         if: needs.Check.outputs.deploy == 'false'
@@ -132,7 +183,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: development
-          assets: spirit*
+          assets: spirit* 
           fail-if-no-assets: false
           fail-if-no-release: false
 
@@ -141,7 +192,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./spirit
+          file: ./${{steps.appimage_build.outputs.appimagefile}}
           tag: development
           overwrite: true
           file_glob: true
