@@ -9,6 +9,7 @@
 
 #include "spiritenums.hpp"
 #include "spiritsettings.hpp"
+#include "windowquirks.hpp"
 
 /// This is the GUI Widget for
 /// the spirit.
@@ -72,6 +73,7 @@ class Spirit : public QLabel {
     void cleared();
 
   private:
+    WindowQuirks m_Quirks;
     QScopedPointer<QMediaPlayer> m_Player;
     QScopedPointer<QMovie> m_Movie;
     SpiritSettings m_Settings;

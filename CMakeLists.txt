@@ -57,6 +57,7 @@ list(APPEND source include/termcolor.hpp
 		   include/spiritworker_p.hpp
 		   include/spiritworker.hpp
 		   include/spirit.hpp
+		   include/windowquirks.hpp
 		   include/spiritsettings.hpp
 		   include/spiritconfig.hpp
 		   include/spiritdaemon_p.hpp
@@ -70,6 +71,7 @@ list(APPEND source include/termcolor.hpp
 		   src/spiritworker_p.cc
 		   src/spiritworker.cc
 		   src/spirit.cc
+		   src/windowquirks.cc
 		   src/spiritsettings.cc
 		   src/spiritconfig.cc
 		   src/spiritdaemon_p.cc

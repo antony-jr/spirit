@@ -387,6 +387,7 @@ int SpiritManager::getDaemonPort() {
 }
 
 bool SpiritManager::startDaemonProcess() {
+#ifdef Q_OS_LINUX
     QString programPath;
     auto appimage = std::getenv("APPIMAGE");
     if(appimage) {
@@ -394,6 +395,9 @@ bool SpiritManager::startDaemonProcess() {
     } else {
         programPath = QCoreApplication::applicationFilePath();
     }
+#else
+    QString programPath = QCoreApplication::applicationFilePath();
+#endif
 
     QStringList arguments;
     arguments << "daemon";

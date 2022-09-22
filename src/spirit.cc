@@ -176,6 +176,18 @@ void Spirit::update(QRect geometry) {
     x = pos.x;
     y = pos.y;
 
+    // Handle Quirks in some Distros and OS.
+    // Specifically in the linux world.
+    if (n_Position == Position::TopLeft || n_Position == Position::TopRight) {
+      if (b_Flipped) {
+	 y -= m_Quirks.yoffset();
+      } else {
+	 y += m_Quirks.yoffset();
+      } 
+    } else {
+       y -= m_Quirks.yoffset();
+    }
+
     x += b_Flipped ? _xoff : xoff;
 
     move(x,y);

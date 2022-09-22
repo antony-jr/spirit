@@ -51,7 +51,9 @@ void ActiveWindowTrackerPrivate::start() {
 
 void ActiveWindowTrackerPrivate::rescan() {
 #ifdef Q_OS_LINUX
-    updateActiveWindowX(KWindowSystem::activeWindow());
+   if(KWindowSystem::platform() == KWindowSystem::Platform::X11) {
+      updateActiveWindowX(KWindowSystem::activeWindow());
+   }
 #endif // LINUX 
 }
 
@@ -117,7 +119,6 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
         }
 
         auto geo = info.frameGeometry();
-
         emit update(geo);
         return;
     }
