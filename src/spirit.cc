@@ -180,12 +180,12 @@ void Spirit::update(QRect geometry) {
     // Specifically in the linux world.
     if (n_Position == Position::TopLeft || n_Position == Position::TopRight) {
       if (b_Flipped) {
-	 y += m_Quirks.yoffset();
-      } else {
 	 y -= m_Quirks.yoffset();
+      } else {
+	 y += m_Quirks.yoffset();
       } 
     } else {
-       y += m_Quirks.yoffset();
+       y -= m_Quirks.yoffset();
     }
 
     x += b_Flipped ? _xoff : xoff;

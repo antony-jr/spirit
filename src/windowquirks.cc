@@ -30,14 +30,12 @@ WindowQuirks::WindowQuirks() {
   // KDE at the time does not have any quirks
   // with frame geometry.
 
-  if (wmStr == "ubuntu:GNOME") {
-     n_Y = 60;
-  } 
-     
   if (productType == "ubuntu") { 
-      if (productVersion.contains("20.04")) {
-	// Any specific addition quirks 
-	// for specific versions of ubuntu. 
+      if (productVersion.contains("18.04") ||
+	  productVersion.contains("20.04")) {
+	 if (wmStr == "ubuntu:GNOME") {
+	    n_Y = 45;
+	 } 
       }
    }
 #endif // LINUX
