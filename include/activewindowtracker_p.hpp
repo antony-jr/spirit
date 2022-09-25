@@ -9,6 +9,7 @@
 #endif // LINUX 
 
 #include "spiritenums.hpp"
+#include "windowquirks.hpp"
 
 class ActiveWindowTrackerPrivate : public QObject {
     Q_OBJECT
@@ -23,6 +24,11 @@ class ActiveWindowTrackerPrivate : public QObject {
     void rescan();
     void stop();
 
+    void getQuirks();
+    void addQuirk(QString, int, int, QString);
+    void removeQuirk(QString);
+    void setGlobalOffsets(int, int);
+
     void addAllowedProgram(QString);
     void removeAllowedProgram(int);
     void getAllowedPrograms();
@@ -36,13 +42,19 @@ class ActiveWindowTrackerPrivate : public QObject {
 #endif // LINUX
 
   Q_SIGNALS:
+    void quirks(QJsonObject);
+    void quirkAdded(QString, bool);
+    void quirkRemoved(QString, bool);
+    void updatedGlobalOffsets(int, int);
+
     void error(short);
-    void update(QRect);
+    void update(QRect, int, int);
     void hide();
 
     void allowedPrograms(QStringList);
 
   private:
+    WindowQuirks m_Quirks;
     QStringList m_AllowedPrograms;
 #ifdef Q_OS_LINUX
     bool b_RegisteredTypes = false;

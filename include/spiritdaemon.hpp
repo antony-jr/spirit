@@ -24,6 +24,7 @@ class SpiritDaemon : public QObject {
                      int scale, int speed,
                      int position,
                      QString sign);
+    void updateQuirks(QJsonObject);
 
   Q_SIGNALS:
     void started();
@@ -37,6 +38,10 @@ class SpiritDaemon : public QObject {
     void unsetSpirit();
     void requestLatestProperties();
     void resetProperties();
+    void requestQuirks();
+    void addQuirk(QString, int, int, QString);
+    void removeQuirk(QString);
+    void setGlobalOffsets(int, int);
     void setXOffset(int, int);
     void setYOffset(int, int);
     void setPosition(short);

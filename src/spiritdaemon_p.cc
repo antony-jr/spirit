@@ -209,6 +209,95 @@ class LoadHandler : public CivetHandler {
     }
 };
 
+class QuirkHandler : public CivetHandler {
+  public:
+    bool handleGet(CivetServer *server, struct mg_connection *conn) {
+        SpiritDaemonPrivate *obj = qobject_cast<SpiritDaemonPrivate*>((QObject*)server->getUserContext());
+        http_json_header(conn);
+
+        QEventLoop loop;
+
+        QObject::connect(obj, &SpiritDaemonPrivate::cachedQuirks, &loop, &QEventLoop::quit);
+        emit obj->requestQuirks();
+
+        loop.exec();
+
+        auto res = obj->m_Quirks;
+        res.insert("status", "success");
+
+        write_json(res, conn);
+        return true;
+    }
+
+    bool handlePost(CivetServer *server, struct mg_connection *conn) {
+        SpiritDaemonPrivate *obj = qobject_cast<SpiritDaemonPrivate*>((QObject*)server->getUserContext());
+        bool success = true;
+        http_json_header(conn);
+
+        auto body = get_json_body(conn);
+        if(body.isEmpty() || !body.contains("opt")) {
+            success = false;
+        } else if(body["opt"].toString() == "set") {
+            int x = obj->n_X,
+                y = obj->n_Y;
+
+            if (body.contains("xoffset")) {
+                x = body["xoffset"].toInt(obj->n_X);
+            }
+
+            if (body.contains("yoffset")) {
+                y = body["yoffset"].toInt(obj->n_Y);
+            }
+            emit obj->setGlobalOffsets(x, y);
+
+        } else if (body["opt"].toString() == "add") {
+            if (body.contains("name")) {
+                int x = 0,
+                    y = 0;
+                QString vname;
+                if (body.contains("xoffset")) {
+                    x = body["xoffset"].toInt(0);
+                }
+
+                if (body.contains("yoffset")) {
+                    y = body["yoffset"].toInt(0);
+                }
+
+                if (body.contains("visibleName")) {
+                    vname = body["visibleName"].toString();
+                }
+
+                auto name = body["name"].toString();
+                emit obj->addQuirk(name, x, y, vname);
+            } else {
+                success = false;
+            }
+        } else if (body["opt"].toString() == "remove") {
+            if (body.contains("name")) {
+                auto name = body["name"].toString();
+                emit obj->removeQuirk(name);
+            } else {
+                success = false;
+            }
+        } else {
+            success = false;
+        }
+
+        QEventLoop loop;
+
+        QObject::connect(obj, &SpiritDaemonPrivate::cachedQuirks, &loop, &QEventLoop::quit);
+        emit obj->requestQuirks();
+
+        loop.exec();
+
+        auto res = obj->m_Quirks;
+        res.insert("status", "success");
+
+        write_json(res, conn);
+        return true;
+    }
+};
+
 class PropertyHandler : public CivetHandler {
   public:
     bool handleGet(CivetServer *server, struct mg_connection *conn) {
@@ -498,6 +587,9 @@ void SpiritDaemonPrivate::run() {
     ActionHandler action;
     server.addHandler("/spirit/v1/action", action);
 
+    QuirkHandler quirks;
+    server.addHandler("/spirit/v1/quirk", quirks);
+
     emit started();
 
     while(true) {
@@ -545,4 +637,11 @@ void SpiritDaemonPrivate::updateProps(int x1, int x2,
     n_Speed = speed;
     m_Sign = sign;
     emit cachedProps();
+}
+
+void SpiritDaemonPrivate::updateQuirks(QJsonObject obj) {
+    m_Quirks = obj;
+    n_X = m_Quirks["globalXOffset"].toInt(0);
+    n_Y = m_Quirks["globalYOffset"].toInt(0);
+    emit cachedQuirks();
 }

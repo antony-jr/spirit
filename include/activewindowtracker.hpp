@@ -1,6 +1,7 @@
 #ifndef ACTIVE_WINDOW_TRACKER_HPP
 #define ACTIVE_WINDOW_TRACKER_HPP
 #include <QObject>
+#include <QJsonObject>
 #include <QStringList>
 #include <QRect>
 
@@ -17,11 +18,20 @@ class ActiveWindowTracker : public QObject {
     ~ActiveWindowTracker();
   Q_SIGNALS:
     void error(short);
-    void update(QRect);
+    void update(QRect, int, int);
     void hide();
 
+    void quirks(QJsonObject);
+    void quirkAdded(QString, bool);
+    void quirkRemoved(QString, bool);
+    void updatedGlobalOffsets(int, int);
     void allowedPrograms(QStringList);
   public Q_SLOTS:
+    void getQuirks();
+    void setGlobalOffsets(int, int);
+    void addQuirk(QString, int, int, QString);
+    void removeQuirk(QString);
+
     void start();
     void rescan();
     void stop();

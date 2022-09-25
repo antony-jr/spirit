@@ -3,50 +3,204 @@
 #include <QString>
 #include <QDebug>
 
+#include <QJsonDocument>
+#include <QJsonParseError>
+
+#include <QFile>
+#include <QDir>
+
 #include "windowquirks.hpp"
 
-// Window Quirks helps to get over some quirks in window
-// sizes in different linux distros and window managers.
-// Although this covers only popular distros and wms, for
-// other wms and distros the user can adjust their yoffset
-// themselves.
+// Window Quirks helps to set error yoffset for specific programs
+// since in linux every program acts very different so it is very
+// hard to find the height of a program accurately, like in case
+// of ubuntu where every program has window shadow which makes a 5
+// pixel error in the height which makes the spirit look like it's
+// hanging. And Qt programs in Ubuntu does not have this shadow
+// making it even more weird for me to guess anything so quirk list
+// to handle these cases as per the user wishes.
 
-WindowQuirks::WindowQuirks() {
-#ifdef Q_OS_LINUX
-   auto wm = std::getenv("XDG_CURRENT_DESKTOP");
-   if (wm == NULL) {
-      return;
-   }
-   auto wmStr = QString(wm);
-   auto productType = QSysInfo::productType();
-   auto productVersion = QSysInfo::productVersion(); 
+WindowQuirks::WindowQuirks(QObject *parent)
+    : QObject(parent) {
 
-#if 0
-   qDebug() << "Product: " << productType;
-   qDebug() << "Product Version: " << productVersion;
-   qDebug() << "Window Manager: " << wmStr;
-#endif
+    auto configPath = QDir::toNativeSeparators(QDir::homePath() + "/.spirit");
+    m_QuirkFilePath = QDir::toNativeSeparators(configPath + "/quirks.json");
 
-  // KDE at the time does not have any quirks
-  // with frame geometry.
+    if (QFile::exists(configPath)) {
+        QFile::remove(configPath);
+    }
 
-  if (productType == "ubuntu") { 
-      if (productVersion.contains("18.04") ||
-	  productVersion.contains("20.04")) {
-	 if (wmStr == "ubuntu:GNOME") {
-	    n_Y = 45;
-	 } 
-      }
-   }
-#endif // LINUX
+    QDir configDir(configPath);
+    if (!configDir.exists()) {
+        configDir.cdUp();
+        configDir.mkdir(".spirit");
+        configDir.cd(".spirit");
+    }
+
+    if (!QFile::exists(m_QuirkFilePath)) {
+        updateJson();
+    }
 }
 
 WindowQuirks::~WindowQuirks() { }
 
-int WindowQuirks::yoffset() {
-   return n_Y;
+bool WindowQuirks::read() {
+    QFile file;
+    file.setFileName(m_QuirkFilePath);
+
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+
+    auto arr = file.readAll();
+    file.close();
+
+    QJsonParseError error;
+
+    auto json = QJsonDocument::fromJson(arr, &error);
+    if (error.error != QJsonParseError::NoError || !json.isObject()) {
+        updateJson();
+        return read();
+    }
+
+    auto obj = json.object();
+    if (obj.empty()) {
+        updateJson();
+        return read();
+    }
+
+    n_X = obj["globalXOffset"].toInt(0);
+    n_Y = obj["globalYOffset"].toInt(0);
+
+    m_ProgramQuirks.clear();
+    auto keys = obj.keys();
+    for (auto key : keys) {
+        if (obj[key].isObject()) {
+            auto value = obj[key].toObject();
+
+            Entry e;
+            e.n_X = value["xoffset"].toInt(0);
+            e.n_Y = value["yoffset"].toInt(0);
+            e.m_VisibleName = value["visibleName"].toString();
+
+            m_ProgramQuirks.insert(key, e);
+        }
+    }
+
+    return true;
 }
 
-int WindowQuirks::xoffset() {
-   return n_X;
+bool WindowQuirks::setGlobalXOffset(int x) {
+    n_X = x;
+    return updateJson();
 }
+
+bool WindowQuirks::setGlobalYOffset(int y) {
+    n_Y = y;
+    return updateJson();
+}
+
+QJsonObject WindowQuirks::getQuirk(QString name) {
+    if (name.isEmpty()) {
+        return QJsonObject {
+            {"xoffset", n_X},
+            {"yoffset", n_Y},
+            {"visibleName", ""},
+            {"exists", false}
+        };
+    }
+
+    auto iter = m_ProgramQuirks.find(name);
+    if (iter == m_ProgramQuirks.end()) {
+        return QJsonObject {
+            {"xoffset", n_X},
+            {"yoffset", n_Y},
+            {"visibleName", ""},
+            {"exists", false}
+        };
+    }
+
+    auto e = iter.value();
+
+    return QJsonObject {
+        {"xoffset", e.n_X},
+        {"yoffset", e.n_Y},
+        {"visibleName", e.m_VisibleName}
+    };
+}
+
+void WindowQuirks::getQuirks() {
+    QJsonObject r;
+
+    r.insert("globalXOffset", n_X);
+    r.insert("globalYOffset", n_Y);
+
+    for(auto iter = m_ProgramQuirks.constBegin();
+            iter != m_ProgramQuirks.constEnd();
+            ++iter) {
+        auto e = iter.value();
+        r.insert(iter.key(), QJsonObject {
+            {"xoffset", e.n_X},
+            {"yoffset", e.n_Y},
+            {"visibleName", e.m_VisibleName}
+        });
+    }
+
+    emit quirks(r);
+}
+
+bool WindowQuirks::addQuirk(QString name, int x, int y, QString visibleName) {
+    Entry e;
+    e.n_X = x;
+    e.n_Y = y;
+    e.m_VisibleName = visibleName;
+    auto iter = m_ProgramQuirks.find(name);
+    if (iter != m_ProgramQuirks.end()) {
+        m_ProgramQuirks.erase(iter);
+    }
+    m_ProgramQuirks.insert(name, e);
+    return updateJson();
+}
+
+bool WindowQuirks::removeQuirk(QString name) {
+    auto iter = m_ProgramQuirks.find(name);
+    if (iter != m_ProgramQuirks.end()) {
+        m_ProgramQuirks.erase(iter);
+    }
+
+    return updateJson();
+}
+
+bool WindowQuirks::updateJson() {
+    QFile file;
+    file.setFileName(m_QuirkFilePath);
+    if(!file.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+
+
+    QJsonObject r;
+
+    r.insert("globalXOffset", n_X);
+    r.insert("globalYOffset", n_Y);
+
+    for(auto iter = m_ProgramQuirks.constBegin();
+            iter != m_ProgramQuirks.constEnd();
+            ++iter) {
+        auto e = iter.value();
+        r.insert(iter.key(), QJsonObject {
+            {"xoffset", e.n_X},
+            {"yoffset", e.n_Y},
+            {"visibleName", e.m_VisibleName}
+        });
+    }
+
+    QJsonDocument doc(r);
+
+    auto arr = doc.toJson(QJsonDocument::Indented);
+    file.write(arr);
+    file.close();
+
+    return true;
+}
+

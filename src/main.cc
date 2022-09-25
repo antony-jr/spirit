@@ -48,6 +48,9 @@ static void usage(const char *prog) {
               << " set-action     " << "\t" << "Set current action of the loaded spirit.\n"
               << " list-actions   " << "\t" << "List all actions of the loaded spirit.\n"
               << " show-action    " << "\t" << "Show current action.\n"
+              << " quirks         " << "\t" << "Show Quirks list.\n"
+              << " add-quirk      " << "\t" << "Add a Quirk.\n"
+              << " remove-quirk   " << "\t" << "Remove a Quirk.\n"
               << " property       " << "\t" << "Show current action properties.\n"
               << " set-property   " << "\t" << "Set properties for current spirit.\n"
               << " reset-property " << "\t" << "Reset properties to default.\n"
@@ -240,7 +243,269 @@ int main(int ac, char **av) {
 
         return app.exec();
 
-    } else if(subcommand == "property") {
+    } else if(subcommand == "quirks") {
+        info();
+        QObject::connect(&manager, &SpiritManager::quirks,
+        [&app](bool success, QJsonObject quirks) {
+            if (!success) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Failed to Get Quirks."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+            } else {
+
+                int x = quirks["globalXOffset"].toInt(),
+                    y = quirks["globalYOffset"].toInt();
+
+                std::cout << termcolor::bold
+                          << termcolor::yellow
+                          << "Global"
+                          << termcolor::reset
+                          << ": "
+                          << "XOffset = "
+                          << x
+                          << " | YOffset = "
+                          << y
+                          << "\n";
+
+                Q_UNUSED(quirks.take("status"));
+                auto keys = quirks.keys();
+                for (auto key : keys) {
+                    if (key == "globalXOffset" ||
+                            key == "globalYOffset") {
+                        continue;
+                    }
+
+                    auto obj = quirks[key].toObject();
+
+                    int x = obj["xoffset"].toInt(),
+                        y = obj["yoffset"].toInt();
+                    QString vname = obj["visibleName"].toString();
+
+                    std::cout << termcolor::bold
+                              << termcolor::yellow
+                              << key.toStdString()
+                              << termcolor::reset
+                              << ": "
+                              << "XOffset = "
+                              << x
+                              << " | YOffset = "
+                              << y
+                              << " | Visible Name = "
+                              << vname.toStdString()
+                              << "\n";
+                }
+
+                std::cout << "\n";
+            }
+
+
+            app.quit();
+
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, &manager, &SpiritManager::getQuirks);
+        timer.start();
+
+        return app.exec();
+    } else if(subcommand == "add-quirk") {
+        info();
+        QObject::connect(&manager, &SpiritManager::quirks,
+        [&app](bool success, QJsonObject quirks) {
+            if (!success) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Failed to Get Quirks."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+            } else {
+
+                int x = quirks["globalXOffset"].toInt(),
+                    y = quirks["globalYOffset"].toInt();
+
+                std::cout << termcolor::bold
+                          << termcolor::yellow
+                          << "Global"
+                          << termcolor::reset
+                          << ": "
+                          << "XOffset = "
+                          << x
+                          << " | YOffset = "
+                          << y
+                          << "\n";
+
+                Q_UNUSED(quirks.take("status"));
+                auto keys = quirks.keys();
+                for (auto key : keys) {
+                    if (key == "globalXOffset" ||
+                            key == "globalYOffset") {
+                        continue;
+                    }
+
+                    auto obj = quirks[key].toObject();
+
+                    int x = obj["xoffset"].toInt(),
+                        y = obj["yoffset"].toInt();
+                    QString vname = obj["visibleName"].toString();
+
+                    std::cout << termcolor::bold
+                              << termcolor::yellow
+                              << key.toStdString()
+                              << termcolor::reset
+                              << ": "
+                              << "XOffset = "
+                              << x
+                              << " | YOffset = "
+                              << y
+                              << " | Visible Name = "
+                              << vname.toStdString()
+                              << "\n";
+                }
+
+                std::cout << "\n";
+            }
+
+
+            app.quit();
+
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, [&app, &manager, &args]() {
+            QJsonObject quirk { };
+            for(auto i = 1; i < args.size(); ++i) {
+                auto opt = args.at(i);
+                auto st = opt.split("=");
+                if (st.size() != 2) {
+                    std::cout << termcolor::bold
+                              << termcolor::red
+                              << "Syntax Error, Failed to Add Quirk."
+                              << termcolor::reset
+                              << "\n";
+
+                    app.exit(-1);
+                    return;
+
+                }
+
+                if (st.at(0) == "name") {
+                    quirk.insert(st.at(0), st.at(1));
+                } else if(st.at(0) == "visibleName") {
+                    quirk.insert(st.at(0), st.at(1));
+                } else {
+                    bool ok = false;
+                    int v = st.at(1).toInt(&ok);
+
+                    if (ok) {
+                        quirk.insert(st.at(0), v);
+                    }
+                }
+            }
+
+            manager.addQuirk(quirk);
+
+        });
+        timer.start();
+
+        return app.exec();
+    } else if(subcommand == "remove-quirk") {
+        info();
+        QObject::connect(&manager, &SpiritManager::quirks,
+        [&app](bool success, QJsonObject quirks) {
+            if (!success) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Failed to Get Quirks."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+            } else {
+
+                int x = quirks["globalXOffset"].toInt(),
+                    y = quirks["globalYOffset"].toInt();
+
+                std::cout << termcolor::bold
+                          << termcolor::yellow
+                          << "Global"
+                          << termcolor::reset
+                          << ": "
+                          << "XOffset = "
+                          << x
+                          << " | YOffset = "
+                          << y
+                          << "\n";
+
+                Q_UNUSED(quirks.take("status"));
+                auto keys = quirks.keys();
+                for (auto key : keys) {
+                    if (key == "globalXOffset" ||
+                            key == "globalYOffset") {
+                        continue;
+                    }
+
+                    auto obj = quirks[key].toObject();
+
+                    int x = obj["xoffset"].toInt(),
+                        y = obj["yoffset"].toInt();
+                    QString vname = obj["visibleName"].toString();
+
+                    std::cout << termcolor::bold
+                              << termcolor::yellow
+                              << key.toStdString()
+                              << termcolor::reset
+                              << ": "
+                              << "XOffset = "
+                              << x
+                              << " | YOffset = "
+                              << y
+                              << " | Visible Name = "
+                              << vname.toStdString()
+                              << "\n";
+                }
+
+                std::cout << "\n";
+            }
+
+
+            app.quit();
+
+        });
+
+        QTimer timer;
+        timer.setSingleShot(100);
+        QObject::connect(&timer, &QTimer::timeout, [&app, &manager, &args]() {
+            if (args.size() != 2) {
+                std::cout << termcolor::bold
+                          << termcolor::red
+                          << "Invalid Argument Count."
+                          << termcolor::reset
+                          << "\n";
+
+                app.exit(-1);
+                return;
+
+            }
+
+            manager.removeQuirk(args.at(1));
+        });
+        timer.start();
+
+        return app.exec();
+    }
+
+    else if(subcommand == "property") {
         info();
         QObject::connect(&manager, &SpiritManager::properties,
         [&app](bool success, QJsonObject props) {
@@ -541,7 +806,7 @@ int main(int ac, char **av) {
 
         return app.exec();
     } else if(subcommand == "gh-load") {
-       // TODO: Implement gh-load
+        // TODO: Implement gh-load
     } else if(subcommand == "daemon") {
         manager.daemon();
     } else {

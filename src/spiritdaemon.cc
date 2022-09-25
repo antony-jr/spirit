@@ -40,6 +40,18 @@ SpiritDaemon::SpiritDaemon(QObject *parent)
     connect(m_Worker, &SpiritDaemonPrivate::resetProperties,
             this, &SpiritDaemon::resetProperties, Qt::DirectConnection);
 
+    connect(m_Worker, &SpiritDaemonPrivate::requestQuirks,
+            this, &SpiritDaemon::requestQuirks, Qt::DirectConnection);
+
+    connect(m_Worker, &SpiritDaemonPrivate::addQuirk,
+            this, &SpiritDaemon::addQuirk, Qt::DirectConnection);
+
+    connect(m_Worker, &SpiritDaemonPrivate::removeQuirk,
+            this, &SpiritDaemon::removeQuirk, Qt::DirectConnection);
+
+    connect(m_Worker, &SpiritDaemonPrivate::setGlobalOffsets,
+            this, &SpiritDaemon::setGlobalOffsets, Qt::DirectConnection);
+
     connect(m_Worker, &SpiritDaemonPrivate::setXOffset,
             this, &SpiritDaemon::setXOffset, Qt::DirectConnection);
 
@@ -97,6 +109,12 @@ void SpiritDaemon::updateSpiritMeta(QJsonObject meta) {
     getMethod(m_Worker, "updateSpiritMeta(QJsonObject)")
     .invoke(m_Worker,
             Qt::QueuedConnection, Q_ARG(QJsonObject, meta));
+}
+
+void SpiritDaemon::updateQuirks(QJsonObject quirks) {
+    getMethod(m_Worker, "updateQuirks(QJsonObject)")
+    .invoke(m_Worker,
+            Qt::QueuedConnection, Q_ARG(QJsonObject, quirks));
 }
 
 void SpiritDaemon::updateProps(

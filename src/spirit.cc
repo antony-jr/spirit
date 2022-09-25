@@ -22,14 +22,14 @@ static Coordinates getCoordinates(short pos, QRect geometry, QRect frame, int w,
         y = point.y();
 
         x = x + frame.width() - (w*2);
-        y = y - frame.height() + (yoff < 0 ? 0 : yoff);
+        y = y - frame.height() + yoff;
     } else if(pos == Spirit::Position::BottomLeft) {
         point = geometry.bottomLeft();
         x = point.x();
         y = point.y();
 
         x = x - frame.width() + w;
-        y = y - frame.height() - (_yoff < 0 ? 0 : _yoff);
+        y = y - frame.height() - _yoff;
 
     } else if(pos == Spirit::Position::BottomRight) {
         point = geometry.bottomRight();
@@ -37,10 +37,10 @@ static Coordinates getCoordinates(short pos, QRect geometry, QRect frame, int w,
         y = point.y();
 
         x = x - frame.width() - (w/4);
-        y = y - frame.height() - (_yoff < 0 ? 0 : _yoff);
+        y = y - frame.height() - _yoff;
     } else { // TopLeft
         x += w;
-        y = y - frame.height() + (yoff <= 0 ? 0 : yoff);
+        y = y - frame.height() + yoff;
     }
 
     Coordinates r;
@@ -108,7 +108,7 @@ void Spirit::setPosition(short pos) {
     emit requestUpdate();
 }
 
-void Spirit::update(QRect geometry) {
+void Spirit::update(QRect geometry, int xoffset, int yoffset) {
     if (b_Paused || m_Movie.isNull() || b_ClearRequested) {
         return;
     }
@@ -178,14 +178,18 @@ void Spirit::update(QRect geometry) {
 
     // Handle Quirks in some Distros and OS.
     // Specifically in the linux world.
+
+    qDebug() << "Quirk YOffset = " << yoffset
+             << "Quirk XOffset = " << xoffset;
+
     if (n_Position == Position::TopLeft || n_Position == Position::TopRight) {
-      if (b_Flipped) {
-	 y -= m_Quirks.yoffset();
-      } else {
-	 y += m_Quirks.yoffset();
-      } 
+        if (b_Flipped) {
+            y -= yoffset;
+        } else {
+            y += yoffset;
+        }
     } else {
-       y -= m_Quirks.yoffset();
+        y -= yoffset;
     }
 
     x += b_Flipped ? _xoff : xoff;

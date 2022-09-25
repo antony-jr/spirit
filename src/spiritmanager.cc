@@ -156,6 +156,23 @@ void SpiritManager::ghLoad(QString repo) {
     return;
 }
 
+void SpiritManager::getQuirks() {
+    auto port = getDaemonPort();
+    if (port < 1) {
+        emit quirks(false, QJsonObject {});
+        return;
+    }
+    QNetworkRequest req(QUrl(
+                            QString("http://127.1:") + QString::number(port) + QString("/spirit/v1/quirk")));
+
+    req.setRawHeader("X-ReqCat", "QUIRKSGET");
+
+
+
+    m_Manager->get(req);
+}
+
+
 void SpiritManager::getProperties() {
     auto port = getDaemonPort();
     if (port < 1) {
@@ -187,6 +204,54 @@ QJsonObject SpiritManager::waitForProperties() {
     QObject::disconnect(conn);
     return result;
 }
+
+void SpiritManager::addQuirk(QJsonObject obj) {
+    auto port = getDaemonPort();
+    if (port < 1) {
+        emit quirks(false, QJsonObject {});
+        return;
+    }
+
+    if (!obj.contains("name")) {
+        obj.insert("opt", "set");
+    } else {
+        obj.insert("opt", "add");
+    }
+    auto rawJson = QJsonDocument(obj).toJson();
+
+
+    QNetworkRequest req(QUrl(
+                            QString("http://127.1:") + QString::number(port) + QString("/spirit/v1/quirk")));
+
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    req.setRawHeader("X-ReqCat", "QUIRKADD");
+
+    m_Manager->post(req, rawJson);
+}
+
+void SpiritManager::removeQuirk(QString name) {
+    auto port = getDaemonPort();
+    if (port < 1) {
+        emit quirks(false, QJsonObject {});
+        return;
+    }
+
+    QJsonObject obj {
+        {"opt", "remove"},
+        {"name", name}
+    };
+
+    auto rawJson = QJsonDocument(obj).toJson();
+
+    QNetworkRequest req(QUrl(
+                            QString("http://127.1:") + QString::number(port) + QString("/spirit/v1/quirk")));
+
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    req.setRawHeader("X-ReqCat", "QUIRKREMOVE");
+
+    m_Manager->post(req, rawJson);
+}
+
 
 void SpiritManager::setProperties(QJsonObject obj) {
 
@@ -417,6 +482,8 @@ void SpiritManager::handleAPIResponse(QNetworkReply *reply) {
         handleDeinitReply(reply);
     } else if (cat == "LOADSET") {
         handleLoadSetReply(reply);
+    } else if(cat == "QUIRKSGET" || cat == "QUIRKADD" || cat == "QUIRKREMOVE") {
+        handleGetQuirksReply(reply);
     } else if (cat == "PROPERTYGET" || cat == "PROPERTYRESET") {
         handleGetPropertyReply(reply);
     } else if (cat == "PROPERTYSET") {
@@ -535,6 +602,38 @@ void SpiritManager::handleLoadSetReply(QNetworkReply *reply) {
 
     reply->deleteLater();
     emit loaded(stat == "success");
+}
+
+
+void SpiritManager::handleGetQuirksReply(QNetworkReply *reply) {
+    if(reply->error() != QNetworkReply::NoError) {
+        reply->deleteLater();
+        emit quirks(false, QJsonObject {});
+        return;
+    }
+
+    auto arr = reply->readAll();
+    QJsonParseError error;
+    auto json = QJsonDocument::fromJson(arr, &error);
+    if (error.error != QJsonParseError::NoError || !json.isObject()) {
+        reply->deleteLater();
+        emit quirks(false, QJsonObject {});
+        return;
+    }
+
+    auto obj = json.object();
+
+    if (obj.empty() ||
+            !obj.contains("status")) {
+        reply->deleteLater();
+        emit quirks(false, QJsonObject {});
+        return;
+    }
+
+    auto stat = obj["status"].toString();
+
+    reply->deleteLater();
+    emit quirks(stat == "success", obj);
 }
 
 

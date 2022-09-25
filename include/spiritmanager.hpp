@@ -37,6 +37,10 @@ class SpiritManager : public QObject {
     void getAction();
     void setAction(QString);
 
+    void getQuirks();
+    void addQuirk(QJsonObject);
+    void removeQuirk(QString);
+
     void getProperties();
     QJsonObject waitForProperties();
     void setProperties(QJsonObject);
@@ -61,6 +65,7 @@ class SpiritManager : public QObject {
     void handleSpiritInfo(QNetworkReply*);
     void handleGetAction(QNetworkReply*);
     void handleGetActions(QNetworkReply*);
+    void handleGetQuirksReply(QNetworkReply*);
 
   private:
     int getDaemonPort();
@@ -70,6 +75,7 @@ class SpiritManager : public QObject {
     void deinitialized(bool);
     void loaded(bool);
     void ghLoaded(bool);
+    void quirks(bool, QJsonObject);
     void properties(bool, QJsonObject);
     void updatedProperties(bool, QJsonObject);
     void loadedSpiritInfo(bool, QJsonObject);

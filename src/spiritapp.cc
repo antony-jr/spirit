@@ -49,6 +49,12 @@ bool SpiritApp::run() {
     QObject::connect(daemon, &SpiritDaemon::setSpeed, spirit, &Spirit::setSpeed);
     QObject::connect(daemon, &SpiritDaemon::setXOffset, spirit, &Spirit::setXOffset);
     QObject::connect(daemon, &SpiritDaemon::setYOffset, spirit, &Spirit::setYOffset);
+    QObject::connect(daemon, &SpiritDaemon::setGlobalOffsets, tracker, &ActiveWindowTracker::setGlobalOffsets);
+    QObject::connect(daemon, &SpiritDaemon::addQuirk, tracker, &ActiveWindowTracker::addQuirk);
+    QObject::connect(daemon, &SpiritDaemon::removeQuirk, tracker, &ActiveWindowTracker::removeQuirk);
+    QObject::connect(daemon, &SpiritDaemon::requestQuirks, tracker, &ActiveWindowTracker::getQuirks, Qt::QueuedConnection);
+    QObject::connect(tracker, &ActiveWindowTracker::quirks, daemon, &SpiritDaemon::updateQuirks);
+
     QObject::connect(daemon, &SpiritDaemon::requestLatestProperties, spirit, &Spirit::getProperties,
                      Qt::QueuedConnection);
     QObject::connect(daemon, &SpiritDaemon::resetProperties, spirit, &Spirit::resetDefaults, Qt::QueuedConnection);

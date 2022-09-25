@@ -23,6 +23,23 @@ ActiveWindowTracker::ActiveWindowTracker(QObject *parent)
             this, &ActiveWindowTracker::hide,
             Qt::DirectConnection);
 
+    connect(d, &ActiveWindowTrackerPrivate::quirks,
+            this, &ActiveWindowTracker::quirks,
+            Qt::DirectConnection);
+
+    connect(d, &ActiveWindowTrackerPrivate::quirkAdded,
+            this, &ActiveWindowTracker::quirkAdded,
+            Qt::DirectConnection);
+
+    connect(d, &ActiveWindowTrackerPrivate::quirkRemoved,
+            this, &ActiveWindowTracker::quirkRemoved,
+            Qt::DirectConnection);
+
+    connect(d, &ActiveWindowTrackerPrivate::updatedGlobalOffsets,
+            this, &ActiveWindowTracker::updatedGlobalOffsets,
+            Qt::DirectConnection);
+
+
     connect(d, &ActiveWindowTrackerPrivate::allowedPrograms,
             this, &ActiveWindowTracker::allowedPrograms,
             Qt::DirectConnection);
@@ -35,6 +52,30 @@ ActiveWindowTracker::~ActiveWindowTracker() {
     worker->quit();
     worker->wait();
     worker->deleteLater();
+}
+
+void ActiveWindowTracker::getQuirks() {
+    getMethod(d, "getQuirks()").invoke(d, Qt::QueuedConnection);
+}
+
+void ActiveWindowTracker::setGlobalOffsets(int x, int y) {
+    getMethod(d, "setGlobalOffsets(int, int)")
+    .invoke(d, Qt::QueuedConnection,
+            Q_ARG(int, x),
+            Q_ARG(int, y));
+}
+
+void ActiveWindowTracker::addQuirk(QString name, int x, int y, QString visibleName) {
+    getMethod(d, "addQuirk(QString, int, int, QString)")
+    .invoke(d, Qt::QueuedConnection,
+            Q_ARG(QString, name),
+            Q_ARG(int, x),
+            Q_ARG(int, y),
+            Q_ARG(QString, visibleName));
+}
+
+void ActiveWindowTracker::removeQuirk(QString name) {
+    getMethod(d, "removeQuirk(QString)").invoke(d, Qt::QueuedConnection, Q_ARG(QString, name));
 }
 
 void ActiveWindowTracker::start() {
