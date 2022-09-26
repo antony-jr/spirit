@@ -25,9 +25,9 @@ class ActiveWindowTrackerPrivate : public QObject {
     void stop();
 
     void getQuirks();
-    void addQuirk(QString, int, int, QString);
+    void addQuirk(QString, int, int, int, int, QString);
     void removeQuirk(QString);
-    void setGlobalOffsets(int, int);
+    void setGlobalOffsets(int, int, int, int);
 
     void addAllowedProgram(QString);
     void removeAllowedProgram(int);
@@ -45,10 +45,9 @@ class ActiveWindowTrackerPrivate : public QObject {
     void quirks(QJsonObject);
     void quirkAdded(QString, bool);
     void quirkRemoved(QString, bool);
-    void updatedGlobalOffsets(int, int);
 
     void error(short);
-    void update(QRect, int, int);
+    void update(QRect, int, int, int, int);
     void hide();
 
     void allowedPrograms(QStringList);

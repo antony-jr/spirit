@@ -108,10 +108,12 @@ void Spirit::setPosition(short pos) {
     emit requestUpdate();
 }
 
-void Spirit::update(QRect geometry, int xoffset, int yoffset) {
+void Spirit::update(QRect geometry, int xoffset, int yoffset, int _xoffset, int _yoffset) {
     if (b_Paused || m_Movie.isNull() || b_ClearRequested) {
         return;
     }
+
+    auto screen = this->screen();
 
     auto xoffsets = m_Settings.getXOffset();
     auto xoff = xoffsets.first;
@@ -175,24 +177,23 @@ void Spirit::update(QRect geometry, int xoffset, int yoffset) {
 
     x = pos.x;
     y = pos.y;
+    x += b_Flipped ? _xoff : xoff;
 
     // Handle Quirks in some Distros and OS.
     // Specifically in the linux world.
 
-    qDebug() << "Quirk YOffset = " << yoffset
-             << "Quirk XOffset = " << xoffset;
-
     if (n_Position == Position::TopLeft || n_Position == Position::TopRight) {
         if (b_Flipped) {
-            y -= yoffset;
+            y -= _yoffset;
+            x += _xoffset;
         } else {
             y += yoffset;
+            x += xoffset;
         }
     } else {
-        y -= yoffset;
+        y -= _yoffset;
+        x += _xoffset;
     }
-
-    x += b_Flipped ? _xoff : xoff;
 
     move(x,y);
     show();

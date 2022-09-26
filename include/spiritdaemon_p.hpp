@@ -43,9 +43,9 @@ class SpiritDaemonPrivate : public QObject {
     void requestLatestProperties();
     void resetProperties();
     void requestQuirks();
-    void addQuirk(QString, int, int, QString);
+    void addQuirk(QString, int, int, int, int, QString);
     void removeQuirk(QString);
-    void setGlobalOffsets(int, int);
+    void setGlobalOffsets(int, int, int, int);
     void setXOffset(int, int);
     void setYOffset(int, int);
     void setPosition(short);
@@ -59,7 +59,9 @@ class SpiritDaemonPrivate : public QObject {
     QJsonObject m_Meta;
     QJsonObject m_Quirks;
     int n_X = 0,
-        n_Y = 0; // Global Quirks.
+        n_Y = 0, // Global Quirks.
+        n_BottomX = 0,
+        n_BottomY = 0;
 
     QList<QString> m_ActionList;
     QString m_Action,

@@ -69,34 +69,42 @@ bool WindowQuirks::read() {
         return read();
     }
 
-    n_X = obj["globalXOffset"].toInt(0);
-    n_Y = obj["globalYOffset"].toInt(0);
-
     m_ProgramQuirks.clear();
     auto keys = obj.keys();
     for (auto key : keys) {
-        if (obj[key].isObject()) {
-            auto value = obj[key].toObject();
+        auto value = obj[key].toObject();
 
-            Entry e;
-            e.n_X = value["xoffset"].toInt(0);
-            e.n_Y = value["yoffset"].toInt(0);
-            e.m_VisibleName = value["visibleName"].toString();
-
-            m_ProgramQuirks.insert(key, e);
+        if (key == "global") {
+            n_X = value["xoffset"].toInt(0);
+            n_Y = value["yoffset"].toInt(0);
+            n_BottomX = value["bottomXOffset"].toInt(0);
+            n_BottomY = value["bottomYOffset"].toInt(0);
+            continue;
         }
+
+        Entry e;
+        e.n_X = value["xoffset"].toInt(0);
+        e.n_Y = value["yoffset"].toInt(0);
+        e.n_BottomX = value["bottomXOffset"].toInt(0);
+        e.n_BottomY = value["bottomYOffset"].toInt(0);
+
+        e.m_VisibleName = value["visibleName"].toString();
+
+        m_ProgramQuirks.insert(key, e);
     }
 
     return true;
 }
 
-bool WindowQuirks::setGlobalXOffset(int x) {
-    n_X = x;
+bool WindowQuirks::setGlobalXOffset(int x1, int x2) {
+    n_X = x1;
+    n_BottomX = x2;
     return updateJson();
 }
 
-bool WindowQuirks::setGlobalYOffset(int y) {
-    n_Y = y;
+bool WindowQuirks::setGlobalYOffset(int y1, int y2) {
+    n_Y = y1;
+    n_BottomY = y2;
     return updateJson();
 }
 
@@ -105,6 +113,8 @@ QJsonObject WindowQuirks::getQuirk(QString name) {
         return QJsonObject {
             {"xoffset", n_X},
             {"yoffset", n_Y},
+            {"bottomXOffset", n_BottomX},
+            {"bottomYOffset", n_BottomY},
             {"visibleName", ""},
             {"exists", false}
         };
@@ -115,6 +125,8 @@ QJsonObject WindowQuirks::getQuirk(QString name) {
         return QJsonObject {
             {"xoffset", n_X},
             {"yoffset", n_Y},
+            {"bottomXOffset", n_BottomX},
+            {"bottomYOffset", n_BottomY},
             {"visibleName", ""},
             {"exists", false}
         };
@@ -125,15 +137,22 @@ QJsonObject WindowQuirks::getQuirk(QString name) {
     return QJsonObject {
         {"xoffset", e.n_X},
         {"yoffset", e.n_Y},
-        {"visibleName", e.m_VisibleName}
+        {"bottomXOffset", e.n_BottomX},
+        {"bottomYOffset", e.n_BottomY},
+        {"visibleName", e.m_VisibleName},
+        {"exists", true}
     };
 }
 
 void WindowQuirks::getQuirks() {
     QJsonObject r;
 
-    r.insert("globalXOffset", n_X);
-    r.insert("globalYOffset", n_Y);
+    r.insert("global", QJsonObject {
+        {"xoffset", n_X},
+        {"yoffset", n_Y},
+        {"bottomXOffset", n_BottomX},
+        {"bottomYOffset", n_BottomY}
+    });
 
     for(auto iter = m_ProgramQuirks.constBegin();
             iter != m_ProgramQuirks.constEnd();
@@ -142,6 +161,8 @@ void WindowQuirks::getQuirks() {
         r.insert(iter.key(), QJsonObject {
             {"xoffset", e.n_X},
             {"yoffset", e.n_Y},
+            {"bottomXOffset", n_BottomX},
+            {"bottomYOffset", n_BottomY},
             {"visibleName", e.m_VisibleName}
         });
     }
@@ -149,10 +170,12 @@ void WindowQuirks::getQuirks() {
     emit quirks(r);
 }
 
-bool WindowQuirks::addQuirk(QString name, int x, int y, QString visibleName) {
+bool WindowQuirks::addQuirk(QString name, int x, int y, int x2, int y2, QString visibleName) {
     Entry e;
     e.n_X = x;
     e.n_Y = y;
+    e.n_BottomX = x2;
+    e.n_BottomY = y2;
     e.m_VisibleName = visibleName;
     auto iter = m_ProgramQuirks.find(name);
     if (iter != m_ProgramQuirks.end()) {
@@ -181,8 +204,12 @@ bool WindowQuirks::updateJson() {
 
     QJsonObject r;
 
-    r.insert("globalXOffset", n_X);
-    r.insert("globalYOffset", n_Y);
+    r.insert("global", QJsonObject {
+        {"xoffset", n_X},
+        {"yoffset", n_Y},
+        {"bottomXOffset", n_BottomX},
+        {"bottomYOffset", n_BottomY}
+    });
 
     for(auto iter = m_ProgramQuirks.constBegin();
             iter != m_ProgramQuirks.constEnd();
@@ -191,6 +218,8 @@ bool WindowQuirks::updateJson() {
         r.insert(iter.key(), QJsonObject {
             {"xoffset", e.n_X},
             {"yoffset", e.n_Y},
+            {"bottomXOffset", n_BottomX},
+            {"bottomYOffset", n_BottomY},
             {"visibleName", e.m_VisibleName}
         });
     }

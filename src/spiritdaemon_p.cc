@@ -239,7 +239,9 @@ class QuirkHandler : public CivetHandler {
             success = false;
         } else if(body["opt"].toString() == "set") {
             int x = obj->n_X,
-                y = obj->n_Y;
+                y = obj->n_Y,
+                x2 = obj->n_BottomX,
+                y2 = obj->n_BottomY;
 
             if (body.contains("xoffset")) {
                 x = body["xoffset"].toInt(obj->n_X);
@@ -248,12 +250,23 @@ class QuirkHandler : public CivetHandler {
             if (body.contains("yoffset")) {
                 y = body["yoffset"].toInt(obj->n_Y);
             }
-            emit obj->setGlobalOffsets(x, y);
+
+            if (body.contains("bottomXOffset")) {
+                x2 = body["bottomXOffset"].toInt(obj->n_BottomX);
+            }
+
+            if (body.contains("bottomYOffset")) {
+                y2 = body["bottomYOffset"].toInt(obj->n_BottomY);
+            }
+
+            emit obj->setGlobalOffsets(x, y, x2, y2);
 
         } else if (body["opt"].toString() == "add") {
             if (body.contains("name")) {
                 int x = 0,
-                    y = 0;
+                    y = 0,
+                    x2 = 0,
+                    y2 = 0;
                 QString vname;
                 if (body.contains("xoffset")) {
                     x = body["xoffset"].toInt(0);
@@ -263,12 +276,21 @@ class QuirkHandler : public CivetHandler {
                     y = body["yoffset"].toInt(0);
                 }
 
+                if (body.contains("bottomXOffset")) {
+                    x2 = body["bottomXOffset"].toInt(obj->n_BottomX);
+                }
+
+                if (body.contains("bottomYOffset")) {
+                    y2 = body["bottomYOffset"].toInt(obj->n_BottomY);
+                }
+
+
                 if (body.contains("visibleName")) {
                     vname = body["visibleName"].toString();
                 }
 
                 auto name = body["name"].toString();
-                emit obj->addQuirk(name, x, y, vname);
+                emit obj->addQuirk(name, x, y, x2, y2, vname);
             } else {
                 success = false;
             }
@@ -641,7 +663,11 @@ void SpiritDaemonPrivate::updateProps(int x1, int x2,
 
 void SpiritDaemonPrivate::updateQuirks(QJsonObject obj) {
     m_Quirks = obj;
-    n_X = m_Quirks["globalXOffset"].toInt(0);
-    n_Y = m_Quirks["globalYOffset"].toInt(0);
+    auto global = m_Quirks["global"].toObject();
+
+    n_X = global["xoffset"].toInt(0);
+    n_Y = global["yoffset"].toInt(0);
+    n_BottomX = global["bottomXOffset"].toInt(0);
+    n_BottomY = global["bottomYOffset"].toInt(0);
     emit cachedQuirks();
 }

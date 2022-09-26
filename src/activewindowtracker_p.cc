@@ -22,8 +22,8 @@ void ActiveWindowTrackerPrivate::getQuirks() {
     m_Quirks.getQuirks();
 }
 
-void ActiveWindowTrackerPrivate::addQuirk(QString name, int x, int y, QString vname) {
-    auto ok = m_Quirks.addQuirk(name, x, y, vname);
+void ActiveWindowTrackerPrivate::addQuirk(QString name, int x, int y, int x2, int y2, QString vname) {
+    auto ok = m_Quirks.addQuirk(name, x, y, x2, y2, vname);
     emit quirkAdded(name, ok);
 }
 
@@ -32,15 +32,11 @@ void ActiveWindowTrackerPrivate::removeQuirk(QString name) {
     emit quirkRemoved(name, ok);
 }
 
-void ActiveWindowTrackerPrivate::setGlobalOffsets(int x, int y) {
-    auto ok = m_Quirks.setGlobalXOffset(x);
-    ok = m_Quirks.setGlobalYOffset(y);
+void ActiveWindowTrackerPrivate::setGlobalOffsets(int x, int y, int x2, int y2) {
+    m_Quirks.setGlobalXOffset(x, x2);
+    m_Quirks.setGlobalYOffset(y, y2);
 
-    auto quirk = m_Quirks.getQuirk();
-    int xoffset = quirk["xoffset"].toInt(0);
-    int yoffset = quirk["yoffset"].toInt(0);
-
-    emit updatedGlobalOffsets(xoffset, yoffset);
+    getQuirks();
 }
 
 void ActiveWindowTrackerPrivate::start() {
@@ -121,7 +117,9 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
                           NET::WMName |
                           NET::WMVisibleName;
 
-        KWindowInfo info(id, properties);
+        auto props2 = NET::WM2WindowClass;
+
+        KWindowInfo info(id, properties, props2);
         if(!info.valid()) {
             emit hide();
             return;
@@ -142,20 +140,30 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
             return;
         }
 
-        QString program;
-        {
-            QString filename = QString::fromUtf8("/proc/%1/cmdline");
-            QFile file(filename.arg(info.pid()));
-            if(file.open(QIODevice::ReadOnly)) {
-                auto cmdline = QString(file.readAll());
-                program = QFileInfo(cmdline).baseName();
-                file.close();
-            }
+        /*
+            QString program;
+            {
+                QString filename = QString::fromUtf8("/proc/%1/cmdline");
+                QFile file(filename.arg(info.pid()));
+                if(file.open(QIODevice::ReadOnly)) {
+                    auto cmdline = QString(file.readAll());
+                    program = QFileInfo(cmdline).baseName();
+                    file.close();
+                }
+            }*/
+
+        auto clsName = info.windowClassName();
+        auto clsClass = info.windowClassClass();
+
+        auto quirk = m_Quirks.getQuirk(clsName);
+        if (quirk["exists"].toBool() == false) {
+            quirk = m_Quirks.getQuirk(clsClass);
         }
 
-        auto quirk = m_Quirks.getQuirk(program);
         auto xoffset = quirk["xoffset"].toInt(0);
         auto yoffset = quirk["yoffset"].toInt(0);
+        auto _xoffset = quirk["bottomXOffset"].toInt(0);
+        auto _yoffset = quirk["bottomYOffset"].toInt(0);
         auto vname = quirk["visibleName"].toString();
 
         auto state = info.state();
@@ -171,18 +179,30 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
             return;
         }
 
+        if (state & NET::State::Max) {
+            _yoffset = _xoffset = 0;
+        }
+
         auto geo = info.frameGeometry();
 
         if (vname.isEmpty()) {
-            emit update(geo, xoffset, yoffset);
+            emit update(geo, xoffset, yoffset, _xoffset, _yoffset);
         } else if (title.contains(vname)) {
-            emit update(geo, xoffset, yoffset);
+            emit update(geo, xoffset, yoffset, _xoffset, _yoffset);
         } else {
             auto gl = m_Quirks.getQuirk();
+            gl = gl["global"].toObject();
+
             int glx = gl["xoffset"].toInt(0);
             int gly = gl["yoffset"].toInt(0);
+            auto gl_x = gl["bottomXOffset"].toInt(0);
+            auto gl_y = gl["bottomYOffset"].toInt(0);
 
-            emit update(geo, glx, gly);
+            if (state & NET::State::Max) {
+                gl_y = gl_x = 0;
+            }
+
+            emit update(geo, glx, gly, gl_x, gl_y);
         }
 
         return;

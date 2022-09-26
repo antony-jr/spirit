@@ -41,7 +41,7 @@ class Spirit : public QLabel {
     void setPosition(short);
 
     // Moves the widget to the given rect.
-    void update(QRect, int, int);
+    void update(QRect, int, int, int, int);
 
     // Animates a given action
     void animate(QString /*current action name*/,

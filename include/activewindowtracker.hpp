@@ -18,18 +18,17 @@ class ActiveWindowTracker : public QObject {
     ~ActiveWindowTracker();
   Q_SIGNALS:
     void error(short);
-    void update(QRect, int, int);
+    void update(QRect, int, int, int, int);
     void hide();
 
     void quirks(QJsonObject);
     void quirkAdded(QString, bool);
     void quirkRemoved(QString, bool);
-    void updatedGlobalOffsets(int, int);
     void allowedPrograms(QStringList);
   public Q_SLOTS:
     void getQuirks();
-    void setGlobalOffsets(int, int);
-    void addQuirk(QString, int, int, QString);
+    void setGlobalOffsets(int, int, int, int);
+    void addQuirk(QString, int, int, int, int, QString);
     void removeQuirk(QString);
 
     void start();

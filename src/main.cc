@@ -36,6 +36,7 @@ static void usage(const char *prog) {
               << "       " << prog << " load <LOCAL SPIRIT FILE> [OPTIONS]\n"
               << "       " << prog << " set-action <ACTION NAME> [OPTIONS]\n"
               << "       " << prog << " set-property <Property=Value> ... [OPTIONS]\n"
+              << "       " << prog << " add-quirk name=<ProgramName> yoffset=<int> ... [OPTIONS]\n"
               << termcolor::reset
               << "\n\n";
 
@@ -258,32 +259,16 @@ int main(int ac, char **av) {
                 return;
             } else {
 
-                int x = quirks["globalXOffset"].toInt(),
-                    y = quirks["globalYOffset"].toInt();
-
-                std::cout << termcolor::bold
-                          << termcolor::yellow
-                          << "Global"
-                          << termcolor::reset
-                          << ": "
-                          << "XOffset = "
-                          << x
-                          << " | YOffset = "
-                          << y
-                          << "\n";
-
                 Q_UNUSED(quirks.take("status"));
                 auto keys = quirks.keys();
                 for (auto key : keys) {
-                    if (key == "globalXOffset" ||
-                            key == "globalYOffset") {
-                        continue;
-                    }
-
                     auto obj = quirks[key].toObject();
 
                     int x = obj["xoffset"].toInt(),
                         y = obj["yoffset"].toInt();
+                    int x2 = obj["bottomXOffset"].toInt(),
+                        y2 = obj["bottomYOffset"].toInt();
+
                     QString vname = obj["visibleName"].toString();
 
                     std::cout << termcolor::bold
@@ -295,9 +280,18 @@ int main(int ac, char **av) {
                               << x
                               << " | YOffset = "
                               << y
-                              << " | Visible Name = "
-                              << vname.toStdString()
-                              << "\n";
+                              << " | Bottom XOffset = "
+                              << x2
+                              << " | Bottom YOffset = "
+                              << y2;
+
+                    if (vname.isEmpty()) {
+                        std::cout << "\n";
+                    } else {
+                        std::cout << " | Visible Name = "
+                                  << vname.toStdString()
+                                  << "\n";
+                    }
                 }
 
                 std::cout << "\n";
@@ -329,32 +323,16 @@ int main(int ac, char **av) {
                 return;
             } else {
 
-                int x = quirks["globalXOffset"].toInt(),
-                    y = quirks["globalYOffset"].toInt();
-
-                std::cout << termcolor::bold
-                          << termcolor::yellow
-                          << "Global"
-                          << termcolor::reset
-                          << ": "
-                          << "XOffset = "
-                          << x
-                          << " | YOffset = "
-                          << y
-                          << "\n";
-
                 Q_UNUSED(quirks.take("status"));
                 auto keys = quirks.keys();
                 for (auto key : keys) {
-                    if (key == "globalXOffset" ||
-                            key == "globalYOffset") {
-                        continue;
-                    }
-
                     auto obj = quirks[key].toObject();
 
                     int x = obj["xoffset"].toInt(),
                         y = obj["yoffset"].toInt();
+                    int x2 = obj["bottomXOffset"].toInt(),
+                        y2 = obj["bottomYOffset"].toInt();
+
                     QString vname = obj["visibleName"].toString();
 
                     std::cout << termcolor::bold
@@ -366,9 +344,18 @@ int main(int ac, char **av) {
                               << x
                               << " | YOffset = "
                               << y
-                              << " | Visible Name = "
-                              << vname.toStdString()
-                              << "\n";
+                              << " | Bottom XOffset = "
+                              << x2
+                              << " | Bottom YOffset = "
+                              << y2;
+
+                    if (vname.isEmpty()) {
+                        std::cout << "\n";
+                    } else {
+                        std::cout << " | Visible Name = "
+                                  << vname.toStdString()
+                                  << "\n";
+                    }
                 }
 
                 std::cout << "\n";
@@ -433,32 +420,16 @@ int main(int ac, char **av) {
                 return;
             } else {
 
-                int x = quirks["globalXOffset"].toInt(),
-                    y = quirks["globalYOffset"].toInt();
-
-                std::cout << termcolor::bold
-                          << termcolor::yellow
-                          << "Global"
-                          << termcolor::reset
-                          << ": "
-                          << "XOffset = "
-                          << x
-                          << " | YOffset = "
-                          << y
-                          << "\n";
-
                 Q_UNUSED(quirks.take("status"));
                 auto keys = quirks.keys();
                 for (auto key : keys) {
-                    if (key == "globalXOffset" ||
-                            key == "globalYOffset") {
-                        continue;
-                    }
-
                     auto obj = quirks[key].toObject();
 
                     int x = obj["xoffset"].toInt(),
                         y = obj["yoffset"].toInt();
+                    int x2 = obj["bottomXOffset"].toInt(),
+                        y2 = obj["bottomYOffset"].toInt();
+
                     QString vname = obj["visibleName"].toString();
 
                     std::cout << termcolor::bold
@@ -470,11 +441,19 @@ int main(int ac, char **av) {
                               << x
                               << " | YOffset = "
                               << y
-                              << " | Visible Name = "
-                              << vname.toStdString()
-                              << "\n";
-                }
+                              << " | Bottom XOffset = "
+                              << x2
+                              << " | Bottom YOffset = "
+                              << y2;
 
+                    if (vname.isEmpty()) {
+                        std::cout << "\n";
+                    } else {
+                        std::cout << " | Visible Name = "
+                                  << vname.toStdString()
+                                  << "\n";
+                    }
+                }
                 std::cout << "\n";
             }
 

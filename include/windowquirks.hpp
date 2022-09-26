@@ -17,10 +17,11 @@ class WindowQuirks : public QObject {
   public Q_SLOTS:
     bool read();
 
-    bool setGlobalXOffset(int);
-    bool setGlobalYOffset(int);
+    bool setGlobalXOffset(int, int);
+    bool setGlobalYOffset(int, int);
 
-    bool addQuirk(QString name, int x = 0, int y = 0, QString visibleName = QString());
+    bool addQuirk(QString name, int x = 0, int y = 0,
+                  int bottomX = 0, int bottomY = 0, QString visibleName = QString());
     bool removeQuirk(QString name);
     void getQuirks();
 
@@ -33,11 +34,15 @@ class WindowQuirks : public QObject {
     bool updateJson();
 
     int n_Y = 0,
-        n_X = 0;
+        n_X = 0,
+        n_BottomX = 0,
+        n_BottomY = 0;
 
     struct Entry {
         int n_X = 0,
-            n_Y = 0;
+            n_Y = 0,
+            n_BottomX = 0,
+            n_BottomY = 0;
         QString m_VisibleName;
     };
 

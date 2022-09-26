@@ -39,9 +39,9 @@ class SpiritDaemon : public QObject {
     void requestLatestProperties();
     void resetProperties();
     void requestQuirks();
-    void addQuirk(QString, int, int, QString);
+    void addQuirk(QString, int, int, int, int, QString);
     void removeQuirk(QString);
-    void setGlobalOffsets(int, int);
+    void setGlobalOffsets(int, int, int, int);
     void setXOffset(int, int);
     void setYOffset(int, int);
     void setPosition(short);
