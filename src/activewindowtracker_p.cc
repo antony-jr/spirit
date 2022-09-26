@@ -128,9 +128,14 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
         auto allowed = m_AllowedPrograms.isEmpty();
         auto name = info.name();
         auto title = info.visibleName();
+        auto clsName = QString(info.windowClassName());
+        auto clsClass = QString(info.windowClassClass());
 
         for (auto prog : m_AllowedPrograms) {
-            if (title.contains(prog)) {
+            if (title.contains(prog) ||
+                    name.contains(prog) ||
+                    clsName.contains(prog) ||
+                    clsClass.contains(prog)) {
                 allowed = true;
                 break;
             }
@@ -152,9 +157,6 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
                     file.close();
                 }
             }*/
-
-        auto clsName = info.windowClassName();
-        auto clsClass = info.windowClassClass();
 
         auto quirk = m_Quirks.getQuirk(clsName);
         if (quirk["exists"].toBool() == false) {

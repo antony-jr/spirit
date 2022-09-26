@@ -91,7 +91,6 @@ int main(int ac, char **av) {
     }
 
     QApplication::setQuitOnLastWindowClosed(false);
-    QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     QCommandLineParser parser;
 

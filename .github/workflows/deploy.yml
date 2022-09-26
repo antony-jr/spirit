@@ -57,7 +57,7 @@ jobs:
           source /opt/qt*/bin/qt*-env.sh || true 
           git clone https://github.com/KDE/extra-cmake-modules
           cd extra-cmake-modules
-          #git checkout v5.68.0
+          git checkout v5.80.0
           mkdir build 
           cd build
           cmake ..
@@ -69,7 +69,7 @@ jobs:
           
           git clone https://github.com/KDE/kwindowsystem
           cd kwindowsystem
-          #git checkout v5.68.0
+          git checkout v5.80.0
           mkdir build
           cd build
           cmake ..

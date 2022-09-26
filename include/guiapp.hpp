@@ -8,6 +8,7 @@
 // files.
 #include "ui/ui_spiritgui.h"
 #include "ui/ui_spiritsettings.h"
+#include "ui/ui_spiritquirks.h"
 
 #include "spiritmanager.hpp"
 #include "spiritconfig.hpp"
@@ -46,13 +47,23 @@ class GuiApp : public QMainWindow {
     void handleRemoveAllowedProgram();
     void handleSettingsFinished(int);
 
+    void handleQuirks();
+    void handleQuirkSelected(QModelIndex);
+    void handleAddQuirk();
+    void handleRemoveQuirk();
+    void handleQuirkData(bool, QJsonObject);
+
   Q_SIGNALS:
     void quit();
 
   private:
     Ui::SpiritMainWindow *m_UI;
     Ui::settingsDialog *m_SettingsDialogUI;
+    Ui::quirksDialog *m_QuirksDialogUI;
+
     QDialog *m_SettingsDialog;
+    QDialog *m_QuirksDialog;
+
     SpiritManager *m_Manager;
     SpiritConfig *m_Config;
 
@@ -60,6 +71,10 @@ class GuiApp : public QMainWindow {
     QStringList m_RecentAllowed;
     int n_AllowedProgramRow = 0;
     QString m_DefaultSpirit;
+
+    QStringListModel *m_QuirksModel;
+    int n_QuirkSelected = 0;
+    QJsonObject m_QuirkData;
 };
 
 #endif // GUI_APP_HPP_INCLUDED

@@ -8,20 +8,34 @@ GuiApp::GuiApp(QWidget *parent) :
     QMainWindow(parent) {
     m_UI = new Ui::SpiritMainWindow;
     m_SettingsDialogUI = new Ui::settingsDialog;
+    m_QuirksDialogUI = new Ui::quirksDialog;
     m_Manager = new SpiritManager(qApp);
     m_Config = new SpiritConfig(this);
     m_SettingsDialog = new QDialog(this);
-
+    m_QuirksDialog = new QDialog(this);
 
     m_UI->setupUi(this);
     m_SettingsDialogUI->setupUi(m_SettingsDialog);
+    m_QuirksDialogUI->setupUi(m_QuirksDialog);
 
     m_AllowedProgramsModel = new QStringListModel(this);
+    m_QuirksModel = new QStringListModel(this);
+
+
     m_SettingsDialogUI->programsListView->setModel(m_AllowedProgramsModel);
+    m_QuirksDialogUI->quirksListView->setModel(m_QuirksModel);
 
-    // Populate our model
-    // model->setStringList(List);
+    connect(m_Manager, &SpiritManager::quirks,
+            this, &GuiApp::handleQuirkData);
 
+    connect(m_QuirksDialogUI->quirksListView, &QListView::activated,
+            this, &GuiApp::handleQuirkSelected);
+
+    connect(m_QuirksDialogUI->addBtn, &QPushButton::pressed,
+            this, &GuiApp::handleAddQuirk);
+
+    connect(m_QuirksDialogUI->removeBtn, &QPushButton::pressed,
+            this, &GuiApp::handleRemoveQuirk);
 
     connect(m_SettingsDialogUI->programsListView, &QListView::activated,
             this, &GuiApp::handleAllowedProgramSelected);
@@ -38,6 +52,9 @@ GuiApp::GuiApp(QWidget *parent) :
 
     connect(m_UI->quitBtn, &QPushButton::pressed,
             m_Manager, &SpiritManager::deinit);
+
+    connect(m_UI->actionQuirks, &QAction::triggered,
+            this, &GuiApp::handleQuirks);
 
     connect(m_UI->actionSettings, &QAction::triggered,
             this, &GuiApp::handleSettings);
@@ -100,6 +117,7 @@ GuiApp::GuiApp(QWidget *parent) :
 GuiApp::~GuiApp() {
     delete m_UI;
     delete m_SettingsDialogUI;
+    delete m_QuirksDialogUI;
     m_Manager->deleteLater();
 }
 
@@ -356,4 +374,81 @@ void GuiApp::handleSettingsFinished(int result) {
             // daemon at startup.
         }
     }
+}
+
+void GuiApp::handleQuirkSelected(QModelIndex index) {
+    if (!index.isValid()) {
+        return;
+    }
+
+    int i = index.row();
+    n_QuirkSelected = i;
+
+    auto lst = m_QuirksModel->stringList();
+    auto key = lst.at(i);
+
+    auto value = m_QuirkData[key].toObject();
+    m_QuirksDialogUI->programLineEdit->setText(key == "global" ? "" : key);
+    m_QuirksDialogUI->vnameLineEdit->setText(value["visibleName"].toString());
+    m_QuirksDialogUI->xoffset->setValue(value["xoffset"].toInt());
+    m_QuirksDialogUI->bottomXOffset->setValue(value["bottomXOffset"].toInt());
+    m_QuirksDialogUI->yoffset->setValue(value["yoffset"].toInt());
+    m_QuirksDialogUI->bottomYOffset->setValue(value["bottomYOffset"].toInt());
+}
+
+void GuiApp::handleAddQuirk() {
+    QString name = m_QuirksDialogUI->programLineEdit->text(),
+            vname =   m_QuirksDialogUI->vnameLineEdit->text();
+
+    m_Manager->addQuirk(QJsonObject {
+        {"name", name.isEmpty() ? "global" : name},
+        {"visibleName", vname},
+        {"xoffset", m_QuirksDialogUI->xoffset->value()},
+        {"bottomXOffset", m_QuirksDialogUI->bottomXOffset->value()},
+        {"yoffset", m_QuirksDialogUI->yoffset->value()},
+        {"bottomYOffset", m_QuirksDialogUI->bottomYOffset->value()}
+    });
+}
+
+void GuiApp::handleRemoveQuirk() {
+    auto lst = m_QuirksModel->stringList();
+    auto key = lst.at(n_QuirkSelected);
+
+    if (key == "global") {
+        return;
+    }
+
+    m_Manager->removeQuirk(key);
+}
+
+void GuiApp::handleQuirkData(bool ok, QJsonObject obj) {
+    if (!ok) {
+        m_QuirksModel->setStringList(QStringList());
+    }
+
+    Q_UNUSED(obj.take("status"));
+    m_QuirkData = obj;
+    auto lst = obj.keys();
+
+    m_QuirksModel->setStringList(lst);
+    n_QuirkSelected = lst.indexOf("global");
+    m_QuirksDialogUI->programLineEdit->setText("");
+    m_QuirksDialogUI->vnameLineEdit->setText("");
+
+
+    auto value = obj[lst.at(n_QuirkSelected)].toObject();
+    m_QuirksDialogUI->xoffset->setValue(value["xoffset"].toInt());
+    m_QuirksDialogUI->bottomXOffset->setValue(value["bottomXOffset"].toInt());
+    m_QuirksDialogUI->yoffset->setValue(value["yoffset"].toInt());
+    m_QuirksDialogUI->bottomYOffset->setValue(value["bottomYOffset"].toInt());
+}
+
+void GuiApp::handleQuirks() {
+    n_QuirkSelected = 0;
+    m_QuirksModel->setStringList(QStringList());
+    m_QuirksDialogUI->programLineEdit->setText("");
+    m_QuirksDialogUI->vnameLineEdit->setText("");
+
+    m_Manager->getQuirks();
+    m_QuirksDialog->open();
 }

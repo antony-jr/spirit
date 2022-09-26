@@ -14,7 +14,9 @@ find_package(Qt5Network ${MIN_QT_VERSION})
 find_package(Qt5Multimedia ${MIN_QT_VERSION})
 
 # KWindowSystem
-find_package(KF5WindowSystem)
+if (UNIX AND NOT APPLE)  
+   find_package(KF5WindowSystem)
+endif()
 
 # QArchive
 find_package(QArchive)
@@ -87,7 +89,9 @@ list(APPEND source include/termcolor.hpp
 
 add_executable(spirit ${source})
 target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network Qt5::Multimedia)
-target_link_libraries(spirit PUBLIC KF5::WindowSystem)
+if (UNIX AND NOT APPLE) 
+ target_link_libraries(spirit PUBLIC KF5::WindowSystem)
+endif()
 target_link_libraries(spirit PUBLIC QArchive)
 target_link_libraries(spirit PUBLIC civetweb civetweb-cpp)
 
