@@ -82,7 +82,7 @@ class SpiritManager : public QObject {
     void updatedRunOnStartup(bool);
     void updatedDefaultSpiritFile(QString);
     void allowedPrograms(QStringList);
-    void actions(QStringList);
+    void actions(QStringList, QString);
     void action(QString);
 
 

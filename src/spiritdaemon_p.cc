@@ -657,6 +657,7 @@ void SpiritDaemonPrivate::updateProps(int x1, int x2,
     n_y2 = y2;
     n_Scale = scale;
     n_Speed = speed;
+    m_Position = position;
     m_Sign = sign;
     emit cachedProps();
 }

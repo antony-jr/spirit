@@ -128,6 +128,7 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
         auto allowed = m_AllowedPrograms.isEmpty();
         auto name = info.name();
         auto title = info.visibleName();
+
         for (auto prog : m_AllowedPrograms) {
             if (title.contains(prog)) {
                 allowed = true;

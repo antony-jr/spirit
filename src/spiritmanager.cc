@@ -768,7 +768,7 @@ void SpiritManager::handleGetAction(QNetworkReply *reply) {
 void SpiritManager::handleGetActions(QNetworkReply *reply) {
     if(reply->error() != QNetworkReply::NoError) {
         reply->deleteLater();
-        emit actions(QStringList());
+        emit actions(QStringList(), QString());
         return;
     }
 
@@ -777,7 +777,7 @@ void SpiritManager::handleGetActions(QNetworkReply *reply) {
     auto json = QJsonDocument::fromJson(arr, &error);
     if (error.error != QJsonParseError::NoError || !json.isObject()) {
         reply->deleteLater();
-        emit actions(QStringList());
+        emit actions(QStringList(), QString());
         return;
     }
 
@@ -786,11 +786,12 @@ void SpiritManager::handleGetActions(QNetworkReply *reply) {
     if (obj.empty() ||
             !obj.contains("status")) {
         reply->deleteLater();
-        emit actions(QStringList());
+        emit actions(QStringList(), QString());
         return;
     }
 
     auto stat = obj["status"].toString();
+    auto act = obj["action"].toString();
     auto action_arr = obj["actions"].toArray();
 
     reply->deleteLater();
@@ -801,6 +802,6 @@ void SpiritManager::handleGetActions(QNetworkReply *reply) {
         acts << action.toString();
     }
 
-    emit actions(acts);
+    emit actions(acts, act);
 }
 

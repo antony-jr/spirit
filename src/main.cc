@@ -3,6 +3,7 @@
 #include <QStyleFactory>
 #include <QCommandLineParser>
 
+#include "guiapp.hpp"
 #include "spiritmanager.hpp"
 #include "termcolor.hpp"
 
@@ -67,13 +68,28 @@ static void usage(const char *prog) {
 }
 
 int main(int ac, char **av) {
+    QApplication app(ac, av);
+
+    // Set Application Information
+    // --
+
+    QApplication::setApplicationName("Spirit");
+    QApplication::setApplicationVersion(SPIRIT_VERSION);
+    QApplication::setOrganizationDomain("Spirit");
+    QApplication::setOrganizationName("AntonyJR");
+    QApplication::setWindowIcon(QIcon(":artwork/logo.png"));
+
+    // GUI Mode
     if(ac == 1) {
-        // TODO: Use this hint as the gui mode.
-        usage(av[0]);
-        return 0;
+        info();
+
+        GuiApp gui;
+
+        QObject::connect(&gui, &GuiApp::quit, &app, &QApplication::quit);
+        gui.init();
+        return app.exec();
     }
 
-    QApplication app(ac, av);
     QApplication::setQuitOnLastWindowClosed(false);
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 

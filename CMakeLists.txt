@@ -4,6 +4,7 @@ project(spirit)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(MIN_QT_VERSION "5.6.0")
 
@@ -64,6 +65,8 @@ list(APPEND source include/termcolor.hpp
 		   include/spiritdaemon.hpp
 		   include/spiritapp.hpp
 		   include/spiritmanager.hpp
+		   include/guiapp.hpp
+		   src/guiapp.cc
 		   src/spiritmanager.cc
 		   src/spiritapp.cc
 		   src/activewindowtracker_p.cc
