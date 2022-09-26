@@ -160,7 +160,7 @@ jobs:
           wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
           chmod a+x linuxdeployqt-continuous-x86_64.AppImage
           unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
-          cp -r /usr/local/lib/x86_64-linux-gnu/plugins/kf5 $(qmake -query QT_INSTALL_PLUGINS)/
+          sudo cp -rp /usr/local/lib/x86_64-linux-gnu/plugins/kf5 $(qmake -query QT_INSTALL_PLUGINS)/
 
           ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -extra-plugins=kf5,imageformats,mediaservice -bundle-non-qt-libs
         
