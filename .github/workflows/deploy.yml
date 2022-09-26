@@ -160,11 +160,13 @@ jobs:
           wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
           chmod a+x linuxdeployqt-continuous-x86_64.AppImage
           unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
-          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -bundle-non-qt-libs
+          cp -r /usr/local/lib/x86_64-linux-gnu/plugins/kf5 $(qmake -query QT_INSTALL_PLUGINS)/
+
+          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -extra-plugins=kf5,imageformats,mediaservice -bundle-non-qt-libs
         
           # IMPORTANT: KWindowSystem does not work without this plugin. 
-          cp -r /usr/local/lib/x86_64-linux-gnu/plugins/kf5 appdir/usr/plugins/
-          cp -r $(qmake -query QT_INSTALL_PLUGINS)/* appdir/usr/plugins/
+          # cp -r /usr/local/lib/x86_64-linux-gnu/plugins/kf5 appdir/usr/plugins/
+          # cp -r $(qmake -query QT_INSTALL_PLUGINS)/* appdir/usr/plugins/
 
           wget -c -nv "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool-x86_64.AppImage
