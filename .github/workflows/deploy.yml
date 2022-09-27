@@ -129,7 +129,7 @@ jobs:
           
           export VERSION=$(git rev-parse --short HEAD)
           export COMMIT=$(git rev-parse --short HEAD)
-          export BUILD="1"
+          export BUILD="$GITHUB_RUN_NUMBER"
 
           deploy=${{ needs.Check.outputs.deploy }} 
           if [ "$deploy" = "false" ]
