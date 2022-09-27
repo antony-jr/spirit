@@ -1,4 +1,7 @@
+#include <QDesktopServices>
 #include <QFileDialog>
+#include <QMessageBox>
+#include <QScreen>
 #include <QTimer>
 #include <QDir>
 
@@ -13,6 +16,11 @@ GuiApp::GuiApp(QWidget *parent) :
     m_Config = new SpiritConfig(this);
     m_SettingsDialog = new QDialog(this);
     m_QuirksDialog = new QDialog(this);
+    m_ProgressDialog = new QProgressDialog(this);
+    m_ProgressDialog->setMinimum(0);
+    m_ProgressDialog->setMaximum(0);
+    m_ProgressDialog->setMinimumWidth(400);
+    m_ProgressDialog->setMinimumHeight(120);
 
     m_UI->setupUi(this);
     m_SettingsDialogUI->setupUi(m_SettingsDialog);
@@ -24,6 +32,9 @@ GuiApp::GuiApp(QWidget *parent) :
 
     m_SettingsDialogUI->programsListView->setModel(m_AllowedProgramsModel);
     m_QuirksDialogUI->quirksListView->setModel(m_QuirksModel);
+
+    connect(m_ProgressDialog, &QProgressDialog::canceled,
+            this, &GuiApp::handleProgressCancel);
 
     connect(m_Manager, &SpiritManager::quirks,
             this, &GuiApp::handleQuirkData);
@@ -62,6 +73,12 @@ GuiApp::GuiApp(QWidget *parent) :
     connect(m_UI->actionLoad, &QAction::triggered,
             this, &GuiApp::handleLoad);
 
+    connect(m_UI->actionAbout, &QAction::triggered,
+            this, &GuiApp::handleDocs);
+
+    connect(m_UI->actionAbout_2, &QAction::triggered,
+            this, &GuiApp::handleAbout);
+
     connect(m_SettingsDialogUI->selectDefaultSpiritBtn, &QPushButton::pressed,
             this, &GuiApp::handleDefaultSpiritSelect);
 
@@ -71,29 +88,11 @@ GuiApp::GuiApp(QWidget *parent) :
     connect(m_UI->actionQuit, &QAction::triggered,
             m_Manager, &SpiritManager::deinit);
 
-    connect(m_UI->scaleSlider, &QSlider::sliderReleased,
-            this, &GuiApp::handleScaleChange, Qt::QueuedConnection);
+    connect(m_UI->applyBtn, &QPushButton::pressed,
+            this, &GuiApp::handleApplyBtn);
 
     connect(m_UI->resetBtn, &QPushButton::pressed,
-            m_Manager, &SpiritManager::resetProperty);
-
-    connect(m_UI->actionComboBox, QOverload<int>::of(&QComboBox::activated),
-            this, &GuiApp::handleActionChange);
-
-    connect(m_UI->positionComboBox, QOverload<int>::of(&QComboBox::activated),
-            this, &GuiApp::handlePositionChange);
-
-    connect(m_UI->x1offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-            this, &GuiApp::handleX1Offset);
-
-    connect(m_UI->x2offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-            this, &GuiApp::handleX2Offset);
-
-    connect(m_UI->y1offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-            this, &GuiApp::handleY1Offset);
-
-    connect(m_UI->y2offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-            this, &GuiApp::handleY2Offset);
+            this, &GuiApp::handleResetBtn);
 
     connect(m_Manager, &SpiritManager::loadedSpiritInfo,
             this, &GuiApp::handleSpiritInfo);
@@ -122,6 +121,10 @@ GuiApp::~GuiApp() {
 }
 
 void GuiApp::init() {
+    centerDialog(m_ProgressDialog);
+    m_ProgressDialog->reset();
+    m_ProgressDialog->setLabelText("Initializing Spirit");
+    m_ProgressDialog->open();
     m_Manager->init();
 }
 
@@ -130,6 +133,8 @@ void GuiApp::handleInit(bool ok) {
         emit quit();
         return;
     }
+
+    // m_ProgressDialog->setLabelText("Fetching Information");
 
     m_Config->read();
     m_Manager->getProperties();
@@ -165,11 +170,12 @@ void GuiApp::handleSpiritInfo(bool ok, QJsonObject obj) {
 
     m_UI->spiritName->setText(obj["name"].toString());
     m_UI->copyrightLbl->setText(obj["copyright"].toString());
+    m_ProgressDialog->cancel();
 }
 
 void GuiApp::handleProperties(bool ok, QJsonObject obj) {
     updateProperties(ok, obj);
-    if (isHidden()) {
+    if (isHidden() && ok) {
         show();
     }
 }
@@ -205,103 +211,49 @@ void GuiApp::updateProperties(bool ok, QJsonObject obj) {
         m_UI->positionComboBox->setCurrentIndex(3);
     }
 
-    disconnect(m_UI->x1offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-               this, &GuiApp::handleX1Offset);
-
-    disconnect(m_UI->x2offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-               this, &GuiApp::handleX2Offset);
-
-    disconnect(m_UI->y1offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-               this, &GuiApp::handleY1Offset);
-
-    disconnect(m_UI->y2offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-               this, &GuiApp::handleY2Offset);
-
-
-
     m_UI->x1offset->setValue(obj["topXOffset"].toInt(m_UI->x1offset->value()));
     m_UI->x2offset->setValue(obj["bottomXOffset"].toInt(m_UI->x2offset->value()));
 
     m_UI->y1offset->setValue(obj["topYOffset"].toInt(m_UI->y1offset->value()));
     m_UI->y2offset->setValue(obj["bottomYOffset"].toInt(m_UI->y2offset->value()));
-
-
-    connect(m_UI->x1offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-            this, &GuiApp::handleX1Offset);
-
-    connect(m_UI->x2offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-            this, &GuiApp::handleX2Offset);
-
-    connect(m_UI->y1offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-            this, &GuiApp::handleY1Offset);
-
-    connect(m_UI->y2offset,  QOverload<int>::of(&QSpinBox::valueChanged),
-            this, &GuiApp::handleY2Offset);
-
-
-}
-
-void GuiApp::handlePositionChange(int index) {
-    QString pos = "bottomRight";
-    if (index == 0) {
-        pos = "topLeft";
-    } else if (index == 1) {
-        pos = "topRight";
-    } else if (index == 2) {
-        pos = "bottomLeft";
-    }
-
-    m_Manager->setProperties(QJsonObject {
-        {"position", pos}
-    });
-}
-
-void GuiApp::handleX1Offset(int value) {
-    m_Manager->setProperties(QJsonObject {
-        {"topXOffset", value}
-    });
-
-}
-
-void GuiApp::handleX2Offset(int value) {
-    m_Manager->setProperties(QJsonObject {
-        {"bottomXOffset", value}
-    });
-
-}
-
-
-void GuiApp::handleY1Offset(int value) {
-    m_Manager->setProperties(QJsonObject {
-        {"topYOffset", value}
-    });
-
-}
-void GuiApp::handleY2Offset(int value) {
-    m_Manager->setProperties(QJsonObject {
-        {"bottomYOffset", value}
-    });
-
-}
-
-
-
-void GuiApp::handleActionChange(int index) {
-    m_Manager->setAction(m_UI->actionComboBox->itemText(index));
-}
-
-
-void GuiApp::handleScaleChange() {
-    m_Manager->setProperties(QJsonObject {
-        {"scale", m_UI->scaleSlider->value()}
-    });
 }
 
 void GuiApp::handleLoad() {
     auto fileName = QFileDialog::getOpenFileName(this,
                     tr("Open Spirit File"), QDir::homePath(), tr("Spirit Files (*.spirit)"));
 
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    centerDialog(m_ProgressDialog);
+    m_ProgressDialog->reset();
+    m_ProgressDialog->setLabelText("Loading Spirit File");
+    m_ProgressDialog->open();
+
     m_Manager->load(fileName);
+}
+
+void GuiApp::handleDocs() {
+    QDesktopServices::openUrl(QUrl("https://antonyjr.in/spirit"));
+}
+
+void GuiApp::handleAbout() {
+    QStringList s;
+    s << "Spirit "
+      << SPIRIT_VERSION
+      << " commit-"
+      << SPIRIT_COMMIT
+      << " (build "
+      << SPIRIT_BUILD
+      << "),\n"
+      << "Copyright (C) 2021, D. Antony J.R <antonyjr@pm.me>.\n\n"
+      << "This program is free software: you can redistribute it and/or modify "
+      << "it under the terms of the GNU General Public License as published by "
+      << "the Free Software Foundation, either version 3 of the License, or "
+      << "any later version.\n";
+
+    QMessageBox::about(this, "About Spirit", s.join(""));
 }
 
 void GuiApp::handleDefaultSpiritSelect() {
@@ -370,8 +322,42 @@ void GuiApp::handleSettingsFinished(int result) {
                                   == Qt::Checked ? true  : false);
 
         if(m_Config->isRunOnStartup()) {
-            // TODO: Write To Specific Place to Run the
-            // daemon at startup.
+#ifdef Q_OS_LINUX
+
+            QStringList desktopFile;
+            QString programPath;
+            auto appimage = std::getenv("APPIMAGE");
+            if(appimage) {
+                programPath = QString::fromUtf8(appimage);
+            } else {
+                programPath = QCoreApplication::applicationFilePath();
+            }
+
+            desktopFile << "[Desktop Entry]\n"
+                        << "Name=Spirit\n"
+                        << "Type=Application\n"
+                        << "Exec="
+                        << programPath
+                        << " daemon"
+                        << "\n"
+                        << "Terminal=false\n";
+
+            QFile entryFile(
+                QDir::homePath() +
+                QString::fromUtf8("/.config/autostart/Spirit.desktop"));
+            if(!entryFile.open(QIODevice::WriteOnly)) {
+                return;
+            }
+            entryFile.write(desktopFile.join("").toLatin1());
+            entryFile.close();
+#endif // LINUX
+        } else {
+#ifdef Q_OS_LINUX
+            QFile::remove(
+                QDir::homePath() +
+                QString::fromUtf8("/.config/autostart/Spirit.desktop"));
+
+#endif // LINUX
         }
     }
 }
@@ -382,10 +368,9 @@ void GuiApp::handleQuirkSelected(QModelIndex index) {
     }
 
     int i = index.row();
-    n_QuirkSelected = i;
-
     auto lst = m_QuirksModel->stringList();
     auto key = lst.at(i);
+    m_LastSelectedQuirk = key;
 
     auto value = m_QuirkData[key].toObject();
     m_QuirksDialogUI->programLineEdit->setText(key == "global" ? "" : key);
@@ -397,8 +382,15 @@ void GuiApp::handleQuirkSelected(QModelIndex index) {
 }
 
 void GuiApp::handleAddQuirk() {
+    centerDialog(m_ProgressDialog);
+    m_ProgressDialog->reset();
+    m_ProgressDialog->setLabelText("Updating Quirks");
+    m_ProgressDialog->open();
+
     QString name = m_QuirksDialogUI->programLineEdit->text(),
             vname =   m_QuirksDialogUI->vnameLineEdit->text();
+
+    m_LastSelectedQuirk = name;
 
     m_Manager->addQuirk(QJsonObject {
         {"name", name.isEmpty() ? "global" : name},
@@ -413,10 +405,17 @@ void GuiApp::handleAddQuirk() {
 void GuiApp::handleRemoveQuirk() {
     auto lst = m_QuirksModel->stringList();
     auto key = lst.at(n_QuirkSelected);
+    m_LastSelectedQuirk = "global";
 
     if (key == "global") {
         return;
     }
+
+    centerDialog(m_ProgressDialog);
+    m_ProgressDialog->reset();
+    m_ProgressDialog->setLabelText("Removing Quirk");
+    m_ProgressDialog->open();
+
 
     m_Manager->removeQuirk(key);
 }
@@ -424,31 +423,91 @@ void GuiApp::handleRemoveQuirk() {
 void GuiApp::handleQuirkData(bool ok, QJsonObject obj) {
     if (!ok) {
         m_QuirksModel->setStringList(QStringList());
+        m_ProgressDialog->cancel();
+        return;
     }
 
     Q_UNUSED(obj.take("status"));
     m_QuirkData = obj;
     auto lst = obj.keys();
-
     m_QuirksModel->setStringList(lst);
-    n_QuirkSelected = lst.indexOf("global");
-    m_QuirksDialogUI->programLineEdit->setText("");
-    m_QuirksDialogUI->vnameLineEdit->setText("");
 
+    QString showKey = "global";
+    if (obj.contains(m_LastSelectedQuirk)) {
+        showKey = m_LastSelectedQuirk;
+    }
 
-    auto value = obj[lst.at(n_QuirkSelected)].toObject();
+    auto value = obj[showKey].toObject();
+    m_QuirksDialogUI->programLineEdit->setText(showKey == "global" ? "" : showKey);
+    m_QuirksDialogUI->vnameLineEdit->setText(value["visibleName"].toString());
     m_QuirksDialogUI->xoffset->setValue(value["xoffset"].toInt());
     m_QuirksDialogUI->bottomXOffset->setValue(value["bottomXOffset"].toInt());
     m_QuirksDialogUI->yoffset->setValue(value["yoffset"].toInt());
     m_QuirksDialogUI->bottomYOffset->setValue(value["bottomYOffset"].toInt());
+
+    m_ProgressDialog->cancel();
+    m_QuirksDialog->open();
 }
 
 void GuiApp::handleQuirks() {
-    n_QuirkSelected = 0;
+    m_LastSelectedQuirk = "global";
     m_QuirksModel->setStringList(QStringList());
     m_QuirksDialogUI->programLineEdit->setText("");
     m_QuirksDialogUI->vnameLineEdit->setText("");
 
     m_Manager->getQuirks();
-    m_QuirksDialog->open();
+    centerDialog(m_ProgressDialog);
+    m_ProgressDialog->reset();
+    m_ProgressDialog->setLabelText("Fetching Quirks");
+    m_ProgressDialog->open();
+}
+
+void GuiApp::handleApplyBtn() {
+
+    centerDialog(m_ProgressDialog);
+    m_ProgressDialog->reset();
+    m_ProgressDialog->setLabelText("Applying Properties");
+    m_ProgressDialog->open();
+
+    auto index = m_UI->positionComboBox->currentIndex();
+    QString pos = "bottomRight";
+    if (index == 0) {
+        pos = "topLeft";
+    } else if (index == 1) {
+        pos = "topRight";
+    } else if (index == 2) {
+        pos = "bottomLeft";
+    }
+
+    m_Manager->setAction(m_UI->actionComboBox->itemText(m_UI->actionComboBox->currentIndex()));
+
+    m_Manager->setProperties(QJsonObject {
+        {"position", pos},
+        {"topXOffset", m_UI->x1offset->value()},
+        {"bottomXOffset", m_UI->x2offset->value()},
+        {"topYOffset", m_UI->y1offset->value()},
+        {"bottomYOffset", m_UI->y2offset->value()},
+        {"scale", m_UI->scaleSlider->value()}
+    });
+}
+
+void GuiApp::handleResetBtn() {
+
+    centerDialog(m_ProgressDialog);
+    m_ProgressDialog->reset();
+    m_ProgressDialog->setLabelText("Applying Properties");
+    m_ProgressDialog->open();
+
+    m_Manager->resetProperty();
+}
+
+void GuiApp::handleProgressCancel() {
+
+}
+
+void GuiApp::centerDialog(QDialog *d) {
+    auto rec = QGuiApplication::screenAt(this->pos())->geometry();
+    auto size = d->size();
+    auto topLeft = QPoint((rec.width() / 2) - (size.width() / 2), (rec.height() / 2) - (size.height() / 2));
+    d->setGeometry(QRect(topLeft, size));
 }

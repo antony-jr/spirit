@@ -112,9 +112,9 @@ void ActiveWindowTrackerPrivate::getAllowedPrograms() {
 void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
     auto activeWindowId = KWindowSystem::activeWindow();
     if(activeWindowId == 0 ||
-       id == 0) {
-       emit hide(); 
-       return;
+            id == 0) {
+        emit hide();
+        return;
     }
 
     if(id == activeWindowId) {
@@ -230,7 +230,7 @@ void ActiveWindowTrackerPrivate::handleWindowChanged(WId id,
 }
 
 void ActiveWindowTrackerPrivate::handleWindowRemoved(WId id) {
-   emit hide();
+    emit hide();
 }
 
 void ActiveWindowTrackerPrivate::handleWindowAdded(WId id) {

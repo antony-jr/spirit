@@ -2,6 +2,7 @@
 #define GUI_APP_HPP_INCLUDED
 #include <QMainWindow>
 #include <QStringListModel>
+#include <QProgressDialog>
 #include <QDialog>
 
 // Import UIC generated header
@@ -23,21 +24,20 @@ class GuiApp : public QMainWindow {
     void init();
 
   private Q_SLOTS:
+    void centerDialog(QDialog*);
+
     void handleInit(bool);
     void handleDeinit(bool);
 
     void handleLoad();
+    void handleDocs();
+    void handleAbout();
     void handleSpiritInfo(bool, QJsonObject);
     void handleProperties(bool, QJsonObject);
     void updateProperties(bool, QJsonObject);
-    void handleScaleChange();
-    void handlePositionChange(int);
-    void handleActionChange(int);
     void handleActions(QStringList, QString);
-    void handleX1Offset(int);
-    void handleX2Offset(int);
-    void handleY1Offset(int);
-    void handleY2Offset(int);
+    void handleApplyBtn();
+    void handleResetBtn();
 
     // Settings
     void handleSettings();
@@ -47,12 +47,14 @@ class GuiApp : public QMainWindow {
     void handleRemoveAllowedProgram();
     void handleSettingsFinished(int);
 
+    // Quirks
     void handleQuirks();
     void handleQuirkSelected(QModelIndex);
     void handleAddQuirk();
     void handleRemoveQuirk();
     void handleQuirkData(bool, QJsonObject);
 
+    void handleProgressCancel();
   Q_SIGNALS:
     void quit();
 
@@ -63,6 +65,7 @@ class GuiApp : public QMainWindow {
 
     QDialog *m_SettingsDialog;
     QDialog *m_QuirksDialog;
+    QProgressDialog *m_ProgressDialog;
 
     SpiritManager *m_Manager;
     SpiritConfig *m_Config;
@@ -74,6 +77,7 @@ class GuiApp : public QMainWindow {
 
     QStringListModel *m_QuirksModel;
     int n_QuirkSelected = 0;
+    QString m_LastSelectedQuirk;
     QJsonObject m_QuirkData;
 };
 

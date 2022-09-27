@@ -396,26 +396,19 @@ class PropertyHandler : public CivetHandler {
                 }
             }
 
-            if (body.contains("topXOffset")) {
-                auto x1 = body["topXOffset"].toInt();
-                emit obj->setXOffset(x1, obj->n_x2);
-            }
+            emit obj->setXOffset(
+                body.contains("topXOffset") ?
+                body["topXOffset"].toInt() : obj->n_x1,
+                body.contains("bottomXOffset") ?
+                body["bottomXOffset"].toInt() : obj->n_x2
+            );
 
-            if (body.contains("bottomXOffset")) {
-                auto x2 = body["bottomXOffset"].toInt();
-                emit obj->setXOffset(obj->n_x1, x2);
-            }
-
-            if (body.contains("topYOffset")) {
-                auto y1 = body["topYOffset"].toInt();
-                emit obj->setYOffset(y1, obj->n_y2);
-            }
-
-            if (body.contains("bottomYOffset")) {
-                auto y2 = body["bottomYOffset"].toInt();
-                emit obj->setYOffset(obj->n_y1, y2);
-            }
-
+            emit obj->setYOffset(
+                body.contains("topYOffset") ?
+                body["topYOffset"].toInt() : obj->n_y1,
+                body.contains("bottomYOffset") ?
+                body["bottomYOffset"].toInt() : obj->n_y2
+            );
         } else if (body["opt"].toString() == "reset") {
             emit obj->resetProperties();
         }
