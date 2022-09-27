@@ -110,7 +110,14 @@ void ActiveWindowTrackerPrivate::getAllowedPrograms() {
 
 #ifdef Q_OS_LINUX
 void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
-    if(id == KWindowSystem::activeWindow()) {
+    auto activeWindowId = KWindowSystem::activeWindow();
+    if(activeWindowId == 0 ||
+       id == 0) {
+       emit hide(); 
+       return;
+    }
+
+    if(id == activeWindowId) {
         auto properties = NET::WMGeometry |
                           NET::WMState    |
                           NET::WMFrameExtents |
@@ -223,7 +230,7 @@ void ActiveWindowTrackerPrivate::handleWindowChanged(WId id,
 }
 
 void ActiveWindowTrackerPrivate::handleWindowRemoved(WId id) {
-    updateActiveWindowX(id);
+   emit hide();
 }
 
 void ActiveWindowTrackerPrivate::handleWindowAdded(WId id) {

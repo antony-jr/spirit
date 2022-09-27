@@ -46,7 +46,7 @@ jobs:
                qt515multimedia qt515x11extras qt515tools qt515imageformats \
                qt515wayland automake libtool \
                libcairo-dev libfuse-dev zsync desktop-file-utils \
-               ca-certificates autoconf libtool patch wget \
+               ca-certificates autoconf libtool patchelf patch wget \
                vim-common desktop-file-utils pkg-config \
                librsvg2-dev librsvg2-bin liblzma-dev \
                libxrender-dev libxcb-icccm4-dev \
@@ -57,7 +57,7 @@ jobs:
           source /opt/qt*/bin/qt*-env.sh || true 
           git clone https://github.com/KDE/extra-cmake-modules
           cd extra-cmake-modules
-          git checkout v5.80.0
+          git checkout v5.98.0
           mkdir build 
           cd build
           cmake ..
@@ -69,7 +69,7 @@ jobs:
           
           git clone https://github.com/KDE/kwindowsystem
           cd kwindowsystem
-          git checkout v5.80.0
+          git checkout v5.98.0
           mkdir build
           cd build
           cmake ..
@@ -87,8 +87,11 @@ jobs:
           mkdir libbuild
           cd libbuild
           
-          cmake -DCIVETWEB_ENABLE_CXX=ON -DCIVETWEB_DISABLE_CGI=ON -DCIVETWEB_SERVE_NO_FILES=ON -DCIVETWEB_ENABLE_SERVER_EXECUTABLE=OFF -DCIVETWEB_INSTALL_EXECUTABLE=OFF -DCIVETWEB_BUILD_TESTING=OFF ..
-          
+          cmake -DCIVETWEB_ENABLE_CXX=ON \
+          -DCIVETWEB_DISABLE_CGI=ON -DCIVETWEB_SERVE_NO_FILES=ON \
+          -DCIVETWEB_ENABLE_SERVER_EXECUTABLE=OFF \
+          -DCIVETWEB_INSTALL_EXECUTABLE=OFF -DCIVETWEB_BUILD_TESTING=OFF ..
+
           make -j$(nproc)
           sudo make install 
           cd ..
@@ -160,13 +163,19 @@ jobs:
           wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
           chmod a+x linuxdeployqt-continuous-x86_64.AppImage
           unset QTDIR; unset QT_PLUGIN_PATH ; unset LD_LIBRARY_PATH
-          sudo cp -rp /usr/local/lib/x86_64-linux-gnu/plugins/kf5/kwindowsystem $(qmake -query QT_INSTALL_PLUGINS)/
+          
+          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -extra-plugins=imageformats,mediaservice -bundle-non-qt-libs
 
-          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -extra-plugins=kwindowsystem,imageformats,mediaservice -bundle-non-qt-libs
-        
           # IMPORTANT: KWindowSystem does not work without this plugin. 
-          # cp -r /usr/local/lib/x86_64-linux-gnu/plugins/kf5 appdir/usr/plugins/
-          # cp -r $(qmake -query QT_INSTALL_PLUGINS)/* appdir/usr/plugins/
+          sudo cp -rp /usr/local/lib/x86_64-linux-gnu/plugins/kf5 appdir/usr/plugins/
+          export NORMAL=$USER 
+          sudo chown $NORMAL -R appdir/usr/plugins/kf5
+
+          pushd appdir/usr/plugins/kf5/kwindowsystem
+
+          # patchelf --set-rpath "\$ORIGIN/../../../lib" KF5WindowSystemWaylandPlugin.so
+          patchelf --set-rpath "\$ORIGIN/../../../lib" KF5WindowSystemX11Plugin.so 
+          popd
 
           wget -c -nv "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool-x86_64.AppImage
