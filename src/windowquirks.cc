@@ -161,8 +161,8 @@ void WindowQuirks::getQuirks() {
         r.insert(iter.key(), QJsonObject {
             {"xoffset", e.n_X},
             {"yoffset", e.n_Y},
-            {"bottomXOffset", n_BottomX},
-            {"bottomYOffset", n_BottomY},
+            {"bottomXOffset", e.n_BottomX},
+            {"bottomYOffset", e.n_BottomY},
             {"visibleName", e.m_VisibleName}
         });
     }
@@ -218,8 +218,8 @@ bool WindowQuirks::updateJson() {
         r.insert(iter.key(), QJsonObject {
             {"xoffset", e.n_X},
             {"yoffset", e.n_Y},
-            {"bottomXOffset", n_BottomX},
-            {"bottomYOffset", n_BottomY},
+            {"bottomXOffset", e.n_BottomX},
+            {"bottomYOffset", e.n_BottomY},
             {"visibleName", e.m_VisibleName}
         });
     }

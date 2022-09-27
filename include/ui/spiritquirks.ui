@@ -119,7 +119,11 @@
       </widget>
      </item>
      <item row="5" column="0" colspan="5">
-      <widget class="QListView" name="quirksListView"/>
+      <widget class="QListView" name="quirksListView">
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
