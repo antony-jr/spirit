@@ -111,6 +111,7 @@ void ActiveWindowTrackerPrivate::getAllowedPrograms() {
 #ifdef Q_OS_LINUX
 void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
     auto activeWindowId = KWindowSystem::activeWindow();
+    qDebug() << "ID: " << id << " | Active Window: " << activeWindowId;
     if(activeWindowId == 0 ||
             id == 0) {
         emit hide();
@@ -229,7 +230,7 @@ void ActiveWindowTrackerPrivate::handleWindowChanged(WId id,
     updateActiveWindowX(id);
 }
 
-void ActiveWindowTrackerPrivate::handleWindowRemoved(WId id) {
+void ActiveWindowTrackerPrivate::handleWindowRemoved(WId id) { 
    updateActiveWindowX(KWindowSystem::activeWindow());
 }
 
