@@ -230,7 +230,7 @@ void ActiveWindowTrackerPrivate::handleWindowChanged(WId id,
 }
 
 void ActiveWindowTrackerPrivate::handleWindowRemoved(WId id) {
-    emit hide();
+   updateActiveWindowX(KWindowSystem::activeWindow());
 }
 
 void ActiveWindowTrackerPrivate::handleWindowAdded(WId id) {
