@@ -4,6 +4,10 @@
 #include <QDebug>
 
 #include "activewindowtracker_p.hpp"
+#ifdef Q_OS_WINDOWS
+# include <windows.h>
+# include <psapi.h>
+#endif // WINDOWS
 
 ActiveWindowTrackerPrivate::ActiveWindowTrackerPrivate(QObject *parent)
     : QObject(parent) {
@@ -12,6 +16,15 @@ ActiveWindowTrackerPrivate::ActiveWindowTrackerPrivate(QObject *parent)
                      Qt::DirectConnection);
 
     m_Quirks.read();
+
+#ifdef Q_OS_WINDOWS
+    m_WindowTimer = new QTimer(this);
+    m_WindowTimer->setSingleShot(false);
+    m_WindowTimer->setInterval(500);
+
+    connect(m_WindowTimer, &QTimer::timeout,
+            this, &ActiveWindowTrackerPrivate::updateActiveWindow);
+#endif
 }
 
 ActiveWindowTrackerPrivate::~ActiveWindowTrackerPrivate() {
@@ -75,6 +88,10 @@ void ActiveWindowTrackerPrivate::start() {
     // Initially no signal will be emitted so.
     handleWindowAdded(KWindowSystem::activeWindow());
 #endif // LINUX
+
+#ifdef Q_OS_WINDOWS
+    m_WindowTimer->start();
+#endif // WINDOWS
 }
 
 void ActiveWindowTrackerPrivate::rescan() {
@@ -83,6 +100,11 @@ void ActiveWindowTrackerPrivate::rescan() {
         updateActiveWindowX(KWindowSystem::activeWindow());
     }
 #endif // LINUX 
+
+#ifdef Q_OS_WINDOWS
+    updateActiveWindow();
+#endif // WINDOWS
+
 }
 
 void ActiveWindowTrackerPrivate::stop() {
@@ -90,6 +112,9 @@ void ActiveWindowTrackerPrivate::stop() {
     this->disconnect();
 #endif // LINUX
 
+#ifdef Q_OS_WINDOWS
+    m_WindowTimer->stop();
+#endif // WINDOWS
 }
 
 void ActiveWindowTrackerPrivate::addAllowedProgram(QString program) {
@@ -230,11 +255,105 @@ void ActiveWindowTrackerPrivate::handleWindowChanged(WId id,
     updateActiveWindowX(id);
 }
 
-void ActiveWindowTrackerPrivate::handleWindowRemoved(WId id) { 
-   updateActiveWindowX(KWindowSystem::activeWindow());
+void ActiveWindowTrackerPrivate::handleWindowRemoved(WId id) {
+    updateActiveWindowX(KWindowSystem::activeWindow());
 }
 
 void ActiveWindowTrackerPrivate::handleWindowAdded(WId id) {
     updateActiveWindowX(id);
 }
 #endif // LINUX
+
+
+#ifdef Q_OS_WINDOWS
+void ActiveWindowTrackerPrivate::updateActiveWindow() {
+    QString title,
+            program;
+    QRect geo;
+
+    HWND foreground = GetForegroundWindow();
+    if (foreground) {
+        char window_title[256];
+        GetWindowText(foreground, window_title, 256);
+        title = QString(window_title);
+    }
+
+    DWORD dwPID;
+    GetWindowThreadProcessId(foreground, &dwPID);
+
+    HANDLE handle = OpenProcess(
+                        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                        FALSE,
+                        dwPID);
+
+    if (handle) {
+        char prog_path[256];
+        if (GetProcessImageFileName(handle,
+                                    prog_path,
+                                    sizeof(prog_path)/sizeof(*prog_path)) !=0 ) {
+            program = QString(prog_path);
+        }
+    }
+
+    WINDOWINFO info { NULL };
+    if (GetWindowInfo(foreground, &info)) {
+        auto rect = info.rcClient;
+
+        /*
+        auto bheight = info.cyWindowBorders;
+        auto dpi = GetDpiForWindow(foreground);
+        qDebug() << "DPI: " << dpi;
+        int borderHeight = bheight * (dpi / 100.0);
+        qDebug() << "Border Height: " << borderHeight;
+        */
+
+        geo = QRect(rect.left, rect.top /*- borderHeight*/, rect.right - rect.left + 1, (rect.bottom - rect.top + 1) /*+ borderHeight*/);
+    }
+
+    auto clsName =  QFileInfo(program).baseName();
+    auto allowed = m_AllowedPrograms.isEmpty();
+
+    for (auto prog : m_AllowedPrograms) {
+        if (title.contains(prog) ||
+                clsName.contains(prog)) {
+            allowed = true;
+            break;
+        }
+    }
+
+    if (!allowed) {
+        emit hide();
+        return;
+    }
+
+    DWORD wStyle;
+    wStyle = GetWindowLong (foreground,GWL_STYLE);
+    if(!(wStyle & WS_CAPTION)) {
+        emit hide();
+        return;
+    }
+
+    auto quirk = m_Quirks.getQuirk(clsName);
+    auto xoffset = quirk["xoffset"].toInt(0);
+    auto yoffset = quirk["yoffset"].toInt(0);
+    auto _xoffset = quirk["bottomXOffset"].toInt(0);
+    auto _yoffset = quirk["bottomYOffset"].toInt(0);
+    auto vname = quirk["visibleName"].toString();
+
+    if (vname.isEmpty()) {
+        emit update(geo, xoffset, yoffset, _xoffset, _yoffset);
+    } else if (title.contains(vname)) {
+        emit update(geo, xoffset, yoffset, _xoffset, _yoffset);
+    } else {
+        auto gl = m_Quirks.getQuirk();
+        gl = gl["global"].toObject();
+
+        int glx = gl["xoffset"].toInt(0);
+        int gly = gl["yoffset"].toInt(0);
+        auto gl_x = gl["bottomXOffset"].toInt(0);
+        auto gl_y = gl["bottomYOffset"].toInt(0);
+
+        emit update(geo, glx, gly, gl_x, gl_y);
+    }
+}
+#endif // WINDOWS

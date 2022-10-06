@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QRect>
 #include <QStringList>
+#include <QTimer>
 #ifdef Q_OS_LINUX
 # include <kwindowsystem.h>
 # include <kwindowinfo.h>
@@ -41,6 +42,12 @@ class ActiveWindowTrackerPrivate : public QObject {
     void handleWindowAdded(WId);
 #endif // LINUX
 
+#ifdef Q_OS_WINDOWS
+  private Q_SLOTS:
+    void updateActiveWindow();
+#endif // WINDOWS
+
+
   Q_SIGNALS:
     void quirks(QJsonObject);
     void quirkAdded(QString, bool);
@@ -58,6 +65,9 @@ class ActiveWindowTrackerPrivate : public QObject {
 #ifdef Q_OS_LINUX
     bool b_RegisteredTypes = false;
 #endif // LINUX
+#ifdef Q_OS_WINDOWS
+    QTimer *m_WindowTimer;
+#endif // WINDOWS
 };
 
 #endif //ACTIVE_WINDOW_TRACKER_HPP_PRIVATE

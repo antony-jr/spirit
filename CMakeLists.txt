@@ -1,17 +1,35 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.2)
 project(spirit)
 
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE RELEASE)
+endif()
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CONAN_BUILD ON)
 set(MIN_QT_VERSION "5.6.0")
 
-find_package(Qt5Core ${MIN_QT_VERSION})
-find_package(Qt5Widgets ${MIN_QT_VERSION})
-find_package(Qt5Network ${MIN_QT_VERSION})
-find_package(Qt5Multimedia ${MIN_QT_VERSION})
+if (UNIX AND NOT APPLE)
+   set(CONAN_BUILD OFF)
+endif()
+
+if (CONAN_BUILD)
+   list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+   list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+   include(conan.cmake)
+   
+   conan_cmake_autodetect(settings)
+   conan_cmake_install(PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR}/conanfile.py
+                    BUILD missing
+                    REMOTE conancenter
+                    SETTINGS ${settings})
+endif()
+find_package(Qt5 COMPONENTS Core Widgets Network Multimedia)
 
 # KWindowSystem
 if (UNIX AND NOT APPLE)  
@@ -92,8 +110,36 @@ target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network Qt5::Mul
 if (UNIX AND NOT APPLE) 
  target_link_libraries(spirit PUBLIC KF5::WindowSystem)
 endif()
-target_link_libraries(spirit PUBLIC QArchive)
-target_link_libraries(spirit PUBLIC civetweb civetweb-cpp)
+if (UNIX AND NOT APPLE)
+   target_link_libraries(spirit PUBLIC QArchive)
+else()
+   target_link_libraries(spirit PUBLIC QArchive::QArchive)
+endif()
+target_link_libraries(spirit PUBLIC civetweb::civetweb civetweb::civetweb-cpp)
+
+if (WIN32 AND CONAN_BUILD)
+	include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+	add_custom_command(
+        TARGET spirit POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CONAN_BIN_DIRS_QARCHIVE}/QArchive.dll
+                ${CMAKE_CURRENT_BINARY_DIR}/Release/QArchive.dll)
+	add_custom_command(
+        TARGET spirit POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CONAN_BIN_DIRS_CIVETWEB}/civetweb.dll
+                ${CMAKE_CURRENT_BINARY_DIR}/Release/civetweb.dll)
+	add_custom_command(
+		TARGET spirit POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy
+		${CONAN_BIN_DIRS_CIVETWEB}/civetweb-cpp.dll
+		${CMAKE_CURRENT_BINARY_DIR}/Release/civetweb-cpp.dll)
+	
+	add_custom_command(
+		TARGET spirit POST_BUILD
+		COMMAND ${CONAN_BIN_DIRS_QT}/windeployqt.exe
+		${CMAKE_CURRENT_BINARY_DIR}/Release/spirit.exe)
+endif()
 
 # Hotfix for CI/CD
 if (UNIX AND NOT APPLE) 

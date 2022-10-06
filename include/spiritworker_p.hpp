@@ -8,7 +8,11 @@
 #include <QTimer>
 #include <QJsonObject>
 #include <QScopedPointer>
-#include <QArchive/QArchive>
+#ifdef Q_OS_LINUX
+# include <QArchive/QArchive>
+#else
+# include <QArchive>
+#endif
 
 class SpiritWorkerPrivate : public QObject {
     Q_OBJECT
