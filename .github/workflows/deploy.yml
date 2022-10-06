@@ -186,6 +186,7 @@ jobs:
           # sed '0,/AI\x02/{s|AI\x02|\x00\x00\x00|}' -i spirit-$VERSION-x86_64.AppImage
 
           echo ::set-output name=appimagefile::spirit-$VERSION-x86_64.AppImage
+          echo ::set-output name=windowsfile::spirit-$VERSION-setup.exe
 
           # Remove development appimages.
           rm -rf linuxdeploy* appimagetool*
@@ -205,7 +206,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./${{steps.appimage_build.outputs.appimagefile}}
+          file: ./${{steps.appimage_build.outputs.appimagefile}}*
           tag: development
           overwrite: true
           file_glob: true
@@ -268,7 +269,7 @@ jobs:
         run: |
           git clone https://github.com/antony-jr/conan-center-index
           cd conan-center-index
-          git checkout antonyjr/add-qarchive-2.1.1
+          git checkout antonyjr/hotfix
           cd recipes\qarchive\all
           conan create . 2.1.1@local/packages --build=missing
           cd ..
@@ -290,7 +291,6 @@ jobs:
           rm -r -fo .\build
           ls .\qtinstaller\packages\com.antonyjr.spirit\data
           .\qifw\bin\binarycreator.exe -c .\qtinstaller\config\config.xml -p .\qtinstaller\packages Setup.exe
-          echo ::set-output name=windowssetupfile::Setup.exe
 
       - name: Delete Old Development Builds
         if: needs.Check.outputs.deploy == 'false'
@@ -307,10 +307,10 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./${{steps.windows_build.outputs.windowssetupfile}} 
+          file: ./Setup.exe
+          asset_name: ${{ needs.BuildAndDeployLinux.appimage_build.outputs.windowsfile }}
           tag: development
           overwrite: true
-          file_glob: true
           prerelease: true
           release_name: "Spirit Development Builds"
           body: "The latest and greatest of spirit!"
@@ -322,6 +322,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.BuildAndDeployLinux.create_release.outputs.upload_url }}
-          asset_path: ./${{steps.windows_build.outputs.windowssetupfile}}
-          asset_name: ${{steps.windows_build.outputs.windowssetupfile}}
+          asset_path: ./Setup.exe
+          asset_name: ${{ needs.BuildAndDeployLinux.appimage_build.outputs.windowsfile }} 
           asset_content_type: application/octet-stream
