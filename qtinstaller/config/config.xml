@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>Spirit</Name>
+    <Version>0.2.0</Version>
+    <Title>Spirit v0.2.0</Title>
+    <Publisher>D. Antony JR</Publisher>
+    <StartMenuDir>Spirit</StartMenuDir>
+    <TargetDir>@HomeDir@/Spirit</TargetDir>
+    <InstallerWindowIcon>window_logo</InstallerWindowIcon>
+    <InstallerApplicationIcon>window_logo</InstallerApplicationIcon>
+    
+    <RunProgram>@TargetDir@/spirit.exe</RunProgram>
+    <RunProgramDescription>Open Spirit Manager Now</RunProgramDescription>
+    <WizardStyle>Modern</WizardStyle>
+    <ProductImages>
+        <ProductImage>
+            <Image>logo.png</Image>
+            <Url>https://antonyjr.in/Spirit</Url>
+        </ProductImage>
+    </ProductImages>
+</Installer>

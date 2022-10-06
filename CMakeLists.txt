@@ -105,7 +105,12 @@ list(APPEND source include/termcolor.hpp
 		   # Resources
 		   resources.qrc)
 
-add_executable(spirit ${source})
+if (WIN32)
+   add_executable(spirit WIN32 ${source})
+else()
+   add_executable(spirit ${source})
+endif()
+
 target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network Qt5::Multimedia)
 if (UNIX AND NOT APPLE) 
  target_link_libraries(spirit PUBLIC KF5::WindowSystem)

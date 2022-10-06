@@ -30,8 +30,10 @@ jobs:
           cat /tmp/tags.txt
           result=$(python3 scripts/check.py "$(git log -1 --pretty=%B)" "/tmp/tags.txt")
           echo "::set-output name=check::$result"
-  BuildAndDeploy:
-    name: "Build And Deploy"
+
+
+  BuildAndDeployLinux:
+    name: "Build And Deploy (GNU+Linux AMD64)"
     runs-on: ubuntu-18.04
     needs: Check
     steps:
@@ -233,4 +235,91 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./${{steps.appimage_build.outputs.appimagefile}}
           asset_name: ${{steps.appimage_build.outputs.appimagefile}}
+          asset_content_type: application/octet-stream 
+  
+  BuildAndDeployWindows:
+    name: "Build And Deploy (Windows x86)"
+    runs-on: windows-latest
+    needs: [Check, BuildAndDeployLinux]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: lukka/get-cmake@latest
+      
+      - name: Install MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      
+      - name: Install Conan
+        id: conan
+        uses: turtlebrowser/get-conan@main
+
+      - name: Install Wget
+        run: choco install wget
+
+      - name: Install Qt Installer Framework
+        id: qifw
+        run: |
+          mkdir qifw
+          wget -O Installer.exe "https://drive.google.com/uc?export=download&id=1Kg_0WVuTFUUKZ6PsMjHYqGVEQv9itxm4&confirm=t"
+          .\Installer.exe in -t "$pwd\qifw" --am -c --al
+          rm Installer.exe
+
+      # Remove this when QArchive v2.1.1 is added to Conan Center.
+      - name: QArchive Hotfix for Conan
+        run: |
+          git clone https://github.com/antony-jr/conan-center-index
+          cd conan-center-index
+          git checkout antonyjr/add-qarchive-2.1.1
+          cd recipes\qarchive\all
+          conan create . 2.1.1@local/packages --build=missing
+          cd ..
+          cd ..
+          cd ..
+          cd ..
+
+      - name: Build Spirit
+        id: windows_build
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --config release
+          copy ../qtinstaller/packages/com.antonyjr.spirit/data/logo.ico Release/logo.ico
+          mv Release ../qtinstaller/packages/com.antonyjr.spirit/data
+          cd ..
+          rm -r -fo build
+          .\qifw\bin\binarycreator.exe -c .\qtinstaller\config\config.xml -p .\qtinstaller\packages Setup.exe
+          echo ::set-output name=windowssetupfile::Setup.exe
+
+      - name: Delete Old Development Builds
+        if: needs.Check.outputs.deploy == 'false'
+        uses: mknejp/delete-release-assets@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: development
+          assets: Setup* 
+          fail-if-no-assets: false
+          fail-if-no-release: false
+
+      - name: Upload Development Build
+        if: needs.Check.outputs.deploy == 'false'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./${{steps.windows_build.outputs.windowssetupfile}} 
+          tag: development
+          overwrite: true
+          file_glob: true
+          prerelease: true
+          release_name: "Spirit Development Builds"
+          body: "The latest and greatest of spirit!"
+
+      - name: Upload Windows Release Asset
+        if: needs.Check.outputs.deploy != 'false'
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.BuildAndDeployLinux.create_release.outputs.upload_url }}
+          asset_path: ./${{steps.windows_build.outputs.windowssetupfile}}
+          asset_name: ${{steps.windows_build.outputs.windowssetupfile}}
           asset_content_type: application/octet-stream
