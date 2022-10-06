@@ -283,10 +283,12 @@ jobs:
           cd build
           cmake ..
           cmake --build . --config release
-          copy ../qtinstaller/packages/com.antonyjr.spirit/data/logo.ico Release/logo.ico
-          mv Release ../qtinstaller/packages/com.antonyjr.spirit/data
+          copy ..\qtinstaller\packages\com.antonyjr.spirit\data\logo.ico .\Release\logo.ico
+          rm -r -fo ..\qtinstaller\packages\com.antonyjr.spirit\data
+          mv .\Release ..\qtinstaller\packages\com.antonyjr.spirit\data
           cd ..
-          rm -r -fo build
+          rm -r -fo .\build
+          ls .\qtinstaller\packages\com.antonyjr.spirit\data
           .\qifw\bin\binarycreator.exe -c .\qtinstaller\config\config.xml -p .\qtinstaller\packages Setup.exe
           echo ::set-output name=windowssetupfile::Setup.exe
 
