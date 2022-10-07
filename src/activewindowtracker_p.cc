@@ -20,7 +20,7 @@ ActiveWindowTrackerPrivate::ActiveWindowTrackerPrivate(QObject *parent)
 #ifdef Q_OS_WINDOWS
     m_WindowTimer = new QTimer(this);
     m_WindowTimer->setSingleShot(false);
-    m_WindowTimer->setInterval(500);
+    m_WindowTimer->setInterval(100);
 
     connect(m_WindowTimer, &QTimer::timeout,
             this, &ActiveWindowTrackerPrivate::updateActiveWindow);
@@ -136,7 +136,6 @@ void ActiveWindowTrackerPrivate::getAllowedPrograms() {
 #ifdef Q_OS_LINUX
 void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
     auto activeWindowId = KWindowSystem::activeWindow();
-    qDebug() << "ID: " << id << " | Active Window: " << activeWindowId;
     if(activeWindowId == 0 ||
             id == 0) {
         emit hide();
@@ -264,7 +263,6 @@ void ActiveWindowTrackerPrivate::handleWindowAdded(WId id) {
 }
 #endif // LINUX
 
-
 #ifdef Q_OS_WINDOWS
 void ActiveWindowTrackerPrivate::updateActiveWindow() {
     QString title,
@@ -276,6 +274,9 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
         char window_title[256];
         GetWindowText(foreground, window_title, 256);
         title = QString(window_title);
+    } else {
+        hide();
+        return;
     }
 
     DWORD dwPID;
@@ -298,16 +299,26 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
     WINDOWINFO info { NULL };
     if (GetWindowInfo(foreground, &info)) {
         auto rect = info.rcClient;
+        auto window_rect = RECT { NULL };
 
-        /*
-        auto bheight = info.cyWindowBorders;
-        auto dpi = GetDpiForWindow(foreground);
-        qDebug() << "DPI: " << dpi;
-        int borderHeight = bheight * (dpi / 100.0);
-        qDebug() << "Border Height: " << borderHeight;
-        */
+        if(!GetWindowRect(foreground, &window_rect)) {
+            emit hide();
+            return;
 
-        geo = QRect(rect.left, rect.top /*- borderHeight*/, rect.right - rect.left + 1, (rect.bottom - rect.top + 1) /*+ borderHeight*/);
+        }
+
+        auto client_height = rect.bottom - rect.top + 1;
+        auto title_bar_height = rect.top - window_rect.top + 1;
+        auto height = client_height + title_bar_height;
+        auto width = window_rect.right - window_rect.left + 1;
+
+        int x = window_rect.left,
+            y = window_rect.top;
+
+        geo = QRect(x, y, width, height);
+    } else {
+        emit hide();
+        return;
     }
 
     auto clsName =  QFileInfo(program).baseName();

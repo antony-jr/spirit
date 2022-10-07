@@ -36,6 +36,9 @@ jobs:
     name: "Build And Deploy (GNU+Linux AMD64)"
     runs-on: ubuntu-18.04
     needs: Check
+    outputs:
+      windowsfile: ${{ steps.appimage_build.outputs.windowsfile }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - uses: actions/checkout@v2
       - uses: lukka/get-cmake@latest
@@ -269,7 +272,7 @@ jobs:
         run: |
           git clone https://github.com/antony-jr/conan-center-index
           cd conan-center-index
-          git checkout antonyjr/hotfix
+          git checkout antonyjr/add-qarchive-2.1.1
           cd recipes\qarchive\all
           conan create . 2.1.1@local/packages --build=missing
           cd ..
@@ -298,7 +301,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: development
-          assets: Setup* 
+          assets: "*setup.exe" 
           fail-if-no-assets: false
           fail-if-no-release: false
 
@@ -308,7 +311,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./Setup.exe
-          asset_name: ${{ needs.BuildAndDeployLinux.appimage_build.outputs.windowsfile }}
+          asset_name: ${{ needs.BuildAndDeployLinux.outputs.windowsfile }}
           tag: development
           overwrite: true
           prerelease: true
@@ -321,7 +324,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.BuildAndDeployLinux.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.BuildAndDeployLinux.outputs.upload_url }}
           asset_path: ./Setup.exe
-          asset_name: ${{ needs.BuildAndDeployLinux.appimage_build.outputs.windowsfile }} 
+          asset_name: ${{ needs.BuildAndDeployLinux.outputs.windowsfile }} 
           asset_content_type: application/octet-stream

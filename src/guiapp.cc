@@ -1,6 +1,7 @@
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QSettings>
 #include <QScreen>
 #include <QTimer>
 #include <QDir>
@@ -351,6 +352,18 @@ void GuiApp::handleSettingsFinished(int result) {
             entryFile.write(desktopFile.join("").toLatin1());
             entryFile.close();
 #endif // LINUX
+
+#ifdef Q_OS_WINDOWS
+            QSettings bootUpSettings(
+                "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+                QSettings::NativeFormat);
+            QStringList app_path;
+            app_path << "\""
+                     << QDir::toNativeSeparators(QCoreApplication::applicationFilePath())
+                     << "\""
+                     << " daemon";
+            bootUpSettings.setValue("Spirit", app_path.join(""));
+#endif // WINDOWS
         } else {
 #ifdef Q_OS_LINUX
             QFile::remove(
@@ -358,6 +371,13 @@ void GuiApp::handleSettingsFinished(int result) {
                 QString::fromUtf8("/.config/autostart/Spirit.desktop"));
 
 #endif // LINUX
+
+#ifdef Q_OS_WINDOWS
+            QSettings bootUpSettings(
+                "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+                QSettings::NativeFormat);
+            bootUpSettings.remove("Spirit");
+#endif // WINDOWS
         }
     }
 }
