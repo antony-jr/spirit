@@ -19,7 +19,7 @@ void hide_from_dock() {
 //    macos_getwin.c
 //       Get Window Info in macOS
 //                                                     2019.6 K.Chimarie
-void macos_get_active_window(int *x, int *y, int *width, int *height, char **window_title) {
+void macos_get_active_window(int *x, int *y, int *w, int *h, char **window_title) {
   *x=-1;
   *y=-1;
   *w=-1;
