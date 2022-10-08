@@ -118,7 +118,7 @@ endif()
 
 if (WIN32)
    add_executable(spirit WIN32 ${source})
-else if(APPLE)
+elseif(APPLE)
    add_executable(spirit MACOSX_BUNDLE ${source})
 else()
    add_executable(spirit ${source})
