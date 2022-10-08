@@ -526,8 +526,10 @@ void GuiApp::handleProgressCancel() {
 }
 
 void GuiApp::centerDialog(QDialog *d) {
+#ifndef Q_OS_MAC
     auto rec = QGuiApplication::screenAt(this->pos())->geometry();
     auto size = d->size();
     auto topLeft = QPoint((rec.width() / 2) - (size.width() / 2), (rec.height() / 2) - (size.height() / 2));
     d->setGeometry(QRect(topLeft, size));
+#endif
 }
