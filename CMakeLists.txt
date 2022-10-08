@@ -14,7 +14,13 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CONAN_BUILD ON)
 set(MIN_QT_VERSION "5.6.0")
 
-if (UNIX AND NOT APPLE)
+if (APPLE)
+   enable_language(OBJC)
+   set(CMAKE_EXE_LINKER_FLAGS 
+       "-framework Cocoa -framework AppKit -framework CoreData -framework Foundation")
+endif()
+
+if (UNIX)
    set(CONAN_BUILD OFF)
 endif()
 
@@ -105,8 +111,15 @@ list(APPEND source include/termcolor.hpp
 		   # Resources
 		   resources.qrc)
 
+if (APPLE)
+   list(APPEND source include/macos_p.h
+      		      src/macos_p.m)
+endif()
+
 if (WIN32)
    add_executable(spirit WIN32 ${source})
+else if(APPLE)
+   add_executable(spirit MACOSX_BUNDLE ${source})
 else()
    add_executable(spirit ${source})
 endif()
@@ -115,7 +128,7 @@ target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network Qt5::Mul
 if (UNIX AND NOT APPLE) 
  target_link_libraries(spirit PUBLIC KF5::WindowSystem)
 endif()
-if (UNIX AND NOT APPLE)
+if (UNIX)
    target_link_libraries(spirit PUBLIC QArchive)
 else()
    target_link_libraries(spirit PUBLIC QArchive::QArchive)

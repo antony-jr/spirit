@@ -42,10 +42,10 @@ class ActiveWindowTrackerPrivate : public QObject {
     void handleWindowAdded(WId);
 #endif // LINUX
 
-#ifdef Q_OS_WINDOWS
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
   private Q_SLOTS:
     void updateActiveWindow();
-#endif // WINDOWS
+#endif // WINDOWS || MAC
 
 
   Q_SIGNALS:
@@ -65,9 +65,10 @@ class ActiveWindowTrackerPrivate : public QObject {
 #ifdef Q_OS_LINUX
     bool b_RegisteredTypes = false;
 #endif // LINUX
-#ifdef Q_OS_WINDOWS
+       //
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
     QTimer *m_WindowTimer;
-#endif // WINDOWS
+#endif // WINDOWS || MAC
 };
 
 #endif //ACTIVE_WINDOW_TRACKER_HPP_PRIVATE

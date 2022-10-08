@@ -4,6 +4,13 @@
 #include <QDebug>
 
 #include "activewindowtracker_p.hpp"
+
+#ifdef Q_OS_MAC
+extern "C" {
+#include "macos_p.h"
+}
+#endif // MAC
+
 #ifdef Q_OS_WINDOWS
 # include <windows.h>
 # include <psapi.h>
@@ -17,14 +24,14 @@ ActiveWindowTrackerPrivate::ActiveWindowTrackerPrivate(QObject *parent)
 
     m_Quirks.read();
 
-#ifdef Q_OS_WINDOWS
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
     m_WindowTimer = new QTimer(this);
     m_WindowTimer->setSingleShot(false);
     m_WindowTimer->setInterval(100);
 
     connect(m_WindowTimer, &QTimer::timeout,
             this, &ActiveWindowTrackerPrivate::updateActiveWindow);
-#endif
+#endif // WINDOWS || MAC
 }
 
 ActiveWindowTrackerPrivate::~ActiveWindowTrackerPrivate() {
@@ -89,9 +96,9 @@ void ActiveWindowTrackerPrivate::start() {
     handleWindowAdded(KWindowSystem::activeWindow());
 #endif // LINUX
 
-#ifdef Q_OS_WINDOWS
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
     m_WindowTimer->start();
-#endif // WINDOWS
+#endif // WINDOWS || MAC
 }
 
 void ActiveWindowTrackerPrivate::rescan() {
@@ -101,9 +108,9 @@ void ActiveWindowTrackerPrivate::rescan() {
     }
 #endif // LINUX 
 
-#ifdef Q_OS_WINDOWS
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
     updateActiveWindow();
-#endif // WINDOWS
+#endif // WINDOWS || MAC
 
 }
 
@@ -112,9 +119,9 @@ void ActiveWindowTrackerPrivate::stop() {
     this->disconnect();
 #endif // LINUX
 
-#ifdef Q_OS_WINDOWS
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
     m_WindowTimer->stop();
-#endif // WINDOWS
+#endif // WINDOWS || MAC
 }
 
 void ActiveWindowTrackerPrivate::addAllowedProgram(QString program) {
@@ -263,12 +270,14 @@ void ActiveWindowTrackerPrivate::handleWindowAdded(WId id) {
 }
 #endif // LINUX
 
-#ifdef Q_OS_WINDOWS
+#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
 void ActiveWindowTrackerPrivate::updateActiveWindow() {
     QString title,
-            program;
+            clsName;
     QRect geo;
 
+#ifdef Q_OS_WINDOWS
+    QString program;
     HWND foreground = GetForegroundWindow();
     if (foreground) {
         char window_title[256];
@@ -321,7 +330,31 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
         return;
     }
 
-    auto clsName =  QFileInfo(program).baseName();
+    clsName =  QFileInfo(program).baseName();
+#endif // WINDOWS
+
+#ifdef Q_OS_MAC
+    {
+       int x,y,w,h;
+       x = y = w = h = 0;
+       char *window_title = nullptr;
+       
+       macos_get_active_window(&x, &y, &w, &h, &window_title);
+       
+       if (x == -1 && y == -1 &&
+	   w == -1 && h == -1 &&
+	   window_title == NULL) {
+	  emit hide();
+	  return;
+       }
+
+       geo = QRect(x, y, w, h);
+       title = QString(window_title);
+       free(window_title);
+    }
+    clsName = title;
+#endif // MACOS
+
     auto allowed = m_AllowedPrograms.isEmpty();
 
     for (auto prog : m_AllowedPrograms) {
@@ -337,13 +370,15 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
         return;
     }
 
+#ifdef Q_OS_WINDOWS
     DWORD wStyle;
     wStyle = GetWindowLong (foreground,GWL_STYLE);
     if(!(wStyle & WS_CAPTION)) {
         emit hide();
         return;
     }
-
+#endif // WINDOWS
+    
     auto quirk = m_Quirks.getQuirk(clsName);
     auto xoffset = quirk["xoffset"].toInt(0);
     auto yoffset = quirk["yoffset"].toInt(0);
@@ -367,4 +402,4 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
         emit update(geo, glx, gly, gl_x, gl_y);
     }
 }
-#endif // WINDOWS
+#endif // WINDOWS || MAC

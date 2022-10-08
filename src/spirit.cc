@@ -5,6 +5,11 @@
 #include <QDebug>
 
 #include "spirit.hpp"
+#ifdef Q_OS_MAC
+extern "C" {
+# include "macos_p.h"
+}
+#endif // MAC
 
 struct Coordinates {
     int x = 0,
@@ -59,6 +64,7 @@ Spirit::Spirit()
              Qt::NoDropShadowWindowHint |
              Qt::X11BypassWindowManagerHint) {
 
+    setAttribute(Qt::WA_MacAlwaysShowToolWindow, true); 
     setAttribute(Qt::WA_TranslucentBackground, true);
     setAttribute(Qt::WA_TransparentForMouseEvents, true);
     setAttribute(Qt::WA_ShowWithoutActivating, true);
@@ -70,6 +76,9 @@ Spirit::Spirit()
     QObject::connect(m_Player.data(), &QMediaPlayer::stateChanged,
                      this, &Spirit::handlePlayerStateChanged, Qt::QueuedConnection);
 
+#ifdef Q_OS_MAC
+    hide_from_dock();
+#endif // MAC
 }
 
 Spirit::~Spirit() {
