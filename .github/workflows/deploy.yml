@@ -33,7 +33,7 @@ jobs:
 
 
   BuildAndDeployLinux:
-    name: "Build And Deploy (GNU+Linux AMD64)"
+    name: "Build and Deploy (GNU+Linux AMD64)"
     runs-on: ubuntu-18.04
     needs: Check
     outputs:
@@ -240,9 +240,112 @@ jobs:
           asset_path: ./${{steps.appimage_build.outputs.appimagefile}}
           asset_name: ${{steps.appimage_build.outputs.appimagefile}}
           asset_content_type: application/octet-stream 
-  
+ 
+  BuildAndDeployMac:
+    name: "Build and Deploy (macOS x86_64)"
+    runs-on: macos-10.15
+    needs: [Check, BuildAndDeployLinux]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: lukka/get-cmake@latest
+
+      - name: Install Qt, LibArchive, PkgConfig and Ninja
+        run: brew install qt@5 libarchive pkg-config ninja
+
+      - name: Install QArchive
+        run: |
+          git clone https://github.com/antony-jr/QArchive
+          cd QArchive
+          git checkout v2.1.1-mac-fix
+          mkdir build
+          cd build
+          export Qt5_DIR=$(brew --prefix qt@5)
+          cmake -DLIBARCHIVE_PKG_CONFIG=$(brew --prefix libarchive)/lib/pkgconfig/libarchive.pc ..
+          cmake --build . --config release -j$(nproc)
+          sudo make install
+          cd ..
+          cd ..
+          rm -rf QArchive
+
+      - name: Install CivetWeb
+        run: |
+          wget "https://github.com/civetweb/civetweb/archive/refs/tags/v1.15.tar.gz"
+          tar -xvf v1.15.tar.gz
+          cd civetweb-1.15
+          mkdir libbuild
+          cd libbuild
+          
+          cmake -DCIVETWEB_ENABLE_CXX=ON \
+          -DCIVETWEB_DISABLE_CGI=ON -DCIVETWEB_SERVE_NO_FILES=ON \
+          -DCIVETWEB_ENABLE_SERVER_EXECUTABLE=OFF \
+          -DCIVETWEB_INSTALL_EXECUTABLE=OFF -DCIVETWEB_BUILD_TESTING=OFF ..
+
+          make -j$(nproc)
+          sudo make install 
+          cd ..
+          cd ..
+          rm -rf v1.15.tar.gz civetweb-1.15
+
+      - name: Make Icon
+        run: |
+          git clone https://github.com/bitboss-ca/png2icns
+          cd png2icns
+          cp ../artwork/logo-1024x1024.png .
+          ./png2icns.sh logo-1024x1024.png
+          mv logo-1024x1024.icns ../build_resources/spirit.icns
+          cd ..
+          rm -rf png2icns
+
+      - name: Build Spirit
+        id: macos_build
+        run: |
+          mkdir build
+          cd build
+          cmake -G Ninja ..
+          cmake --build . --config release -j$(nproc)
+          ls
+          cp ../build_resources/Info.plist spirit.app/Contents/
+          cp ../build_resources/spirit.icns spirit.app/Contents/Resources/
+          $(brew --prefix qt@5)/bin/macdeployqt spirit.app -no-strip -dmg 
+          ls
+
+      - name: Delete Old Development Builds
+        if: needs.Check.outputs.deploy == 'false'
+        uses: mknejp/delete-release-assets@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: development
+          assets: "*.dmg" 
+          fail-if-no-assets: false
+          fail-if-no-release: false
+
+      - name: Upload Development Build
+        if: needs.Check.outputs.deploy == 'false'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./spirit.dmg
+          asset_name: spirit.dmg
+          tag: development
+          overwrite: true
+          prerelease: true
+          release_name: "Spirit Development Builds"
+          body: "The latest and greatest of spirit!"
+
+      - name: Upload MacOS Release Asset
+        if: needs.Check.outputs.deploy != 'false'
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.BuildAndDeployLinux.outputs.upload_url }}
+          asset_path: ./spirit.dmg
+          asset_name: spirit.dmg 
+          asset_content_type: application/octet-stream
+
+
   BuildAndDeployWindows:
-    name: "Build And Deploy (Windows x86)"
+    name: "Build and Deploy (Windows x86)"
     runs-on: windows-latest
     needs: [Check, BuildAndDeployLinux]
     steps:
