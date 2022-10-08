@@ -261,7 +261,7 @@ jobs:
           cd build
           export Qt5_DIR=$(brew --prefix qt@5)
           cmake -DLIBARCHIVE_PKG_CONFIG=$(brew --prefix libarchive)/lib/pkgconfig/libarchive.pc ..
-          cmake --build . --config release -j$(nproc)
+          cmake --build . --config release
           sudo make install
           cd ..
           cd ..
@@ -280,7 +280,7 @@ jobs:
           -DCIVETWEB_ENABLE_SERVER_EXECUTABLE=OFF \
           -DCIVETWEB_INSTALL_EXECUTABLE=OFF -DCIVETWEB_BUILD_TESTING=OFF ..
 
-          make -j$(nproc)
+          make
           sudo make install 
           cd ..
           cd ..
@@ -303,8 +303,9 @@ jobs:
           cd build
           export Qt5_DIR=$(brew --prefix qt@5)
           cmake -G Ninja ..
-          cmake --build . --config release -j$(nproc)
+          cmake --build . --config release
           ls
+          mkdir spirit.app/Contents/Resources
           cp ../build_resources/Info.plist spirit.app/Contents/
           cp ../build_resources/spirit.icns spirit.app/Contents/Resources/
           $(brew --prefix qt@5)/bin/macdeployqt spirit.app -no-strip -dmg 
