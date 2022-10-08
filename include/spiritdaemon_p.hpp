@@ -56,6 +56,7 @@ class SpiritDaemonPrivate : public QObject {
     bool b_StopRequested = false;
 
   public:
+    bool b_QuitRequested = false;
     QJsonObject m_Meta;
     QJsonObject m_Quirks;
     int n_X = 0,
