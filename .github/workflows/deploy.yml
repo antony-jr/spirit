@@ -38,6 +38,7 @@ jobs:
     needs: Check
     outputs:
       windowsfile: ${{ steps.appimage_build.outputs.windowsfile }}
+      macosfile: ${{ steps.appimage_build.outputs.macosfile }} 
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - uses: actions/checkout@v2
@@ -190,6 +191,7 @@ jobs:
 
           echo ::set-output name=appimagefile::spirit-$VERSION-x86_64.AppImage
           echo ::set-output name=windowsfile::spirit-$VERSION-setup.exe
+          echo ::set-output name=macosfile::spirit-$VERSION-x86_64.dmg
 
           # Remove development appimages.
           rm -rf linuxdeploy* appimagetool*
@@ -304,12 +306,13 @@ jobs:
           export Qt5_DIR=$(brew --prefix qt@5)
           cmake -G Ninja ..
           cmake --build . --config release
-          ls
           mkdir spirit.app/Contents/Resources
           cp ../build_resources/Info.plist spirit.app/Contents/
           cp ../build_resources/spirit.icns spirit.app/Contents/Resources/
           $(brew --prefix qt@5)/bin/macdeployqt spirit.app -no-strip -dmg 
-          ls
+          mv spirit.dmg ../spirit.dmg
+          cd ..
+          rm -rf build
 
       - name: Delete Old Development Builds
         if: needs.Check.outputs.deploy == 'false'
@@ -327,7 +330,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./spirit.dmg
-          asset_name: spirit.dmg
+          asset_name: ${{ needs.BuildAndDeployLinux.outputs.macosfile }}
           tag: development
           overwrite: true
           prerelease: true
@@ -342,7 +345,7 @@ jobs:
         with:
           upload_url: ${{ needs.BuildAndDeployLinux.outputs.upload_url }}
           asset_path: ./spirit.dmg
-          asset_name: spirit.dmg 
+          asset_name: ${{ needs.BuildAndDeployLinux.outputs.macosfile }}
           asset_content_type: application/octet-stream
 
 
