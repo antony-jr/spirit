@@ -1,0 +1,8 @@
+{
+  "label": "Spirit File",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "\"Spirit Files\" are compressed zip archives (ends with .spirit) which describes a mascot for Spirit to paint in your Desktop, Spirit files can have many actions and also include music if the spirit file author wishes to. By default Spirit comes with a spirit file embedded into it with basic functionality."
+  }
+}

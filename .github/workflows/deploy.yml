@@ -202,7 +202,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: development
-          assets: spirit* 
+          assets: "*.AppImage*"
           fail-if-no-assets: false
           fail-if-no-release: false
 
