@@ -11,7 +11,7 @@ like to create new spirits, thus you use a **ritual** (as in the tool) to create
 spirits to use as mascots. (pun intended)
 
 Spirit file can use any valid specification that is given in this documentation, but
-currently the one used is the 2022 edition specification. On each new edition of the
+currently the one used is the 2021 edition specification. On each new edition of the
 specification spirits might get new abilities to use.
 
 

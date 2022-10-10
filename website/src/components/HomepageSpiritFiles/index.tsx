@@ -44,9 +44,9 @@ export default function HomepageSpiritFiles(): JSX.Element {
           notifications or Discord messages and use the local API to make the
           mascot do something or play a tune.
           <br /> <br />
-          Read the <Link to="/docs/category/rest-api">user manual</Link> to know
+          Read the <Link to="/docs/category/spirit-rest-api">user manual</Link> to know
           more about the API or checkout some cool applications which extends
-          Spirit <Link to="">here</Link>.
+          Spirit <Link to="/docs/Programs">here</Link>.
         </p>
       </div>
     </div>

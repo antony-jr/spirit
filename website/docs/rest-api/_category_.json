@@ -1,0 +1,8 @@
+{
+  "label": "Spirit REST API",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Describes the REST API which is embedded in Spirit." 
+  }
+}

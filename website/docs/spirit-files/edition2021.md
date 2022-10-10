@@ -2,10 +2,10 @@
 sidebar_position: 2
 ---
 
-# Edition 2022 Specification
+# Edition 2021 Specification
 
-This document specifies the 2022 edition specification of the "Spirit File". The following
-is the directory structure to be followed when creating an 2022 edition Spirit File 
+This document specifies the 2021 edition specification of the "Spirit File". The following
+is the directory structure to be followed when creating an 2021 edition Spirit File 
 directory.
 
 
@@ -92,7 +92,7 @@ in the Spirit application when the user opens it. **This field is required.**
 
 Specifies the edition which you followed to create the "Spirit File Directory", 
 [ritual](https://github.com/antony-jr/ritual) will use this information to check and
-validate your directory. Currently the possible value is ```2022``` only. **This field
+validate your directory. Currently the possible value is ```2021``` only. **This field
 is required.**
 
 ### version
