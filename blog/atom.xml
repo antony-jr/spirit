@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://antonyjr.in/spirit/blog</id>
+    <title>Spirit Blog</title>
+    <updated>2022-10-14T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://antonyjr.in/spirit/blog"/>
+    <subtitle>Spirit Blog</subtitle>
+    <icon>https://antonyjr.in/spirit/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Wayland is just Painful]]></title>
+        <id>wayland</id>
+        <link href="https://antonyjr.in/spirit/blog/wayland"/>
+        <updated>2022-10-14T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Wayland is the most painful thing I worked with when developing Qt application,]]></summary>
+        <content type="html"><![CDATA[<p>Wayland is the most painful thing I worked with when developing Qt application,
+seriously Wayland is surely not a replacement for Xorg, it simply breaks working
+applications.</p><p>I know Xorg is old, but still I have no issue using it even though it's slow.</p><p>Let's come to the topic, I was struggling to support Spirit for Wayland, at least for
+GNOME Shell (Wayland) but it is just so painful. I'm not complaining about getting the
+active window under Wayland, that is just fine with a lot of workarounds.</p><p>But imagine building your Qt application without using <code>move()</code> and <code>resize()</code> methods
+in QWidget. For those who don't know about Qt development, these methods are extremely important,
+at least for Spirit.</p><p><code>move()</code> method in the QWidget class allows a QWidget to move to a specific co-ordinate in
+the screen, <code>resize()</code> helps to resize a QWidget to some dimension. Guess what Wayland does
+not allow a application to modify it's own position and dimenstion. I mean why?? GNOME developers
+claims it's for security reason. </p><p>Without <code>move()</code> method I can't find a way to move the Spirit window around, without resize
+we can't scale. Hell I can't even center my dialog boxes under Wayland.</p><p>So the only solution exists is that, use <strong>gnome-shell-extension</strong> and use QProcess to call gdbus
+and get active window (which is fine), move our own Spirit widget (not fine, it's just painful)
+and resize Spirit widget.</p><p>So we have to call system commands to stuff I did with no issue on X11 with Qt framework. So support
+for Wayland is going to take a long time folks. I'm sorry.</p>]]></content>
+        <author>
+            <name>Divya Antony J.R</name>
+            <uri>https://antonyjr.in</uri>
+        </author>
+        <category label="wayland" term="wayland"/>
+        <category label="gnome" term="gnome"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Welcome]]></title>
+        <id>welcome</id>
+        <link href="https://antonyjr.in/spirit/blog/welcome"/>
+        <updated>2022-10-09T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[I'm the author of Spirit, and Docusaurus v2 seems to provide a free blog. So I thought why not use it.]]></summary>
+        <content type="html"><![CDATA[<p>I'm the author of Spirit, and Docusaurus v2 seems to provide a free blog. So I thought why not use it.
+This project was on my head for very long time but I just kept avoiding it, finally I can now release
+a decent version of my idea. This idea is not inspired from MaCoPix or Shimeji but found the both when
+people mentioned it at Reddit,</p><p>Anyways Spirit is going to be very different from both, but obviously very similar to MaCoPix than
+Shimeji but kind of like a mix. But I don't think Spirit will be playing all over your desktop which
+can be messy. I like tha approach of using only the active window rather than the entire desktop.</p><p>So this is the first blog post to welcome everyone, I will be posting some tricks and tips on how
+to use Spirit.</p>]]></content>
+        <author>
+            <name>Divya Antony J.R</name>
+            <uri>https://antonyjr.in</uri>
+        </author>
+        <category label="hello" term="hello"/>
+        <category label="hola" term="hola"/>
+    </entry>
+</feed>
