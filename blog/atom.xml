@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://antonyjr.in/spirit/blog</id>
+    <id>https://antonyjr.in/spirit/spirit/blog</id>
     <title>Spirit Blog</title>
     <updated>2022-10-14T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://antonyjr.in/spirit/blog"/>
+    <link rel="alternate" href="https://antonyjr.in/spirit/spirit/blog"/>
     <subtitle>Spirit Blog</subtitle>
-    <icon>https://antonyjr.in/spirit/img/favicon.ico</icon>
+    <icon>https://antonyjr.in/spirit/spirit/img/favicon.ico</icon>
     <entry>
         <title type="html"><![CDATA[Wayland is just Painful]]></title>
         <id>wayland</id>
-        <link href="https://antonyjr.in/spirit/blog/wayland"/>
+        <link href="https://antonyjr.in/spirit/spirit/blog/wayland"/>
         <updated>2022-10-14T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Wayland is the most painful thing I worked with when developing Qt application,]]></summary>
         <content type="html"><![CDATA[<p>Wayland is the most painful thing I worked with when developing Qt application,
@@ -37,7 +37,7 @@ for Wayland is going to take a long time folks. I'm sorry.</p>]]></content>
     <entry>
         <title type="html"><![CDATA[Welcome]]></title>
         <id>welcome</id>
-        <link href="https://antonyjr.in/spirit/blog/welcome"/>
+        <link href="https://antonyjr.in/spirit/spirit/blog/welcome"/>
         <updated>2022-10-09T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[I'm the author of Spirit, and Docusaurus v2 seems to provide a free blog. So I thought why not use it.]]></summary>
         <content type="html"><![CDATA[<p>I'm the author of Spirit, and Docusaurus v2 seems to provide a free blog. So I thought why not use it.

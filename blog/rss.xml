@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
     <channel>
         <title>Spirit Blog</title>
-        <link>https://antonyjr.in/spirit/blog</link>
+        <link>https://antonyjr.in/spirit/spirit/blog</link>
         <description>Spirit Blog</description>
         <lastBuildDate>Fri, 14 Oct 2022 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
@@ -10,7 +10,7 @@
         <language>en</language>
         <item>
             <title><![CDATA[Wayland is just Painful]]></title>
-            <link>https://antonyjr.in/spirit/blog/wayland</link>
+            <link>https://antonyjr.in/spirit/spirit/blog/wayland</link>
             <guid>wayland</guid>
             <pubDate>Fri, 14 Oct 2022 00:00:00 GMT</pubDate>
             <description><![CDATA[Wayland is the most painful thing I worked with when developing Qt application,]]></description>
@@ -33,7 +33,7 @@ for Wayland is going to take a long time folks. I'm sorry.</p>]]></content:encod
         </item>
         <item>
             <title><![CDATA[Welcome]]></title>
-            <link>https://antonyjr.in/spirit/blog/welcome</link>
+            <link>https://antonyjr.in/spirit/spirit/blog/welcome</link>
             <guid>welcome</guid>
             <pubDate>Sun, 09 Oct 2022 00:00:00 GMT</pubDate>
             <description><![CDATA[I'm the author of Spirit, and Docusaurus v2 seems to provide a free blog. So I thought why not use it.]]></description>

@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkwebsite=self.webpackChunkwebsite||[]).push([[5220],{6986:a=>{a.exports=JSON.parse('{"label":"wayland","permalink":"/spirit/blog/tags/wayland","allTagsPath":"/spirit/blog/tags","count":1}')}}]);
