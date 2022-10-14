@@ -9,7 +9,7 @@ const config = {
   title: 'Spirit',
   tagline: 'Modern and Hackable Desktop Mascot',
   url: 'https://antonyjr.in/spirit',
-  baseUrl: '/',
+  baseUrl: '/spirit/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
