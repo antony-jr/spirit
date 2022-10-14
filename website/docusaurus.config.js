@@ -75,7 +75,7 @@ const config = {
         },
         items: [
 	  {
-	    href: '#downloads',
+	    href: '/#downloads',
 	    label: 'Downloads',
 	    position: 'left',
 	  },

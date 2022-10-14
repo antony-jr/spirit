@@ -64,7 +64,7 @@ Spirit::Spirit()
              Qt::NoDropShadowWindowHint |
              Qt::X11BypassWindowManagerHint) {
 
-    setAttribute(Qt::WA_MacAlwaysShowToolWindow, true); 
+    setAttribute(Qt::WA_MacAlwaysShowToolWindow, true);
     setAttribute(Qt::WA_TranslucentBackground, true);
     setAttribute(Qt::WA_TransparentForMouseEvents, true);
     setAttribute(Qt::WA_ShowWithoutActivating, true);

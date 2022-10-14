@@ -8,10 +8,8 @@ is made just out of curiosity and as an alternative to both of them since both a
 legacy software.
 
 Spirit is built from the ground up using Qt5 Framework and C++, uses rust for it's
-auxilary tools and helper applications. Spirit is the first application with some 
-support for Wayland and aims to support more Wayland based Desktop environments 
-in Linux. Spirit is also cross-platform and can run in all the major platforms with 
-no issues.
+auxilary tools and helper applications. Spirit is also cross-platform and can run in all the major 
+platforms with no issues.
 
 ## Getting Started
 

@@ -5,8 +5,10 @@
 #include <QStringList>
 #include <QTimer>
 #ifdef Q_OS_LINUX
+# include <QX11Info>
 # include <kwindowsystem.h>
 # include <kwindowinfo.h>
+# include <netwm.h>
 #endif // LINUX 
 
 #include "spiritenums.hpp"
@@ -65,7 +67,7 @@ class ActiveWindowTrackerPrivate : public QObject {
 #ifdef Q_OS_LINUX
     bool b_RegisteredTypes = false;
 #endif // LINUX
-       //
+    //
 #if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
     QTimer *m_WindowTimer;
 #endif // WINDOWS || MAC

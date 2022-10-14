@@ -60,6 +60,14 @@ const FeatureList: FeatureItem[] = [
       </>
     ),
   },
+  /*
+  Not Yet, Since Wayland posses to be a big pain in the
+  ass since it makes move() and resize() not work within Qt.
+  Which means have to use DE specific stuff for things like moving
+  and resizing our own application, like seriously Wayland?
+
+  Wayland is definitely no fun.
+
   {
     title: "Limited Wayland Support",
     Svg: require("@site/static/img/wayland.svg").default,
@@ -69,7 +77,7 @@ const FeatureList: FeatureItem[] = [
         which uses wayland to the best of our efforts.
       </>
     ),
-  },
+  },*/
 ];
 
 function Feature({ title, Svg, description }: FeatureItem) {

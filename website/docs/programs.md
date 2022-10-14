@@ -15,8 +15,26 @@ change to some action you set when the command return code is an error. Might be
 are building some appplication and want to know the status of the build without staring the terminal
 much.
 
-```bash
- # TODO: Some Instructions to this Program.
+### Installation
+
+**Dev Build**
+
+```
+  curl -Ls "https://raw.githubusercontent.com/antony-jr/spirit-addons/main/bash_feedback/install-dev.sh" | bash -s
 ```
 
+**Stable Build**
+
+```
+  curl -Ls "https://raw.githubusercontent.com/antony-jr/spirit-addons/main/bash_feedback/install.sh" | bash -s
+```
+
+### Uninstallation
+
+You should use this if you want to remove the addon from the system, since the installation would
+have updated your bash.rc file.
+
+```
+  curl -Ls "https://raw.githubusercontent.com/antony-jr/spirit-addons/main/bash_feedback/uninstall.sh" | bash -s
+```
 

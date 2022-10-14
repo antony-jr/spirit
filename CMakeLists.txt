@@ -35,7 +35,7 @@ if (CONAN_BUILD)
                     REMOTE conancenter
                     SETTINGS ${settings})
 endif()
-find_package(Qt5 COMPONENTS Core Widgets Network Multimedia)
+find_package(Qt5 COMPONENTS Core Widgets Network Multimedia X11Extras)
 
 # KWindowSystem
 if (UNIX AND NOT APPLE)  
@@ -126,7 +126,7 @@ endif()
 
 target_link_libraries(spirit PUBLIC Qt5::Core Qt5::Widgets Qt5::Network Qt5::Multimedia)
 if (UNIX AND NOT APPLE) 
- target_link_libraries(spirit PUBLIC KF5::WindowSystem)
+   target_link_libraries(spirit PUBLIC KF5::WindowSystem Qt5::X11Extras)
 endif()
 if (UNIX)
    target_link_libraries(spirit PUBLIC QArchive)

@@ -149,6 +149,8 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
         return;
     }
 
+    qDebug() << "activeWindowId: " << activeWindowId << ", id: " << id;
+
     if(id == activeWindowId) {
         auto properties = NET::WMGeometry |
                           NET::WMState    |
@@ -226,6 +228,24 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
         }
 
         auto geo = info.frameGeometry();
+
+
+        // In GNOME and GTK based DEs, this gtkFrameExtents
+        // are set, no problem with Qt application which does
+        // not have that much window decoration problems.
+        if (QX11Info::connection() != NULL) {
+            NETWinInfo wininfo(QX11Info::connection(),
+                               id,
+                               QX11Info::appRootWindow(),
+                               NET::WMFrameExtents,
+                               NET::WM2GTKFrameExtents);
+
+            auto extents = wininfo.gtkFrameExtents();
+            geo = QRect(geo.x() + extents.left,
+                        geo.y() + extents.top,
+                        geo.width() - extents.right - extents.left,
+                        geo.height() - extents.bottom - extents.top);
+        }
 
         if (vname.isEmpty()) {
             emit update(geo, xoffset, yoffset, _xoffset, _yoffset);
@@ -335,22 +355,22 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
 
 #ifdef Q_OS_MAC
     {
-       int x,y,w,h;
-       x = y = w = h = 0;
-       char *window_title = nullptr;
-       
-       macos_get_active_window(&x, &y, &w, &h, &window_title);
-       
-       if (x == -1 && y == -1 &&
-	   w == -1 && h == -1 &&
-	   window_title == NULL) {
-	  emit hide();
-	  return;
-       }
+        int x,y,w,h;
+        x = y = w = h = 0;
+        char *window_title = nullptr;
 
-       geo = QRect(x, y, w, h);
-       title = QString(window_title);
-       free(window_title);
+        macos_get_active_window(&x, &y, &w, &h, &window_title);
+
+        if (x == -1 && y == -1 &&
+                w == -1 && h == -1 &&
+                window_title == NULL) {
+            emit hide();
+            return;
+        }
+
+        geo = QRect(x, y, w, h);
+        title = QString(window_title);
+        free(window_title);
     }
     clsName = title;
 #endif // MACOS
@@ -378,7 +398,7 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
         return;
     }
 #endif // WINDOWS
-    
+
     auto quirk = m_Quirks.getQuirk(clsName);
     auto xoffset = quirk["xoffset"].toInt(0);
     auto yoffset = quirk["yoffset"].toInt(0);

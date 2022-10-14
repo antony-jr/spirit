@@ -135,13 +135,13 @@ class HaltHandler : public CivetHandler {
         SpiritDaemonPrivate *obj = qobject_cast<SpiritDaemonPrivate*>((QObject*)server->getUserContext());
         http_json_header(conn);
 
-	obj->b_QuitRequested = true;
-        
-	write_json(QJsonObject {
+        obj->b_QuitRequested = true;
+
+        write_json(QJsonObject {
             {"status", "success"},
         }, conn);
 
-	obj->stop();
+        obj->stop();
         return true;
     }
 };
@@ -619,7 +619,7 @@ void SpiritDaemonPrivate::run() {
 
     file.remove(); // Remove the temporary file
     if (b_QuitRequested) {
-       emit quit();
+        emit quit();
     }
 }
 
