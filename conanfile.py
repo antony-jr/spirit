@@ -7,8 +7,8 @@ class Conan(ConanFile):
    generators = ["cmake_find_package", "cmake", "json"]
 
    def configure(self):
-      self.requires("qarchive/2.1.1@local/packages")
-      self.requires("qt/5.15.3")
+      self.requires("qarchive/2.1.1")
+      self.requires("qt/5.15.6")
       self.requires("civetweb/1.15")
 
       self.options["qarchive"].shared = True

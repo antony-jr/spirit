@@ -375,19 +375,6 @@ jobs:
           .\Installer.exe in -t "$pwd\qifw" --am -c --al
           rm Installer.exe
 
-      # Remove this when QArchive v2.1.1 is added to Conan Center.
-      - name: QArchive Hotfix for Conan
-        run: |
-          git clone https://github.com/antony-jr/conan-center-index
-          cd conan-center-index
-          git checkout antonyjr/add-qarchive-2.1.1
-          cd recipes\qarchive\all
-          conan create . 2.1.1@local/packages --build=missing
-          cd ..
-          cd ..
-          cd ..
-          cd ..
-
       - name: Build Spirit
         id: windows_build
         run: |

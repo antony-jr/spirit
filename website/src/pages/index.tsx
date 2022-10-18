@@ -15,7 +15,8 @@ function HomepageHeader() {
   return (
     <header className={clsx("hero hero--primary", styles.heroBanner)}>
       <div className="container">
-        <img height="150px" width="auto" src="/img/spirit.png" alt="Logo" />
+        <img height="150px" width="auto"
+	 src={require("@site/static/img/spirit.png").default} alt="Logo" />
         <h1 className="hero__title">{siteConfig.title}</h1>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
         <div className={styles.buttons}>
@@ -41,10 +42,10 @@ function HomepageHeader() {
         </div>
         <br />
         <img
-          src="/img/spirit-preview.webp"
+          src={require("@site/static/img/spirit-preview.webp").default}
           alt="Banner"
           style={{
-            backgroundImage: 'url("/img/preview-background.png")',
+            backgroundImage: `url("${require('@site/static/img/preview-background.png').default}")`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
           }}
