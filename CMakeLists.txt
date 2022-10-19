@@ -35,10 +35,11 @@ if (CONAN_BUILD)
                     REMOTE conancenter
                     SETTINGS ${settings})
 endif()
-find_package(Qt5 COMPONENTS Core Widgets Network Multimedia X11Extras)
+find_package(Qt5 COMPONENTS Core Widgets Network Multimedia)
 
 # KWindowSystem
 if (UNIX AND NOT APPLE)  
+   find_package(Qt5 COMPONENTS X11Extras)
    find_package(KF5WindowSystem)
 endif()
 
