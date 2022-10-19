@@ -56,7 +56,10 @@ jobs:
                vim-common desktop-file-utils pkg-config \
                librsvg2-dev librsvg2-bin liblzma-dev \
                libxrender-dev libxcb-icccm4-dev \
-               libxcb-keysyms1-dev libxcb-res0-dev git
+               libxcb-keysyms1-dev libxcb-res0-dev git \
+               gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+               gstreamer1.0-plugins-bad gstreamer1.0-alsa \
+               gstreamer1.0-pulseaudio
 
       - name: Install KWindowSystem
         run: |
@@ -182,6 +185,18 @@ jobs:
           # patchelf --set-rpath "\$ORIGIN/../../../lib" KF5WindowSystemWaylandPlugin.so
           patchelf --set-rpath "\$ORIGIN/../../../lib" KF5WindowSystemX11Plugin.so 
           popd
+
+          # Copy gstreamer
+          install -Dm755 "/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner" \
+                         "appdir/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+          for plugin in adpcmdec alsa app audioconvert audioparsers audioresample \
+                        autodetect coreelements gsm id3demux jack mpg123 mulaw playback \
+                        pulse typefindfunctions wavparse; do
+                install -Dm755 "/usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgst${plugin}.so" \
+                               "appdir/usr/lib/gstreamer-1.0/libgst${plugin}.so"
+          done
+          
+          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -extra-plugins=imageformats,mediaservice -bundle-non-qt-libs
 
           wget -c -nv "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool-x86_64.AppImage

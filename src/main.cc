@@ -7,6 +7,24 @@
 #include "spiritmanager.hpp"
 #include "termcolor.hpp"
 
+#ifdef Q_OS_LINUX
+static void setupAppImageGStreamer() {
+    QString appDir = QString::fromLocal8Bit(qgetenv("APPDIR"));
+    if (!appDir.isEmpty()) {
+        bool success = qputenv("GST_PLUGIN_SYSTEM_PATH_1_0",
+                               QString("%1/usr/lib/gstreamer-1.0:%2")
+                               .arg(appDir, QString::fromLocal8Bit(qgetenv("GST_PLUGIN_SYSTEM_PATH_1_0")))
+                               .toLocal8Bit());
+        success = qputenv("GST_PLUGIN_SCANNER_1_0",
+                          QString("%1/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner")
+                          .arg(appDir).toLocal8Bit()) && success;
+        if (!success) {
+            qWarning() << "Unable to set up GStreamer environment";
+        }
+    }
+}
+#endif
+
 static void info() {
     std::cout << termcolor::bold << "Spirit 👻"
               << termcolor::reset
@@ -68,6 +86,10 @@ static void usage(const char *prog) {
 }
 
 int main(int ac, char **av) {
+#ifdef Q_OS_LINUX
+    setupAppImageGStreamer();
+#endif // LINUX
+
     QApplication app(ac, av);
 
     // Set Application Information

@@ -149,8 +149,6 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
         return;
     }
 
-    qDebug() << "activeWindowId: " << activeWindowId << ", id: " << id;
-
     if(id == activeWindowId) {
         auto properties = NET::WMGeometry |
                           NET::WMState    |
@@ -269,8 +267,6 @@ void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
 
         return;
     }
-
-    updateActiveWindowX(KWindowSystem::activeWindow());
 }
 
 void ActiveWindowTrackerPrivate::handleWindowChanged(WId id,
