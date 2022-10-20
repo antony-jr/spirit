@@ -189,14 +189,16 @@ jobs:
           # Copy gstreamer
           install -Dm755 "/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner" \
                          "appdir/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+          local gst_executables="-executable=appdir/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
           for plugin in adpcmdec alsa app audioconvert audioparsers audioresample \
                         autodetect coreelements gsm id3demux jack mpg123 mulaw playback \
-                        pulse typefindfunctions wavparse; do
+                        pulseaudio typefindfunctions wavparse; do
                 install -Dm755 "/usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgst${plugin}.so" \
                                "appdir/usr/lib/gstreamer-1.0/libgst${plugin}.so"
+                gst_executables="${gst_executables} -executable=appdir/usr/lib/gstreamer-1.0/libgst${plugin}.so"
           done
           
-          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -extra-plugins=imageformats,mediaservice -bundle-non-qt-libs
+          ./linuxdeployqt-continuous-x86_64.AppImage appdir/usr/share/applications/*.desktop -extra-plugins=imageformats,mediaservice -bundle-non-qt-libs ${gst_executables}
 
           wget -c -nv "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool-x86_64.AppImage
