@@ -1,0 +1,15 @@
+{
+  "title": "Spirit",
+  "icon": "spirit.icns",
+  "background": "background.png",
+  "window": {
+     "size": {
+       "width": 500,
+       "height": 400
+     }
+  },
+  "contents": [
+    { "x": 368, "y": 284, "type": "link", "path": "/Applications" },
+    { "x": 122, "y": 284, "type": "file", "path": "Spirit.app" }
+  ]
+}

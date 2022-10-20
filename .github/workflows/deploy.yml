@@ -269,7 +269,10 @@ jobs:
       - uses: lukka/get-cmake@latest
 
       - name: Install Qt, LibArchive, PkgConfig and Ninja
-        run: brew install qt@5 libarchive pkg-config ninja
+        run: brew install qt@5 libarchive pkg-config ninja npm
+
+      - name: Install AppDMG
+        run: npm install -g appdmg
 
       - name: Install QArchive
         run: |
@@ -326,10 +329,14 @@ jobs:
           mkdir spirit.app/Contents/Resources
           cp ../build_resources/Info.plist spirit.app/Contents/
           cp ../build_resources/spirit.icns spirit.app/Contents/Resources/
-          $(brew --prefix qt@5)/bin/macdeployqt spirit.app -no-strip -dmg 
-          mv spirit.dmg ../spirit.dmg
+          $(brew --prefix qt@5)/bin/macdeployqt spirit.app -no-strip
+          mv spirit.app ../build_resources/Spirit.app 
           cd ..
           rm -rf build
+          cd build_resources
+          appdmg dmg-spec.json spirit.dmg
+          mv spirit.dmg ../spirit.dmg
+          cd ..
 
       - name: Delete Old Development Builds
         if: needs.Check.outputs.deploy == 'false'
