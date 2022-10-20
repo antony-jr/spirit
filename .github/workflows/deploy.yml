@@ -189,7 +189,7 @@ jobs:
           # Copy gstreamer
           install -Dm755 "/usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner" \
                          "appdir/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
-          local gst_executables="-executable=appdir/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
+          export gst_executables="-executable=appdir/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
           for plugin in adpcmdec alsa app audioconvert audioparsers audioresample \
                         autodetect coreelements gsm id3demux jack mpg123 mulaw playback \
                         pulseaudio typefindfunctions wavparse; do
