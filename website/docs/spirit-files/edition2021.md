@@ -130,11 +130,11 @@ Each object under action can have the following options,
       "yoff": 0, // INTEGER    | used when spirit is on top of window
       "_xoff": 0, // INTEGER   | used when spirit is on bottom of window
       "_yoff": 0, // INTEGER   | used when spirit is on bottom of window
-      "loop": true, // BOOLEAN | loop the animation
+      "loop": true, // BOOLEAN | loop the action (true by default for default action)
       "scale": 100, // INTEGER | defines the percentage of scale (here, 100%)
       "speed": 100, // INTEGER | defines the percentage of speed (here, 100%)
-      "next_action": "", // STRING | when loop is false, show this action next
-      "play": "track0", // STRING | mp3 file to play when showing this action
+      "next": "", // STRING | when loop is false, show this action next
+      "play": "track0", // STRING | mp3 file to play when showing this action (OPTIONAL)
       "delay": 1000, // INTEGER | delay in miliseconds when moving to next action  
   }
 }
