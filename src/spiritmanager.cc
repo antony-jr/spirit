@@ -468,6 +468,7 @@ bool SpiritManager::startDaemonProcess() {
     QDir dir = QDir(programPath);
     dir.cdUp();
     dir.cdUp();
+    dir.cdUp();
 
     QString bundle = dir.absolutePath();
     QString configPath = QDir::toNativeSeparators(QDir::homePath() + "/.spirit");
