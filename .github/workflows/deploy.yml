@@ -147,7 +147,7 @@ jobs:
             export VERSION=$(git rev-parse --short HEAD) 
           else
             export tag="latest"
-            exprot SPIRIT_VERSION=$deploy
+            export SPIRIT_VERSION=$deploy
             export VERSION=$deploy
           fi
 
