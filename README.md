@@ -6,57 +6,37 @@
 # Spirit [![GitHub issues](https://img.shields.io/github/issues/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/issues) [![GitHub forks](https://img.shields.io/github/forks/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/network) [![GitHub stars](https://img.shields.io/github/stars/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/stargazers) [![GitHub license](https://img.shields.io/github/license/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/blob/master/LICENSE) [![Deploy](https://github.com/antony-jr/spirit/actions/workflows/deploy.yml/badge.svg)](https://github.com/antony-jr/spirit/actions/workflows/deploy.yml)
 
 
-See the demo at https://www.youtube.com/watch?v=KC_MwRyo0js
+Spirit is a modern and hackable desktop mascot, it operates very similar to **MaCoPix** and 
+**Shimeji** but was never invented to replace either of them. Spirit is made just out of 
+curiousity and as an alternative to both of them since both are legacy software.
 
-# Quick Start
+Spirit is built from the ground up using Qt5 Framework and C++, uses rust for it's auxilary tools 
+and helper applications. Spirit is also cross-platform and can run in all the major platforms 
+with no issues.
 
-```
- $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.2/spirit" 
- $ chmod +x spirit
- $ ./spirit init 
- $ # Now only the focused terminal will have the overlay.
- $ ./spirit deinit # To kill all instance of spirit # This is important
-```
+[Ritual](https://github.com/antony-jr/ritual) is used to create new spirits, but you can download
+official spirits from [here](https://antonyjr.in/spirit/docs/spirit-files/download).
+You can also use [Spirit addons](https://antonyjr.in/spirit/docs/programs) which are simple 
+programs which interacts with Spirit using it's REST API to do some meaningful things like 
+notifying when a command fails.
 
-# Installation / Update
+**Wayland support is on the way but not anytime soon, sorry, please see why this is the case
+in this small [blog post](https://antonyjr.in/spirit/blog/wayland)**.
 
-```
- $ curl -Ls "https://git.io/JsgXK" | bash -s
-```
+# Installation
 
+Download the software for your platform from [official website](https://antonyjr.in/spirit/). And
+follow through the instructions. It's really simple, unlike **Shimeji** which involves installing
+a legacy version of JRE.
 
-# Get AppImages 
+For more information, please head over to the [official website](https://antonyjr.in/spirit/).
 
-**Spirit** can be used as an AppImage, please don't integrate this into your system. You can put it in your local bin 
-path and edit your terminal desktop file to invoke it with the spirit command.
+# Building
 
-### Development Builds
+See the Github actions for each platform to get a idea on building this from source,
+hard to explain since it's a bit hard. (Please use the prebuilt binaries)
 
-The build of the master branch into an AppImage are the development builds. On each push these binaries are updated.
-Use this to get the latest and the greatest of spirit.
-
-
-```
- $ wget "https://github.com/antony-jr/spirit/releases/download/development/spirit"
- $ chmod +x spirit
- $ ./spirit # Use it now, or move it to /usr/bin/ to install
-```
-
-### Versioned Releases
-
-Somewhat considered as stable. These builds are usually older than the development builds. Bug fixes will happen a bit slower in these builds.
-
-
-```
- $ wget "https://github.com/antony-jr/spirit/releases/download/v0.1.2/spirit"
- $ chmod +x spirit
- $ ./spirit # Use it now, or move it to /usr/bin/ to install
-```
-
-
-# Building from source
-
-**Dependencies:** CivetWeb, QArchive 
+**Dependencies:** Qt5 Framework, QArchive, CivetWeb
 
 ```
  $ git clone https://github.com/antony-jr/spirit 
@@ -67,4 +47,6 @@ Somewhat considered as stable. These builds are usually older than the developme
 
 # License
 
-Licensed under GPL v3.
+The GNU General Public License v3.
+
+Copyright (C) 2021-present, D. Antony J.R
