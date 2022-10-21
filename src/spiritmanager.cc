@@ -464,6 +464,37 @@ bool SpiritManager::startDaemonProcess() {
     QString programPath = QCoreApplication::applicationFilePath();
 #endif
 
+#ifdef Q_OS_MAC
+    QDir dir = QDir(programPath);
+    dir.cdUp();
+    dir.cdUp();
+
+    QString bundle = dir.absolutePath();
+    QString configPath = QDir::toNativeSeparators(QDir::homePath() + "/.spirit");
+    configPath = QDir::toNativeSeparators(configPath + "/daemon.app");
+
+    QProcess::execute("rm", QStringList() << "-rf" << configPath);  
+    QProcess::execute("cp", QStringList() << "-r" << bundle
+	  				  << configPath);
+    QString infolist = QDir::toNativeSeparators(configPath + "/Contents/Info.plist");
+   
+    QFile source(":build_resources/Daemon-Info.plist");
+    if (!source.open(QIODevice::ReadOnly)) {
+       return false;
+    }
+
+    QFile file(infolist);
+    if (!file.open(QIODevice::WriteOnly)) {
+       return false;
+    }
+    file.write(source.readAll());
+
+    source.close();
+    file.close();
+
+    programPath = QDir::toNativeSeparators(configPath + "/Contents/MacOS/spirit");
+#endif
+
     QStringList arguments;
     arguments << "daemon";
 

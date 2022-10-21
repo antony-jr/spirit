@@ -1,5 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
+    <file>build_resources/Daemon-Info.plist</file>
     <file>artwork/logo.png</file> 
     <file>default.spirit</file>
 </qresource>
