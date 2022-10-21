@@ -514,30 +514,22 @@ bool SpiritWorkerPrivate::parseEdition2021(const QVector<QArchive::MemoryFile> &
 
             if(object.contains("yoff")) {
                 int pixels = object.value("yoff").toInt();
-                if(pixels > 0) {
-                    yoff = pixels;
-                }
+                yoff = pixels;
             }
 
             if(object.contains("_yoff")) {
                 int pixels = object.value("_yoff").toInt();
-                if(pixels > 0) {
-                    _yoff = pixels;
-                }
+                _yoff = pixels;
             }
 
             if(object.contains("xoff")) {
                 int pixels = object.value("xoff").toInt();
-                if(pixels > 0) {
-                    xoff = pixels;
-                }
+                xoff = pixels;
             }
 
             if(object.contains("_xoff")) {
                 int pixels = object.value("_xoff").toInt();
-                if(pixels > 0) {
-                    _xoff = pixels;
-                }
+                _xoff = pixels;
             }
 
             if(object.contains("scale")) {

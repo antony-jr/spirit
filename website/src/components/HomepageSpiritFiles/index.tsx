@@ -26,7 +26,7 @@ export default function HomepageSpiritFiles(): JSX.Element {
 
         <center>
           <img
-            height="550px"
+            height="auto"
             width="auto"
             src={require("@site/static/img/linux_program.png").default}
             alt="Linux Program"

@@ -64,10 +64,9 @@ const PlatformList: PlatformItem[] = [
     Svg: require("@site/static/img/macos.svg").default,
     description: (
       <>
-        Open the .dmg file with <b>"Control + Click"</b> then select <b>open</b>{" "}
-        from the menu. This is because code signing is not used for Windows and
-        MacOS distributables since it cost a lot of money.
-        <br /> <br />
+        Open the .dmg file with <b>"Control + Click"</b> and then drag and drop
+	 Spirit into the application folder, again <b>"Control + Click"</b> the app bundle
+	and select open from the menu. (This is only one time)
       </>
     ),
     stable_version_link: mac_stable_link,
@@ -79,9 +78,7 @@ const PlatformList: PlatformItem[] = [
     description: (
       <>
         Download the setup file and install the program into your system, please
-        avoid warnings from windows since the application is not code signed
-        since it cost a lot of money. If you are still worried please verify GPG
-        signatures in Github releases.
+        avoid warnings from windows, this is because it's not code signed.
       </>
     ),
     stable_version_link: win_stable_link,
@@ -98,7 +95,7 @@ function Platform({
 }: PlatformItem) {
   return (
     <div className={clsx("col")}>
-      <div class="card">
+       <div class="card" style={{minHeight: "550px"}}>
         <div class="card__header">
           <h3>{title}</h3>
         </div>

@@ -34,7 +34,7 @@ static Coordinates getCoordinates(short pos, QRect geometry, QRect frame, int w,
         y = point.y();
 
         x = x - frame.width() + w;
-        y = y - frame.height() - _yoff;
+        y = y - frame.height() + _yoff;
 
     } else if(pos == Spirit::Position::BottomRight) {
         point = geometry.bottomRight();
@@ -42,7 +42,7 @@ static Coordinates getCoordinates(short pos, QRect geometry, QRect frame, int w,
         y = point.y();
 
         x = x - frame.width() - (w/4);
-        y = y - frame.height() - _yoff;
+        y = y - frame.height() + _yoff;
     } else { // TopLeft
         x += w;
         y = y - frame.height() + yoff;

@@ -17,7 +17,10 @@
 }
 
 .buttons {
+  --ifm-button-size-multiplier: 1.6;
   display: flex;
-  align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 24px;
 }
