@@ -474,19 +474,19 @@ bool SpiritManager::startDaemonProcess() {
     QString configPath = QDir::toNativeSeparators(QDir::homePath() + "/.spirit");
     configPath = QDir::toNativeSeparators(configPath + "/daemon.app");
 
-    QProcess::execute("rm", QStringList() << "-rf" << configPath);  
+    QProcess::execute("rm", QStringList() << "-rf" << configPath);
     QProcess::execute("cp", QStringList() << "-r" << bundle
-	  				  << configPath);
+                      << configPath);
     QString infolist = QDir::toNativeSeparators(configPath + "/Contents/Info.plist");
-   
+
     QFile source(":build_resources/Daemon-Info.plist");
     if (!source.open(QIODevice::ReadOnly)) {
-       return false;
+        return false;
     }
 
     QFile file(infolist);
     if (!file.open(QIODevice::WriteOnly)) {
-       return false;
+        return false;
     }
     file.write(source.readAll());
 
