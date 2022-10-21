@@ -1,3 +1,11 @@
+/*
+ * Spirit, Modern and Hackable Desktop Mascot.
+ * Copyright (C) 2021  D.Antony J.R <antonyjr@pm.me>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, only version 3 of the License.
+*/
 #include <QApplication>
 #include <QTimer>
 #include <QStyleFactory>
