@@ -8,7 +8,7 @@ class Conan(ConanFile):
 
    def configure(self):
       self.requires("qarchive/2.1.1")
-      self.requires("qt/5.15.6")
+      self.requires("qt/5.15.7")
       self.requires("civetweb/1.15")
 
       self.options["qarchive"].shared = True

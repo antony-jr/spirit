@@ -125,13 +125,15 @@ jobs:
       - name: Install QArchive
         run: |
           source /opt/qt*/bin/qt*-env.sh || true
-          git clone https://github.com/antony-jr/QArchive
-          cd QArchive
-          git checkout 2d05e652ad9a2bff8c87962d5525e2b3c4d7351b 
+          wget "https://github.com/antony-jr/QArchive/archive/refs/tags/v2.2.3.tar.gz"
+          tar -xvf v2.2.3.tar.gz
+          rm -rf v2.2.3.tar.gz
+          cd QArchive-2.2.3
           cmake .
           make -j$(nproc)
           sudo make install
           cd ..
+          rm -rf QArchive-2.2.3
 
       - name: Building Spirit
         id: appimage_build
@@ -278,18 +280,20 @@ jobs:
 
       - name: Install QArchive
         run: |
-          git clone https://github.com/antony-jr/QArchive
-          cd QArchive
-          git checkout v2.1.1-mac-fix
+          wget "https://github.com/antony-jr/QArchive/archive/refs/tags/v2.2.3.tar.gz"
+          tar -xvf v2.2.3.tar.gz
+          rm -rf v2.2.3.tar.gz
+          cd QArchive-2.2.3  
           mkdir build
           cd build
           export Qt5_DIR=$(brew --prefix qt@5)
+          export QT_DIR=$(brew --prefix qt@5)
           cmake -DLIBARCHIVE_PKG_CONFIG=$(brew --prefix libarchive)/lib/pkgconfig/libarchive.pc ..
           cmake --build . --config release
           sudo make install
           cd ..
           cd ..
-          rm -rf QArchive
+          rm -rf QArchive-2.2.3
 
       - name: Install CivetWeb
         run: |
