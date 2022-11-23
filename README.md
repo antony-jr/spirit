@@ -5,10 +5,6 @@
 
 # Spirit [![GitHub issues](https://img.shields.io/github/issues/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/issues) [![GitHub forks](https://img.shields.io/github/forks/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/network) [![GitHub stars](https://img.shields.io/github/stars/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/stargazers) [![GitHub license](https://img.shields.io/github/license/antony-jr/spirit.svg?style=flat-square)](https://github.com/antony-jr/spirit/blob/master/LICENSE) [![Deploy](https://github.com/antony-jr/spirit/actions/workflows/deploy.yml/badge.svg)](https://github.com/antony-jr/spirit/actions/workflows/deploy.yml)
 
-<p align="center">
-  <img src=".github/spirit-install.png" height="300px" width=auto alt="Spirit Install">  <br>
-</p>
-
 Spirit is a modern and hackable desktop mascot, it operates very similar to **MaCoPix** and 
 **Shimeji** but was never invented to replace either of them. Spirit is made just out of 
 curiousity and as an alternative to both of them since both are legacy software.
@@ -25,6 +21,22 @@ notifying when a command fails.
 
 **Wayland support is on the way but not anytime soon, sorry, please see why this is the case
 in this small [blog post](https://antonyjr.in/spirit/blog/wayland)**.
+
+# Quick Start (Only for GNU+Linux Users)
+
+<p align="center">
+  <img src=".github/spirit-install.png" height="200px" width=auto alt="Spirit Install">  <br>
+</p>
+
+```
+ curl -Ls antonyjr.in/get-spirit.sh | bash -s
+ spirit # Start Spirit from Application Menu or Terminal
+
+ # To Delta Update
+ # Only Uses 10 MiB (maximum)
+ curl -Ls antonyjr.in/update-spirit.sh | bash -s
+```
+
 
 # Installation
 
