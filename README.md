@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="artwork/spirit_logo.png" height="200px" width=auto alt="Spirit Logo">  <br>
+  <img src="artwork/spirit_logo.png" height="140px" width=auto alt="Spirit Logo">  <br>
 </p>
 
 
@@ -30,7 +30,7 @@ in this small [blog post](https://antonyjr.in/spirit/blog/wayland)**.
 # Quick Start (Only for GNU+Linux Users)
 
 <p align="center">
-  <img src=".github/spirit-install.png" height="200px" width=auto alt="Spirit Install">  <br>
+  <img src=".github/spirit-install.png" height=auto width=auto alt="Spirit Install">  <br>
 </p>
 
 ```
