@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-VERSION="v0.2.0"
+VERSION="v0.2.1"
 echo -e "\e[1;34mSpirit $VERSION\e[0m, Desktop Mascot of Twenty First Century."
 echo -e "Copyright (C) D. Antony J R, GNU General Public License v3."
 echo ""
