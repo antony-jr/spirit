@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Installer>
     <Name>Spirit</Name>
-    <Version>0.2.0</Version>
-    <Title>Spirit v0.2.0</Title>
+    <Version>0.2.1</Version>
+    <Title>Spirit v0.2.1</Title>
     <Publisher>D. Antony JR</Publisher>
     <StartMenuDir>Spirit</StartMenuDir>
     <TargetDir>@HomeDir@/Spirit</TargetDir>

@@ -2,7 +2,7 @@ from conans import ConanFile, CMake
 
 class Conan(ConanFile):
    name = "spirit"
-   version = "0.2.0"
+   version = "0.2.1"
    settings = "arch"
    generators = ["cmake_find_package", "cmake", "json"]
 

@@ -2,8 +2,8 @@
 <Package>
     <DisplayName>Spirit</DisplayName>
     <Description>Install Spirit Daemon and Spirit Manager to the System.</Description>
-    <Version>0.2.0</Version>
-    <ReleaseDate>2022-10-21</ReleaseDate>
+    <Version>0.2.1</Version>
+    <ReleaseDate>2022-11-28</ReleaseDate>
     <Licenses>
         <License name="GNU General Public License Version 3" file="license.txt" />
     </Licenses>

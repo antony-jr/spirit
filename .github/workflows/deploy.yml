@@ -277,7 +277,7 @@ jobs:
  
   BuildAndDeployMac:
     name: "Build and Deploy (macOS x86_64)"
-    runs-on: macos-10.15
+    runs-on: macos-11
     needs: [Check, BuildAndDeployLinux]
     steps:
       - uses: actions/checkout@v3
