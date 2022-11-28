@@ -132,7 +132,11 @@ void Spirit::update(QRect geometry, int xoffset, int yoffset, int _xoffset, int 
     auto yoff = yoffsets.first;
     auto _yoff = yoffsets.second;
 
-    auto pos = getCoordinates(n_Position, geometry, frameGeometry(), width(), height(), yoff, _yoff);
+    auto percentage = m_Settings.getScale() / 100.0;
+
+    auto pos = getCoordinates(n_Position, geometry, 
+	  		      frameGeometry(), width(), height(),
+			      yoff * percentage, _yoff * percentage);
     auto x = pos.x;
     auto y = pos.y;
 
@@ -170,7 +174,6 @@ void Spirit::update(QRect geometry, int xoffset, int yoffset, int _xoffset, int 
         }
     }
 
-    auto percentage = m_Settings.getScale() / 100.0;
     if (n_OrigWidth && n_OrigHeight && n_OrigWidthVar && n_OrigHeightVar) {
         resize((b_Flipped ? n_OrigWidthVar : n_OrigWidth) * percentage,
                (b_Flipped ? n_OrigHeightVar : n_OrigHeight) * percentage);
