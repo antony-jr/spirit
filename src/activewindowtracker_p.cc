@@ -24,14 +24,12 @@ ActiveWindowTrackerPrivate::ActiveWindowTrackerPrivate(QObject *parent)
 
     m_Quirks.read();
 
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
     m_WindowTimer = new QTimer(this);
     m_WindowTimer->setSingleShot(false);
-    m_WindowTimer->setInterval(100);
+    m_WindowTimer->setInterval(50);
 
     connect(m_WindowTimer, &QTimer::timeout,
             this, &ActiveWindowTrackerPrivate::updateActiveWindow);
-#endif // WINDOWS || MAC
 }
 
 ActiveWindowTrackerPrivate::~ActiveWindowTrackerPrivate() {
@@ -71,57 +69,24 @@ void ActiveWindowTrackerPrivate::start() {
         emit error(Error::UnSupportedPlatform);
         return;
     }
-    if(!b_RegisteredTypes) {
-        qRegisterMetaType<WId>("WId");
-        qRegisterMetaType<NET::Properties>("NET::Properties");
-        qRegisterMetaType<NET::Properties2>("NET::Properties2");
-        b_RegisteredTypes = true;
-    }
-    connect(KWindowSystem::self(),
-            qOverload<WId, NET::Properties, NET::Properties2>(&KWindowSystem::windowChanged),
-            this,
-            &ActiveWindowTrackerPrivate::handleWindowChanged);
-
-    connect(KWindowSystem::self(),
-            &KWindowSystem::windowRemoved,
-            this,
-            &ActiveWindowTrackerPrivate::handleWindowRemoved);
-
-    connect(KWindowSystem::self(),
-            &KWindowSystem::windowAdded,
-            this,
-            &ActiveWindowTrackerPrivate::handleWindowAdded);
-
-    // Initially no signal will be emitted so.
-    handleWindowAdded(KWindowSystem::activeWindow());
 #endif // LINUX
 
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
+    // Start the loop to track active window.
     m_WindowTimer->start();
-#endif // WINDOWS || MAC
 }
 
 void ActiveWindowTrackerPrivate::rescan() {
 #ifdef Q_OS_LINUX
-    if(KWindowSystem::platform() == KWindowSystem::Platform::X11) {
-        updateActiveWindowX(KWindowSystem::activeWindow());
+    if(KWindowSystem::platform() != KWindowSystem::Platform::X11) {
+        return;
     }
 #endif // LINUX 
 
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
     updateActiveWindow();
-#endif // WINDOWS || MAC
-
 }
 
 void ActiveWindowTrackerPrivate::stop() {
-#ifdef Q_OS_LINUX
-    this->disconnect();
-#endif // LINUX
-
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
     m_WindowTimer->stop();
-#endif // WINDOWS || MAC
 }
 
 void ActiveWindowTrackerPrivate::addAllowedProgram(QString program) {
@@ -140,157 +105,74 @@ void ActiveWindowTrackerPrivate::getAllowedPrograms() {
     emit allowedPrograms(m_AllowedPrograms);
 }
 
-#ifdef Q_OS_LINUX
-void ActiveWindowTrackerPrivate::updateActiveWindowX(WId id) {
-    auto activeWindowId = KWindowSystem::activeWindow();
-    if(activeWindowId == 0 ||
-            id == 0) {
-        emit hide();
-        return;
-    }
-
-    if(id == activeWindowId) {
-        auto properties = NET::WMGeometry |
-                          NET::WMState    |
-                          NET::WMFrameExtents |
-                          NET::WMName |
-                          NET::WMVisibleName;
-
-        auto props2 = NET::WM2WindowClass;
-
-        KWindowInfo info(id, properties, props2);
-        if(!info.valid()) {
-            emit hide();
-            return;
-        }
-
-        auto allowed = m_AllowedPrograms.isEmpty();
-        auto name = info.name();
-        auto title = info.visibleName();
-        auto clsName = QString(info.windowClassName());
-        auto clsClass = QString(info.windowClassClass());
-
-        for (auto prog : m_AllowedPrograms) {
-            if (title.contains(prog) ||
-                    name.contains(prog) ||
-                    clsName.contains(prog) ||
-                    clsClass.contains(prog)) {
-                allowed = true;
-                break;
-            }
-        }
-
-        if (!allowed) {
-            emit hide();
-            return;
-        }
-
-        /*
-            QString program;
-            {
-                QString filename = QString::fromUtf8("/proc/%1/cmdline");
-                QFile file(filename.arg(info.pid()));
-                if(file.open(QIODevice::ReadOnly)) {
-                    auto cmdline = QString(file.readAll());
-                    program = QFileInfo(cmdline).baseName();
-                    file.close();
-                }
-            }*/
-
-        auto quirk = m_Quirks.getQuirk(clsName);
-        if (quirk["exists"].toBool() == false) {
-            quirk = m_Quirks.getQuirk(clsClass);
-        }
-
-        auto xoffset = quirk["xoffset"].toInt(0);
-        auto yoffset = quirk["yoffset"].toInt(0);
-        auto _xoffset = quirk["bottomXOffset"].toInt(0);
-        auto _yoffset = quirk["bottomYOffset"].toInt(0);
-        auto vname = quirk["visibleName"].toString();
-
-        auto state = info.state();
-        if(!(state & NET::State::Focused)) {
-            emit hide();
-            return;
-        }
-
-        if(state & NET::State::SkipTaskbar ||
-                state & NET::State::Modal ||
-                state & NET::State::KeepBelow) {
-            emit hide();
-            return;
-        }
-
-        if (state & NET::State::Max) {
-            _yoffset = _xoffset = 0;
-        }
-
-        auto geo = info.frameGeometry();
-
-
-        // In GNOME and GTK based DEs, this gtkFrameExtents
-        // are set, no problem with Qt application which does
-        // not have that much window decoration problems.
-        if (QX11Info::connection() != NULL) {
-            NETWinInfo wininfo(QX11Info::connection(),
-                               id,
-                               QX11Info::appRootWindow(),
-                               NET::WMFrameExtents,
-                               NET::WM2GTKFrameExtents);
-
-            auto extents = wininfo.gtkFrameExtents();
-            geo = QRect(geo.x() + extents.left,
-                        geo.y() + extents.top,
-                        geo.width() - extents.right - extents.left,
-                        geo.height() - extents.bottom - extents.top);
-        }
-
-        if (vname.isEmpty()) {
-            emit update(geo, xoffset, yoffset, _xoffset, _yoffset);
-        } else if (title.contains(vname)) {
-            emit update(geo, xoffset, yoffset, _xoffset, _yoffset);
-        } else {
-            auto gl = m_Quirks.getQuirk();
-            gl = gl["global"].toObject();
-
-            int glx = gl["xoffset"].toInt(0);
-            int gly = gl["yoffset"].toInt(0);
-            auto gl_x = gl["bottomXOffset"].toInt(0);
-            auto gl_y = gl["bottomYOffset"].toInt(0);
-
-            if (state & NET::State::Max) {
-                gl_y = gl_x = 0;
-            }
-
-            emit update(geo, glx, gly, gl_x, gl_y);
-        }
-
-        return;
-    }
-}
-
-void ActiveWindowTrackerPrivate::handleWindowChanged(WId id,
-        NET::Properties prop1,
-        NET::Properties2 prop2) {
-    Q_UNUSED(prop2);
-    Q_UNUSED(prop1);
-    updateActiveWindowX(id);
-}
-
-void ActiveWindowTrackerPrivate::handleWindowRemoved(WId id) {
-    updateActiveWindowX(KWindowSystem::activeWindow());
-}
-
-void ActiveWindowTrackerPrivate::handleWindowAdded(WId id) {
-    updateActiveWindowX(id);
-}
-#endif // LINUX
-
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
 void ActiveWindowTrackerPrivate::updateActiveWindow() {
     QString title,
             clsName;
     QRect geo;
+
+#ifdef Q_OS_LINUX
+    QString name,
+            clsClass;
+
+    auto activeWindowId = KWindowSystem::activeWindow();
+    if(activeWindowId == 0) {
+        emit hide();
+        return;
+    }
+
+    auto properties = NET::WMGeometry |
+                      NET::WMState    |
+                      NET::WMFrameExtents |
+                      NET::WMName |
+                      NET::WMVisibleName;
+
+    auto props2 = NET::WM2WindowClass |
+                  NET::WM2GTKFrameExtents;
+
+    if (!QX11Info::connection()) {
+        emit hide();
+        return;
+    }
+
+
+    NETWinInfo wininfo(QX11Info::connection(),
+                       activeWindowId,
+                       QX11Info::appRootWindow(),
+                       properties,
+                       props2);
+
+    auto state = wininfo.state();
+    if(!(state & NET::State::Focused)) {
+        emit hide();
+        return;
+    }
+
+    if(state & NET::State::SkipTaskbar ||
+            state & NET::State::Modal ||
+            state & NET::State::KeepBelow) {
+        emit hide();
+        return;
+    }
+
+    name = QString(wininfo.name());
+    title = wininfo.visibleName();
+    clsName = QString(wininfo.windowClassName());
+    clsClass = QString(wininfo.windowClassClass());
+
+    auto extents = wininfo.gtkFrameExtents();
+
+    NETRect frame;
+    NETRect geom;
+
+    wininfo.kdeGeometry(frame, geom);
+
+    Q_UNUSED(frame);
+    geo.setRect(frame.pos.x + extents.left,
+                frame.pos.y + extents.top,
+                frame.size.width - extents.right - extents.left,
+                frame.size.height - extents.bottom - extents.top);
+
+#endif // LINUX
 
 #ifdef Q_OS_WINDOWS
     QString program;
@@ -301,6 +183,13 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
         title = QString(window_title);
     } else {
         hide();
+        return;
+    }
+
+    DWORD wStyle;
+    wStyle = GetWindowLong (foreground,GWL_STYLE);
+    if(!(wStyle & WS_CAPTION)) {
+        emit hide();
         return;
     }
 
@@ -375,6 +264,10 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
 
     for (auto prog : m_AllowedPrograms) {
         if (title.contains(prog) ||
+#ifdef Q_OS_LINUX
+                name.contains(prog) ||
+                clsClass.contains(prog) ||
+#endif // LINUX
                 clsName.contains(prog)) {
             allowed = true;
             break;
@@ -386,21 +279,25 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
         return;
     }
 
-#ifdef Q_OS_WINDOWS
-    DWORD wStyle;
-    wStyle = GetWindowLong (foreground,GWL_STYLE);
-    if(!(wStyle & WS_CAPTION)) {
-        emit hide();
-        return;
-    }
-#endif // WINDOWS
-
     auto quirk = m_Quirks.getQuirk(clsName);
+
+#ifdef Q_OS_LINUX
+    if (quirk["exists"].toBool() == false) {
+        quirk = m_Quirks.getQuirk(clsClass);
+    }
+#endif // LINUX
+
     auto xoffset = quirk["xoffset"].toInt(0);
     auto yoffset = quirk["yoffset"].toInt(0);
     auto _xoffset = quirk["bottomXOffset"].toInt(0);
     auto _yoffset = quirk["bottomYOffset"].toInt(0);
     auto vname = quirk["visibleName"].toString();
+
+#ifdef Q_OS_LINUX
+    if (state & NET::State::Max) {
+        _yoffset = _xoffset = 0;
+    }
+#endif // LINUX
 
     if (vname.isEmpty()) {
         emit update(geo, xoffset, yoffset, _xoffset, _yoffset);
@@ -415,7 +312,12 @@ void ActiveWindowTrackerPrivate::updateActiveWindow() {
         auto gl_x = gl["bottomXOffset"].toInt(0);
         auto gl_y = gl["bottomYOffset"].toInt(0);
 
+#ifdef Q_OS_LINUX
+        if (state & NET::State::Max) {
+            gl_y = gl_x = 0;
+        }
+#endif // LINUX
+
         emit update(geo, glx, gly, gl_x, gl_y);
     }
 }
-#endif // WINDOWS || MAC

@@ -36,19 +36,8 @@ class ActiveWindowTrackerPrivate : public QObject {
     void removeAllowedProgram(int);
     void getAllowedPrograms();
 
-#ifdef Q_OS_LINUX
-  private Q_SLOTS:
-    void updateActiveWindowX(WId);
-    void handleWindowChanged(WId, NET::Properties, NET::Properties2);
-    void handleWindowRemoved(WId);
-    void handleWindowAdded(WId);
-#endif // LINUX
-
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
   private Q_SLOTS:
     void updateActiveWindow();
-#endif // WINDOWS || MAC
-
 
   Q_SIGNALS:
     void quirks(QJsonObject);
@@ -64,13 +53,8 @@ class ActiveWindowTrackerPrivate : public QObject {
   private:
     WindowQuirks m_Quirks;
     QStringList m_AllowedPrograms;
-#ifdef Q_OS_LINUX
-    bool b_RegisteredTypes = false;
-#endif // LINUX
-    //
-#if defined(Q_OS_WINDOWS) || defined(Q_OS_MAC)
+
     QTimer *m_WindowTimer;
-#endif // WINDOWS || MAC
 };
 
 #endif //ACTIVE_WINDOW_TRACKER_HPP_PRIVATE
