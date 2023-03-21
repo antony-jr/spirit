@@ -25,16 +25,23 @@ if (UNIX)
 endif()
 
 if (CONAN_BUILD)
-   list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-   list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
-   include(conan.cmake)
-   
-   conan_cmake_autodetect(settings)
-   conan_cmake_install(PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR}/conanfile.py
-                    BUILD missing
-                    REMOTE conancenter
-                    SETTINGS ${settings})
+# Install with Conan with,
+# conan install .. --remote conancenter --build missing
+
+
+#   list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+#   list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+#   include(conan.cmake)
+#   
+#   conan_cmake_autodetect(settings)
+#   conan_cmake_install(PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR}/conanfile.py
+#                    BUILD missing
+#                    REMOTE conancenter
+#                    SETTINGS ${settings})
+    include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+    conan_basic_setup()
 endif()
+
 find_package(Qt5 COMPONENTS Core Widgets Network Multimedia)
 
 # KWindowSystem
@@ -137,7 +144,7 @@ endif()
 target_link_libraries(spirit PUBLIC civetweb::civetweb civetweb::civetweb-cpp)
 
 if (WIN32 AND CONAN_BUILD)
-	include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+   	#include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
 	add_custom_command(
         TARGET spirit POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy

@@ -428,6 +428,7 @@ jobs:
           mkdir build
           cd build
           conan profile detect
+          conan install .. --remote conancenter --build missing
           cmake ..
           cmake --build . --config release
           copy ..\qtinstaller\packages\com.antonyjr.spirit\data\logo.ico .\Release\logo.ico
