@@ -1,4 +1,4 @@
-from conan import ConanFile, CMake
+from conan import ConanFile
 
 class Conan(ConanFile):
    name = "spirit"

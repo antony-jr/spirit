@@ -14,7 +14,7 @@ jobs:
     outputs:
       deploy: ${{ steps.check.outputs.check }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: lukka/get-cmake@latest
 
       - name: Install Python3
@@ -31,13 +31,7 @@ jobs:
           rm -rf spirit
           cat /tmp/tags.txt
           result=$(python3 scripts/check.py "$(git log -1 --pretty=%B)" "/tmp/tags.txt")
-          # Use this once Github deprecates the set-output
-          # thing.
-          #
           echo "check=$result" >> $GITHUB_OUTPUT
-          
-          # echo "::set-output name=check::$result"
-
 
   BuildAndDeployLinux:
     name: "Build and Deploy (GNU+Linux AMD64)"
@@ -48,7 +42,7 @@ jobs:
       macosfile: ${{ steps.appimage_build.outputs.macosfile }} 
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: lukka/get-cmake@latest
 
       - name: Install Qt and other Dependencies
