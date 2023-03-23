@@ -155,6 +155,11 @@ jobs:
             export VERSION=$deploy
           fi
 
+          echo "APP_VERSION=$SPIRIT_VERSION" >> $GITHUB_OUTPUT
+          echo "ACT_VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "APP_COMMIT=$COMMIT" >> $GITHUB_OUTPUT
+          echo "APP_BUILD=$BUILD" >> $GITHUB_OUTPUT
+
           mkdir build
           cd build
           cmake -DSPIRIT_VERSION="$SPIRIT_VERSION" -DSPIRIT_COMMIT="$COMMIT" -DSPIRIT_BUILD="$BUILD" .. 
@@ -209,9 +214,10 @@ jobs:
 
           # sed '0,/AI\x02/{s|AI\x02|\x00\x00\x00|}' -i spirit-$VERSION-x86_64.AppImage
 
-          echo ::set-output name=appimagefile::spirit-$VERSION-x86_64.AppImage
-          echo ::set-output name=windowsfile::spirit-$VERSION-setup.exe
-          echo ::set-output name=macosfile::spirit-$VERSION-x86_64.dmg
+
+          echo "appimagefile=spirit-$VERSION-x86_64.AppImage" >> $GITHUB_OUTPUT
+          echo "windowsfile=spirit-$VERSION-setup.exe" >> $GITHUB_OUTPUT
+          echo "macosfile=spirit-$VERSION-x86_64.dmg" >> $GITHUB_OUTPUT 
 
           # Remove development appimages.
           rm -rf linuxdeploy* appimagetool*
@@ -403,6 +409,7 @@ jobs:
       
       - name: Install Conan
         id: conan
+        version: "1.59.0"
         uses: turtlebrowser/get-conan@main
 
       - name: Install Wget
@@ -421,10 +428,18 @@ jobs:
         run: |
           mkdir build
           cd build
-          conan profile detect
+          
+          # conan profile detect # This is for v2.x
+          conan profile new default --detect
           conan install .. --remote conancenter --build missing
-          cmake ..
+
+          $VERSION = "${{ needs.BuildAndDeployLinux.outputs.APP_VERSION }}"
+          $COMMIT = "${{ needs.BuildAndDeployLinux.outputs.APP_COMMIT }}"
+          $BUILD = "${{ needs.BuildAndDeployLinux.outputs.APP_BUILD }}"
+
+          cmake -DCONAN_BUILD=ON -DSPIRIT_VERSION="$VERSION" -DSPIRIT_COMMIT="$COMMIT" -DSPIRIT_BUILD="$BUILD" ..         
           cmake --build . --config release
+          
           copy ..\qtinstaller\packages\com.antonyjr.spirit\data\logo.ico .\Release\logo.ico
           rm -r -fo ..\qtinstaller\packages\com.antonyjr.spirit\data
           mv .\Release ..\qtinstaller\packages\com.antonyjr.spirit\data

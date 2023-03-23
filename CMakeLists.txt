@@ -11,7 +11,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CONAN_BUILD ON)
 set(MIN_QT_VERSION "5.6.0")
 
 if (APPLE)
@@ -20,24 +19,23 @@ if (APPLE)
        "-framework Cocoa -framework AppKit -framework CoreData -framework Foundation")
 endif()
 
-if (UNIX)
-   set(CONAN_BUILD OFF)
-endif()
-
+# Install with Conan
+#
+# > conan profile new default --detect
+# > conan install .. --remote conancenter --build missing
+# 
+# Then run the cmake build.
 if (CONAN_BUILD)
-# Install with Conan with,
-# conan install .. --remote conancenter --build missing
-
-
-#   list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
-#   list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
-#   include(conan.cmake)
-#   
-#   conan_cmake_autodetect(settings)
-#   conan_cmake_install(PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR}/conanfile.py
-#                    BUILD missing
-#                    REMOTE conancenter
-#                    SETTINGS ${settings})
+    if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+       message("-- Found Conan Cmake File.")
+    else()
+       message("Install Dependencies for Conan Build")
+       message(" ")
+       message("$ conan profile new default --detect")
+       message("$ conan install .. --remote conancenter --build missing")
+       message(" ") 
+       message(FATAL_ERROR "Please run Conan Install.")
+    endif()
     include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
     conan_basic_setup()
 endif()
@@ -144,7 +142,6 @@ endif()
 target_link_libraries(spirit PUBLIC civetweb::civetweb civetweb::civetweb-cpp)
 
 if (WIN32 AND CONAN_BUILD)
-   	#include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
 	add_custom_command(
         TARGET spirit POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy

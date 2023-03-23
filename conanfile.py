@@ -1,4 +1,11 @@
-from conan import ConanFile
+# This is not compatible with Conan v2.x
+# Please use v1.x
+# If you want v2.x, just change conans to conan.
+#
+# Note:
+# I currently can't upgrade to conan v2 since Qt
+# is still not ported to v2
+from conans import ConanFile
 
 class Conan(ConanFile):
    name = "spirit"
