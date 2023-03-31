@@ -397,8 +397,8 @@ jobs:
 
 
   BuildAndDeployWindows:
-    name: "Build and Deploy (Windows x86)"
-    runs-on: windows-latest
+    name: "Build and Deploy (Windows x64)"
+    runs-on: windows-2019
     needs: [Check, BuildAndDeployLinux]
     steps:
       - uses: actions/checkout@v3
