@@ -19,25 +19,16 @@ if (APPLE)
        "-framework Cocoa -framework AppKit -framework CoreData -framework Foundation")
 endif()
 
-# Install with Conan
-#
-# > conan profile new default --detect
-# > conan install .. --remote conancenter --build missing
-# 
-# Then run the cmake build.
 if (CONAN_BUILD)
-    if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
-       message("-- Found Conan Cmake File.")
-    else()
-       message("Install Dependencies for Conan Build")
-       message(" ")
-       message("$ conan profile new default --detect")
-       message("$ conan install .. --remote conancenter --build missing")
-       message(" ") 
-       message(FATAL_ERROR "Please run Conan Install.")
-    endif()
-    include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
-    conan_basic_setup()
+   list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+   list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+   include(conan.cmake)
+   
+   conan_cmake_autodetect(settings)
+   conan_cmake_install(PATH_OR_REFERENCE ${CMAKE_SOURCE_DIR}/conanfile.py
+                    BUILD missing
+                    REMOTE conancenter
+                    SETTINGS ${settings}) 
 endif()
 
 find_package(Qt5 COMPONENTS Core Widgets Network Multimedia)
@@ -142,7 +133,8 @@ endif()
 target_link_libraries(spirit PUBLIC civetweb::civetweb civetweb::civetweb-cpp)
 
 if (WIN32 AND CONAN_BUILD)
-	add_custom_command(
+	include(${CMAKE_CURRENT_BINARY_DIR}/conanbuildinfo.cmake)
+   	add_custom_command(
         TARGET spirit POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CONAN_BIN_DIRS_QARCHIVE}/QArchive.dll
